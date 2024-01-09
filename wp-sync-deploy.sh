@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
+# ^ https://stackoverflow.com/questions/16365130/what-is-the-difference-between-usr-bin-env-bash-and-usr-bin-bash
 
-# SYNCING AND DEPLOYMENT for WordPress
+# SYNC AND DEPLOY for WordPress
 #
-# Please have a look at the .env.example to define your variables (outside of git):
+# Please have a look at the .env.example to define your variables (outside of this folder)
+#
+# COMMANDS provided by this script
+#
+# Sync the database from your production or staging server:
+# `./wp-sync-deploy/wp-sync-deploy.sh sync <production|staging>`
+#
+# Deploy to production or staging (dry)
+# `./wp-sync-deploy/wp-sync-deploy.sh deploy <production|staging>`
+#
+# Deploy to production or staging (RUN!)
+# `./wp-sync-deploy/wp-sync-deploy.sh deploy <production|staging> run`
 
+# Make this script more strict
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -18,6 +31,10 @@ NC='\033[0m' # No Color
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
 
+# Required positional arguments
+JOB_NAME="$1"
+REMOTE_ENV="$2"
+
 # Print a message and exit with code 1
 errorOut() {
     printf "\n🚨${BOLD}${RED} $1";
@@ -28,30 +45,34 @@ errorOut() {
 DIR=$(pwd)
 SCRIPT_DIR=$(realpath $(dirname $0))
 
+# Deployment to production will only be possible from these two branches
 MAIN_BRANCH="master|main"
 
 # Find the closest file in parent directories
 # @see https://unix.stackexchange.com/a/573499/504158
-# Example `findUp ".env" $(dirname "$0")`
 findUp() {
     local file="$1"
     local dir="$2"
 
     test -e "$dir/$file" && echo "$dir/$file" && return 0
-    [ '/' = "$dir" ] && return 1
+    [ '/' = "$dir" ] && return 0 # couldn't find a way to handle return code 1, so leaving it at zero for now
 
     findUp "$file" "$(dirname "$dir")"
 }
 
+# Find the closest .env file
+ENV_FILE=$(findUp ".env" $SCRIPT_DIR)
+[ -z "$ENV_FILE" ] && errorOut "No matching .env file found"
+
 # Make env vars available everywhere
 # @see https://stackoverflow.com/a/30969768/586823
 set -o allexport
-source $(findUp ".env" $SCRIPT_DIR)
+source $ENV_FILE
 set +o allexport
 
 # Validate the dir this script should be called from
 if [[ "$DIR" == "$SCRIPT_DIR" ]]; then
-    errorOut "This script should be called from the parent directory"
+    errorOut "This script should always be called from the parent directory"
 fi;
 
 # Echo the git branch from the theme
@@ -67,8 +88,9 @@ then
     errorOut "No arguments provided, exiting..."
 fi
 
-REMOTE_ENV=$2
 
+
+# Set SSH paths based on provided environment (production/staging)
 case $REMOTE_ENV in
 
     production)
@@ -98,8 +120,6 @@ REMOTE_CACHE_PATH="$SSH_PATH$PROD_CACHE_PATH"
 
 ERROR_MESSAGE="That did not work. Please check your command and try again"
 
-JOB_NAME="$1"
-
 # Checks if a file exists on a remote server
 checkRemoteFile() {
     ssh $SSH_USER@$SSH_HOST "[ -e \"$PROD_WEB_ROOT/$1\" ] && echo 1";
@@ -127,28 +147,38 @@ case $JOB_NAME in
     # SYNC the production database to the local database
     # @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
     sync)
+        # Confirmation dialog
+        read -r -p "
+        🔄  Would you really like to 💥 ${BOLD}reset the local database${NORMAL} ($DEV_URL)
+        and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " response
+
+        # Exit if not confirmed
+        [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
+
         # Activate maintenance mode
         wp maintenance-mode activate --skip-plugins="qtranslate-xt"
 
         REMOTE_FILE="remote-$REMOTE_DB_NAME.sql"
         LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
 
-        printf "\n💾 Dumping remote database to $REMOTE_FILE\n"
+        printf "\r\n💾 Dumping remote database to $REMOTE_FILE\n"
         eval "ssh $SSH_USER@$SSH_HOST 'mysqldump -h $REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4' > '$SCRIPT_DIR/$REMOTE_FILE'"
 
-        printf "\n💾 Dumping local database to $LOCAL_FILE\n"
+        printf "\r\n💾 Dumping local database to $LOCAL_FILE\n"
         eval "mysqldump -h $LOCAL_DB_HOST -u$LOCAL_DB_USER -p$LOCAL_DB_PASS $LOCAL_DB_NAME > '$SCRIPT_DIR/$LOCAL_FILE'"
 
-        printf "\n⬇️ Importing remote database into local database"
+        printf "\r\n⬇️ Importing remote database into local database"
         eval "mysql -h $LOCAL_DB_HOST -u$LOCAL_DB_USER -p$LOCAL_DB_PASS $LOCAL_DB_NAME < '$SCRIPT_DIR/$REMOTE_FILE'"
 
         rm "$SCRIPT_DIR/$REMOTE_FILE";
         rm "$SCRIPT_DIR/$LOCAL_FILE";
 
-        printf "\n🔄 Replacing $PROD_URL with $DEV_URL..."
-        wp search-replace "$PROD_URL" "$DEV_URL" --all-tables-with-prefix --skip-plugins="qtranslate-xt"
+        printf "\r\n🔄 Replacing $REMOTE_URL with $DEV_URL..."
+        wp search-replace "$REMOTE_URL" "$DEV_URL" --all-tables-with-prefix --skip-plugins="qtranslate-xt"
 
         printf "\n🔄 Syncing ACF field groups..."
+        # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
+        # If you don't need this, go ahead and comment it out
         wp rhau acf-sync-field-groups --skip-plugins="qtranslate-xt"
 
         # Deactivate maintenance mode
@@ -184,7 +214,7 @@ case $JOB_NAME in
 
             # ./deployment/deploy.sh deploy production run
             run)
-                # Build assets in theme
+                # Build assets in your theme. Deactivate/modify this if you don't have a npm script called "build"
                 cd "$DIR/content/themes/$WP_THEME";
                 npm run build
                 cd $DIR;
