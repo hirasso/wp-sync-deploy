@@ -3,7 +3,7 @@
 A bash script that helps you
 
 - sync your WordPress database from production or staging to your local dev environment
-- deploy your local files to production or staging
+- deploy your local core, plugins and themes folders to production or staging
 
 > [!NOTE]
 > It's likely that this script won't work with your specific setup
