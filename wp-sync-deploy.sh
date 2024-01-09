@@ -40,7 +40,7 @@ source "$SCRIPT_DIR/lib/functions.sh"
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#usage
 
-./wp-sync-deploy/wp-sync-deploy.sh [<sync|deploy>] [<production|staging>] [run] "
+./wp-sync-deploy/wp-sync-deploy.sh [<sync|deploy>] [[<production|staging>] [run]] "
 
 # Exit early if we received no arguments
 [ $# -eq 0 ] && log "$USAGE_MESSAGE" && exit 1
