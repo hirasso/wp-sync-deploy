@@ -53,8 +53,10 @@ This script assumes a directory structure like this (adjustable through an `.env
 ```bash
 # CD into your projects webroot
 cd /path/to/your/webroot
+
 # clone this repo
 git clone git@github.com:hirasso/wp-sync-deploy.git
+
 # make the script exectutable
 chmod +x ./wp-sync-deploy/wp-sync-deploy.sh
 #
