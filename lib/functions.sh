@@ -66,19 +66,21 @@ function checkPHPVersions() {
     rm "./$FILE_NAME"
     log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$DEV_URL${NC}"
 
-    # Write a file to the web root that prints the php version
+    # Do the same on the remote server
     ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; echo '<?= substr(phpversion(), 0, 3);' > ./$FILE_NAME"
 
-    # Get the version using CURL
+    # The remote file URL
     REMOTE_FILE_URL="https://$REMOTE_URL/$FILE_NAME"
 
     # Check if the remote file actually exists
     REMOTE_FILE_RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $REMOTE_FILE_URL)
     [[ $REMOTE_FILE_RESPONSE_CODE != 200 ]] && logError "Something went wrong while trying to detect the remote PHP version. Please try again."
 
+    # Get the version from the remote file
     REMOTE_VERSION=$(curl -s $REMOTE_FILE_URL)
     # substring from position 0-3
     REMOTE_VERSION=${REMOTE_VERSION:0:3}
+
     log "- PHP version ${GREEN}$REMOTE_VERSION${NC} detected at ${BOLD}$REMOTE_URL${NC}"
 
     # Remove the file to prevent security issues
