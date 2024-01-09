@@ -12,7 +12,8 @@ A bash script that helps you
 
 ## Prerequesites
 
-This script assumes a directory structure like this (adjustable through an `.env` file):
+- [WP CLI](https://wp-cli.org/) installed locally on your machine
+- A WordPress directory structure like this (adjustable through an `.env` file):
 
 ```bash
 .
