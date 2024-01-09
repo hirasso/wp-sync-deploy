@@ -21,10 +21,6 @@ webpack.config.mjs
 .sync-exclude
 TODO
 gsap-bonus.tgz
-composer.json
-composer.lock
-package.json
-package-lock.json
 README.md
 twentytwentyone
 twentytwentythree
