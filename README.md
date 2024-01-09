@@ -70,7 +70,7 @@ Since deploying can be a pretty destructive task, the script performs a few secu
 
 So when you are starting, you will need to
 
-- perform the first deployment manually (through ssh or FTP)
+- perform the first deployment manually
 - Add an empty file `.allow-deployment` to your remote webroot
 
 ## Usage
