@@ -14,6 +14,7 @@ This script assumes a directory structure like this (adjustable through an `.env
 
 ```bash
 .
+├── .env # your .env file, copied and adjusted from the .env.example file in this repo
 ├── content # your wp-content folder
 │  ├── index.php
 │  ├── languages
