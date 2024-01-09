@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# ^ https://stackoverflow.com/questions/16365130/what-is-the-difference-between-usr-bin-env-bash-and-usr-bin-bash
 
 # SYNC AND DEPLOY for WordPress
 #
@@ -22,14 +21,14 @@ set -o nounset
 set -o pipefail
 
 # Font Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE="\033[0;34m"
-NC='\033[0m' # No Color
+export RED='\033[0;31m'
+export GREEN='\033[0;32m'
+export BLUE="\033[0;34m"
+export NC='\033[0m' # No Color
 
 # Font styles
-BOLD=$(tput bold)
-NORMAL=$(tput sgr0)
+export BOLD=$(tput bold)
+export NORMAL=$(tput sgr0)
 
 # Required positional arguments
 JOB_NAME="$1"
@@ -88,25 +87,23 @@ then
     errorOut "No arguments provided, exiting..."
 fi
 
-
-
 # Set SSH paths based on provided environment (production/staging)
 case $REMOTE_ENV in
 
     production)
         # Define your production vars
-        REMOTE_URL=$PROD_URL
-        SSH_USER=$PROD_SSH_USER
-        SSH_HOST=$PROD_SSH_HOST
-        SSH_PATH=$PROD_WEB_ROOT
+        export REMOTE_URL=$PROD_URL
+        export SSH_USER=$PROD_SSH_USER
+        export SSH_HOST=$PROD_SSH_HOST
+        export SSH_PATH=$PROD_WEB_ROOT
     ;;
 
     staging)
         # Define your staging vars
-        REMOTE_URL=$STAGING_URL
-        SSH_USER=$STAGING_SSH_USER
-        SSH_HOST=$STAGING_SSH_HOST
-        SSH_PATH=$STAGING_WEB_ROOT
+        export REMOTE_URL=$STAGING_URL
+        export SSH_USER=$STAGING_SSH_USER
+        export SSH_HOST=$STAGING_SSH_HOST
+        export SSH_PATH=$STAGING_WEB_ROOT
     ;;
 
     *)
@@ -114,15 +111,13 @@ case $REMOTE_ENV in
     ;;
 esac
 
-SSH_ADDRESS="$SSH_USER@$SSH_HOST:$SSH_PATH"
-
-REMOTE_CACHE_PATH="$SSH_PATH$PROD_CACHE_PATH"
+export REMOTE_CACHE_PATH="$SSH_PATH$PROD_CACHE_PATH"
 
 ERROR_MESSAGE="That did not work. Please check your command and try again"
 
 # Checks if a file exists on a remote server
 checkRemoteFile() {
-    ssh $SSH_USER@$SSH_HOST "[ -e \"$PROD_WEB_ROOT/$1\" ] && echo 1";
+    ssh $SSH_USER@$SSH_HOST "[ -e \"$SSH_PATH/$1\" ] && echo 1";
 }
 
 # Validate that the required directories exist locally and remotely
@@ -139,7 +134,7 @@ done
 
 
 isRemoteRootAllowed() {
-    eval "ssh $SSH_USER@$SSH_HOST 'cd $PROD_WEB_ROOT; [ -f \"$PROD_WEB_ROOT/.allow-deployment\" ] && echo yes'"
+    eval "ssh $SSH_USER@$SSH_HOST 'cd $SSH_PATH; [ -f \"$SSH_PATH/.allow-deployment\" ] && echo yes'"
 }
 
 case $JOB_NAME in
@@ -196,8 +191,13 @@ case $JOB_NAME in
 
         # Validate if the remote root is writable
         if [[ $(isRemoteRootAllowed) != 'yes' ]]; then
-            errorOut "Remote root not allowed for deployment (missing file .allow-deployment): ${GREEN}$PROD_WEB_ROOT";
+            errorOut "Remote root not allowed for deployment (missing file .allow-deployment): ${GREEN}$SSH_PATH";
         fi;
+
+        # Check for a matching PHP version between the local and remote environment
+        chmod +x "$SCRIPT_DIR/check-php.sh"
+        "$SCRIPT_DIR/check-php.sh"
+        exit;
 
         DEPLOY_MODE="dry"
         if [[ ! -z "${3+x}" && $3 == 'run' ]]; then
@@ -209,7 +209,7 @@ case $JOB_NAME in
             # ./deployment/deploy.sh deploy production
             dry)
                 printf "\r\n🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
-                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS $SSH_ADDRESS | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
+                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH" | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
             ;;
 
             # ./deployment/deploy.sh deploy production run
@@ -221,7 +221,7 @@ case $JOB_NAME in
 
                 # Deploy
                 printf "\r\n🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
-                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS $SSH_ADDRESS | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
+                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH" | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
 
                 # Clear the cache folder
                 printf "\r\n${BOLD}Clearing the cache cache at:${NORMAL}\r\n $REMOTE_CACHE_PATH"

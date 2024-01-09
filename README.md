@@ -67,11 +67,13 @@ Since deploying can be a pretty destructive task, the script performs a few secu
 
 - It checks if all `$DEPLOY_DIRS` actually exist at both destinations (locally and remotely)
 - It checks if a hidden file `.allow-deployment` is present at the destination.
+- It will check if the *web-facing* (NOT CLI) PHP versions match between your local and remote environments
 
 So when you are starting, you will need to
 
 - perform the first deployment manually
 - Add an empty file `.allow-deployment` to your remote webroot
+- Make sure that your local and remote server are set to use the same PHP version
 
 ## Usage
 
