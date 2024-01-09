@@ -11,6 +11,7 @@ postcss.config.js
 tsconfig.json
 webpack.config.js
 webpack.config.mjs
+*.log
 .env
 .editorconfig
 .npmrc
