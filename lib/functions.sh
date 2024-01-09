@@ -2,7 +2,7 @@
 
 # Log a string
 function log() {
-    printf "\r\n$1";
+    printf "\r\n$1 ";
 }
 
 # Log an empty line
@@ -67,37 +67,34 @@ function checkIsRemoteAllowed() {
 # Check the PHP version between two environments
 function checkPHPVersions() {
     # The file name for the PHP check. Appends a hash to make the file hard to detect.
-    # The file will be automatically deleted after this script finishes
     local HASH=$(echo $(date +%s%N) | sha256sum | head -c 10)
     local FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
 
-    # Get the local PHP Version
+    # Create the test file on the local server
     echo "<?= phpversion();" > "./$FILE_NAME"
-    local LOCAL_VERSION=$(curl -s "$LOCAL_PROTOCOL://$LOCAL_URL/$FILE_NAME")
-    # substring from position 0-3
-    local LOCAL_VERSION=${LOCAL_VERSION:0:3}
+    # Get the output of the test file
+    local LOCAL_OUTPUT=$(curl -s "$LOCAL_PROTOCOL://$LOCAL_URL/$FILE_NAME")
+    # Cleanup the test file
     rm "./$FILE_NAME"
+    # substring from position 0-3
+    local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
+    # validate if the version looks legit
+    [[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
+    # Log the detected PHP version
     log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$LOCAL_URL${NC}"
 
-    # Do the same on the remote server
+    # Create the test file on the remote server
     ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; echo '<?= phpversion();' > ./$FILE_NAME"
-
-    # The remote file URL
-    local REMOTE_FILE_URL="$REMOTE_PROTOCOL://$REMOTE_URL/$FILE_NAME"
-
-    # Check if the remote file actually exists
-    local REMOTE_FILE_RESPONSE_CODE=$(curl -s -o /dev/null -w "%{http_code}" $REMOTE_FILE_URL)
-    [[ $REMOTE_FILE_RESPONSE_CODE != 200 ]] && logError "Something went wrong while trying to detect the remote PHP version. Please try again."
-
-    # Get the version from the remote file
-    local REMOTE_VERSION=$(curl -s $REMOTE_FILE_URL)
-    # substring from position 0-3
-    local REMOTE_VERSION=${REMOTE_VERSION:0:3}
-
-    log "- PHP version ${GREEN}$REMOTE_VERSION${NC} detected at ${BOLD}$REMOTE_URL${NC}"
-
-    # Remove the file to prevent security issues
+    # Get the output of the test file
+    local REMOTE_OUTPUT=$(curl -s "$REMOTE_PROTOCOL://$REMOTE_URL/$FILE_NAME")
+    # Cleanup the test file
     ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; rm ./$FILE_NAME"
+    # substring from position 0-3
+    local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
+    # validate if the version looks legit
+    [[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $REMOTE_VERSION"
+    # Log the detected PHP version
+    log "- PHP version ${GREEN}$REMOTE_VERSION${NC} detected at ${BOLD}$REMOTE_URL${NC}"
 
     # Error out if the two PHP versions aren't a match
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
