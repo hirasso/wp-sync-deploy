@@ -59,7 +59,6 @@ git clone git@github.com:hirasso/wp-sync-deploy.git
 
 # make the script exectutable
 chmod +x ./wp-sync-deploy/wp-sync-deploy.sh
-#
 ```
 
 ## Remote server preparation
