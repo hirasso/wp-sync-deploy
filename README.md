@@ -1,9 +1,12 @@
 # WordPress Deploy & Sync
 
-A bash script for
+A bash script that helps you
 
-- syncing your WordPress database from production
-- deploying your local changes to production
+- sync your WordPress database from production/staging
+- deploy your local changes to production/staging
+
+> **Info** It's likely that this script won't work with your specific setup
+out of the box, but it should be a good starting point.
 
 ## Prerequesites
 
