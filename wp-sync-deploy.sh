@@ -40,7 +40,7 @@ source "$SCRIPT_DIR/lib/functions.sh"
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#usage
 
-    ./wp-sync-deploy/wp-sync-deploy.sh [<sync|deploy>] [<production|staging>] [run] "
+./wp-sync-deploy/wp-sync-deploy.sh [<sync|deploy>] [<production|staging>] [run] "
 
 # Exit early if we received no arguments
 [ $# -eq 0 ] && log "$USAGE_MESSAGE" && exit 1
@@ -93,7 +93,6 @@ case $REMOTE_ENV in
     ;;
 esac
 
-REMOTE_CACHE_PATH="$SSH_PATH$CACHE_PATH"
 
 case $JOB_NAME in
 
@@ -101,12 +100,12 @@ case $JOB_NAME in
     # @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
     sync)
         # Confirmation dialog
-        read -r -p "
-        🔄  Would you really like to 💥 ${BOLD}reset the local database${NORMAL} ($LOCAL_URL)
-        and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " response
+read -r -p "
+🔄  Would you really like to 💥 ${BOLD}reset the local database${NORMAL} ($LOCAL_URL)
+and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
         # Exit if not confirmed
-        [[ ! "$response" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
+        [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
 
         # Activate maintenance mode
         wp maintenance-mode activate --skip-plugins="qtranslate-xt"
@@ -140,7 +139,7 @@ case $JOB_NAME in
         log "\n✅ Done!"
     ;;
 
-    # DEPLOY to production or staging server
+    # DEPLOY to the production or staging server
     deploy)
         logLine
         log "${GREEN}Performing some checks before deploying...${NC}"
@@ -149,7 +148,7 @@ case $JOB_NAME in
         checkPHPVersions
         checkProductionBranch
         checkIsRemoteAllowed
-        logSuccess "All checks successfully passed! Proceeding..."
+        logSuccess "All checks successful! Proceeding..."
         logLine
 
         DEPLOY_MODE="dry"
@@ -162,6 +161,9 @@ case $JOB_NAME in
             dry)
                 log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
                 rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
+                if [[ $CACHE_PATH == *"/supercache/"* ]]; then
+                    log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
+                fi
             ;;
 
             run)
@@ -174,9 +176,11 @@ case $JOB_NAME in
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
                 rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
 
-                # Clear the cache folder @TODO: Make this less dangerous
-                # log "${BOLD}Clearing the cache cache at:${NORMAL}\r\n $REMOTE_CACHE_PATH"
-                # ssh $SSH_USER@$SSH_HOST "rm -r $REMOTE_CACHE_PATH"
+                # Clear the cache folder
+                if [[ $CACHE_PATH == *"/supercache/"* ]]; then
+                    log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $CACHE_PATH"
+                    ssh $SSH_USER@$SSH_HOST "rm -r $CACHE_PATH"
+                fi
             ;;
 
             *)
