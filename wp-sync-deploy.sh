@@ -161,7 +161,7 @@ case $JOB_NAME in
 
             dry)
                 log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
-                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH" | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
+                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
             ;;
 
             run)
@@ -172,7 +172,7 @@ case $JOB_NAME in
 
                 # Deploy
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
-                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH" | tee "$SCRIPT_DIR/.deploy-$REMOTE_ENV.log"
+                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
 
                 # Clear the cache folder @TODO: Make this less dangerous
                 # log "${BOLD}Clearing the cache cache at:${NORMAL}\r\n $REMOTE_CACHE_PATH"
