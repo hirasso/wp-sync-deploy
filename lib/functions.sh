@@ -44,8 +44,9 @@ function checkIsRemoteAllowed() {
     ALLOWED=$(eval "ssh $SSH_USER@$SSH_HOST 'cd $SSH_PATH; [ -f \"$SSH_PATH/.allow-deployment\" ] && echo 1'")
 
     if [[ $ALLOWED != 1 ]]; then
-        log "" "${RED}$SSH_USER@$SSH_HOST:$SSH_PATH${NC}"
-        logError "Remote root not allowed for deployment (missing file .allow-deployment)"
+        logError "Remote root ${RED}not allowed${NC} for deployment (missing file .allow-deployment):
+
+        $SSH_USER@$SSH_HOST:$SSH_PATH"
     else
         logSuccess ".allow-deployment detected on remote server"
     fi;
@@ -67,7 +68,7 @@ function checkPHPVersions() {
     log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$DEV_URL${NC}"
 
     # Do the same on the remote server
-    ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; echo '<?= substr(phpversion(), 0, 3);' > ./$FILE_NAME"
+    ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; echo '<?= phpversion();' > ./$FILE_NAME"
 
     # The remote file URL
     REMOTE_FILE_URL="https://$REMOTE_URL/$FILE_NAME"
