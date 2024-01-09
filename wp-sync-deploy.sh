@@ -154,14 +154,13 @@ case $JOB_NAME in
     # DEPLOY to production or staging server
     deploy)
         logLine
+        log "${GREEN}Performing some checks before deploying...${NC}"
+        logLine
         checkDirectories
-
         checkPHPVersions
-
         checkProductionBranch
-
         checkIsRemoteAllowed
-
+        logSuccess "All checks successfully passed! Proceeding..."
         logLine
 
         DEPLOY_MODE="dry"
