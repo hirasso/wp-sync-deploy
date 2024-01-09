@@ -110,5 +110,5 @@ function checkDirectories() {
         fi
     done
 
-    logSuccess "All directories exist! Proceeding..."
+    logSuccess "All directories exist in both environments"
 }
