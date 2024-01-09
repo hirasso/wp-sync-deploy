@@ -5,8 +5,9 @@ A bash script that helps you
 - sync your WordPress database from production/staging
 - deploy your local changes to production/staging
 
-> **Info** It's likely that this script won't work with your specific setup
-out of the box, but it should be a good starting point.
+> [!NOTE]
+> It's likely that this script won't work with your specific setup
+> out of the box, but it should be a good starting point.
 
 ## Prerequesites
 
@@ -45,3 +46,40 @@ This script assumes a directory structure like this (adjustable through an `.env
 └── wp-sync-deploy # this repo
    └── wp-sync-deploy.sh
 ```
+
+## Installation
+
+```bash
+# CD into your projects webroot
+cd /path/to/your/webroot
+# clone this repo
+git clone git@github.com:hirasso/wp-sync-deploy.git
+# make the script exectutable
+chmod +x ./wp-sync-deploy/wp-sync-deploy.sh
+#
+```
+
+## Usage
+
+1. Move the file `.env.example` into your webroot, rename it to `.env` and adjust all variables for your needs
+
+2. Run the script:
+```bash
+# sync the database from your production server
+./wp-sync-deploy/wp-sync-deploy.sh sync production
+# sync the database from your staging server
+./wp-sync-deploy/wp-sync-deploy.sh sync staging
+# deploy your files to your production server (dry)
+./wp-sync-deploy/wp-sync-deploy.sh deploy production
+# deploy your files to your staging server (dry)
+./wp-sync-deploy/wp-sync-deploy.sh deploy staging
+# deploy your files to your production server (non-dry)
+./wp-sync-deploy/wp-sync-deploy.sh deploy production run
+# deploy your files to your staging server (non-dry)
+./wp-sync-deploy/wp-sync-deploy.sh deploy staging run
+```
+
+Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding. This will make sure you know what you are doing:
+
+ - It checks if all `$DEPLOY_DIRS` actually exist at the destination
+ - It checks if a hidden file `.allow-deployment` is present at the destination.
