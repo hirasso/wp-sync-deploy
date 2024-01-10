@@ -162,11 +162,14 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         case $DEPLOY_MODE in
 
             dry)
-                log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
+                log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production ..."
+
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
                     cd "$LOCAL_WEB_ROOT";
-                    rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                    rsync --dry-run -az --delete --progress --relative \
+                        --exclude-from="$SCRIPT_DIR/.deployignore" \
+                        $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then
                     log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
@@ -179,12 +182,14 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 # npm run build
                 # cd $LOCAL_WEB_ROOT;
 
-                # Deploy
-                log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
+                log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production ..."
+
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
                     cd "$LOCAL_WEB_ROOT";
-                    rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                    rsync -avz --delete --progress --relative \
+                        --exclude-from="$SCRIPT_DIR/.deployignore" \
+                        $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
 
                 # Clear the cache folder
