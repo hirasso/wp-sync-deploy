@@ -62,6 +62,17 @@ git clone git@github.com:hirasso/wp-sync-deploy.git
 chmod +x ./wp-sync-deploy/wp-sync-deploy.sh
 ```
 
+Alternatively, you can install this script as submodule:
+
+```bash
+git submodule add git@github.com:hirasso/wp-sync-deploy.git
+```
+If you want to clone your main repo and already have wp-sync-deploy as a submodule, use this command:
+
+```bash
+git clone --recurse-submodules git@github.com:yourname/your-repo.git
+```
+
 ## Remote server preparation
 
 Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding:
