@@ -114,7 +114,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
 
         log "💾 Dumping remote database to $REMOTE_FILE\n"
-        eval "ssh $SSH_USER@$SSH_HOST 'mysqldump -h $REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4' > '$SCRIPT_DIR/$REMOTE_FILE'"
+        eval "ssh $SSH_USER@$SSH_HOST 'mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4' > '$SCRIPT_DIR/$REMOTE_FILE'"
 
         log "💾 Dumping local database to $LOCAL_FILE\n"
         eval "mysqldump -h $LOCAL_DB_HOST -u$LOCAL_DB_USER -p$LOCAL_DB_PASS $LOCAL_DB_NAME > '$SCRIPT_DIR/$LOCAL_FILE'"
