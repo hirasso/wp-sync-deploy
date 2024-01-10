@@ -117,7 +117,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         ssh $SSH_USER@$SSH_HOST "$SSH_COMMAND" > "$SCRIPT_DIR/$REMOTE_FILE"
 
         log "💾 Dumping local database to $LOCAL_FILE"
-        MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" > "$SCRIPT_DIR/$LOCAL_FILE"
+        MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 > "$SCRIPT_DIR/$LOCAL_FILE"
 
         log "🍭 Importing remote database into local database"
         MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" < "$SCRIPT_DIR/$REMOTE_FILE"
