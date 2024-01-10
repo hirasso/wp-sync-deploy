@@ -21,8 +21,8 @@ set -o nounset
 set -o pipefail
 
 # The directory relative to the script
-export ROOT_DIR=$(pwd)
 export SCRIPT_DIR=$(realpath $(dirname $0))
+export CURRENT_DIR=$(pwd)
 
 # Font Colors
 export RED='\033[0;31m'
@@ -61,9 +61,6 @@ ENV_FILE=$(findUp ".env" $SCRIPT_DIR)
 set -o allexport
 source $ENV_FILE
 set +o allexport
-
-# Validate that the script is being called from the local web root
-[[ "$ROOT_DIR" != "$LOCAL_WEB_ROOT" ]] && logError "This script has to be called from your local web root"
 
 # Set SSH paths based on provided environment (production/staging)
 case $REMOTE_ENV in
@@ -166,7 +163,11 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
             dry)
                 log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
-                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
+                (
+                    cd "$LOCAL_WEB_ROOT";
+                    rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                )
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then
                     log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
                 fi
@@ -174,13 +175,17 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
             run)
                 # Build assets in the provided theme. Deactivate/modify this if you don't have an npm script called "build"
-                # cd "$ROOT_DIR/content/themes/$WP_THEME";
+                # cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME";
                 # npm run build
-                # cd $ROOT_DIR;
+                # cd $LOCAL_WEB_ROOT;
 
                 # Deploy
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
-                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
+                (
+                    cd "$LOCAL_WEB_ROOT";
+                    rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                )
 
                 # Clear the cache folder
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then

@@ -39,9 +39,9 @@ function checkProductionBranch() {
     [[ $REMOTE_ENV != "production" ]] && return;
 
     # Get the branch from the theme
-    cd "$ROOT_DIR/content/themes/$WP_THEME";
+    cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME";
     BRANCH=$(git branch --show);
-    cd $ROOT_DIR;
+    cd $LOCAL_WEB_ROOT;
 
     # Check it
     if [[ ! $BRANCH =~ $MAIN_BRANCH ]]; then
@@ -70,11 +70,11 @@ function checkPHPVersions() {
     local FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
 
     # Create the test file on the local server
-    echo "<?= phpversion();" > "./$FILE_NAME"
+    echo "<?= phpversion();" > "$LOCAL_WEB_ROOT/$FILE_NAME"
     # Get the output of the test file
     local LOCAL_OUTPUT=$(curl -s "$LOCAL_PROTOCOL://$LOCAL_URL/$FILE_NAME")
     # Cleanup the test file
-    rm "./$FILE_NAME"
+    rm "$LOCAL_WEB_ROOT/$FILE_NAME"
     # substring from position 0-3
     local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
     # validate if the version looks legit
@@ -110,14 +110,14 @@ function checkRemoteFile() {
 
 # Validate that the required directories exist locally and remotely
 function checkDirectories() {
-    for deploy_dir in $DEPLOY_DIRS; do
+    for DEPLOY_DIR in $DEPLOY_DIRS; do
         # check on remote machine
-        if [[ $(checkRemoteFile $deploy_dir) != 1 ]]; then
+        if [[ $(checkRemoteFile $DEPLOY_DIR) != 1 ]]; then
             logError "The directory ${GREEN}$deploy_dir${RED} does not exist on the remote server"
         fi
         # check on local machine
-        if [ ! -d "$ROOT_DIR/$deploy_dir" ]; then
-            logError "The directory ${GREEN}$ROOT_DIR/$deploy_dir${RED} does not exist locally"
+        if [ ! -d "$LOCAL_WEB_ROOT/$DEPLOY_DIR" ]; then
+            logError "The directory ${RED}$LOCAL_WEB_ROOT/$DEPLOY_DIR${NC} does not exist locally"
         fi
     done
 
