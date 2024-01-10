@@ -112,14 +112,15 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         REMOTE_FILE="remote-$REMOTE_DB_NAME.sql"
         LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
 
-        log "💾 Dumping remote database to $REMOTE_FILE\n"
-        eval "ssh $SSH_USER@$SSH_HOST 'mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4' > '$SCRIPT_DIR/$REMOTE_FILE'"
+        log "💾 Dumping remote database to $REMOTE_FILE"
+        SSH_COMMAND="mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4"
+        ssh $SSH_USER@$SSH_HOST "$SSH_COMMAND" > "$SCRIPT_DIR/$REMOTE_FILE"
 
-        log "💾 Dumping local database to $LOCAL_FILE\n"
-        eval "mysqldump -h $LOCAL_DB_HOST -u$LOCAL_DB_USER -p$LOCAL_DB_PASS $LOCAL_DB_NAME > '$SCRIPT_DIR/$LOCAL_FILE'"
+        log "💾 Dumping local database to $LOCAL_FILE"
+        MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" > "$SCRIPT_DIR/$LOCAL_FILE"
 
-        log "⬇️ Importing remote database into local database"
-        eval "mysql -h $LOCAL_DB_HOST -u$LOCAL_DB_USER -p$LOCAL_DB_PASS $LOCAL_DB_NAME < '$SCRIPT_DIR/$REMOTE_FILE'"
+        log "🍭 Importing remote database into local database"
+        MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" < "$SCRIPT_DIR/$REMOTE_FILE"
 
         rm "$SCRIPT_DIR/$REMOTE_FILE";
         rm "$SCRIPT_DIR/$LOCAL_FILE";
@@ -127,13 +128,15 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         log "🔄 Replacing $REMOTE_URL with $LOCAL_URL..."
         wp search-replace "$REMOTE_URL" "$LOCAL_URL" --all-tables-with-prefix
 
-        log "\n🔄 Syncing ACF field groups..."
+        # Deactivate maintenance mode
+        wp maintenance-mode deactivate
+
+        logLine
+
+        log "🔄 Syncing ACF field groups..."
         # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
         # If you don't need this, go ahead and comment it out
         wp rhau acf-sync-field-groups
-
-        # Deactivate maintenance mode
-        wp maintenance-mode deactivate
 
         log "\n✅ Done!"
     ;;
