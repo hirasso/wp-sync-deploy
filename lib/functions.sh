@@ -53,12 +53,11 @@ function checkProductionBranch() {
 
 # Check if there is a file `.allow-deployment` present at the remote root
 function checkIsRemoteAllowed() {
-    ALLOWED=$(eval "ssh $SSH_USER@$SSH_HOST 'cd $SSH_PATH; [ -f \"$SSH_PATH/.allow-deployment\" ] && echo 1'")
+    local FILE_PATH="$REMOTE_WEB_ROOT/.allow-deployment"
+    IS_ALLOWED=$(ssh "$SSH_USER@$SSH_HOST" test -e "$FILE_PATH" && echo "yes" || echo "no")
 
-    if [[ $ALLOWED != 1 ]]; then
-        logError "Remote root ${RED}not allowed${NC} for deployment (missing file .allow-deployment):
-
-        $SSH_USER@$SSH_HOST:$SSH_PATH"
+    if [[ $IS_ALLOWED != "yes" ]]; then
+        logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
     else
         logSuccess ".allow-deployment detected on remote server"
     fi;
@@ -84,11 +83,11 @@ function checkPHPVersions() {
     log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$LOCAL_URL${NC}"
 
     # Create the test file on the remote server
-    ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; echo '<?= phpversion();' > ./$FILE_NAME"
+    ssh "$SSH_USER@$SSH_HOST" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
     # Get the output of the test file
     local REMOTE_OUTPUT=$(curl -s "$REMOTE_PROTOCOL://$REMOTE_URL/$FILE_NAME")
     # Cleanup the test file
-    ssh "$SSH_USER@$SSH_HOST" "cd $SSH_PATH; rm ./$FILE_NAME"
+    ssh "$SSH_USER@$SSH_HOST" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
     # substring from position 0-3
     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
     # validate if the version looks legit
@@ -106,7 +105,7 @@ function checkPHPVersions() {
 
 # Checks if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $SSH_USER@$SSH_HOST "[ -e \"$SSH_PATH/$1\" ] && echo 1";
+    ssh $SSH_USER@$SSH_HOST "[ -e \"$REMOTE_WEB_ROOT/$1\" ] && echo 1";
 }
 
 # Validate that the required directories exist locally and remotely

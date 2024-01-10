@@ -74,7 +74,7 @@ case $REMOTE_ENV in
         export REMOTE_PROTOCOL=$PROD_PROTOCOL
         export SSH_USER=$PROD_SSH_USER
         export SSH_HOST=$PROD_SSH_HOST
-        export SSH_PATH=$PROD_WEB_ROOT
+        export REMOTE_WEB_ROOT=$PROD_WEB_ROOT
         export CACHE_PATH=$PROD_CACHE_PATH
     ;;
 
@@ -84,7 +84,7 @@ case $REMOTE_ENV in
         export REMOTE_PROTOCOL=$STAG_PROTOCOL
         export SSH_USER=$STAG_SSH_USER
         export SSH_HOST=$STAG_SSH_HOST
-        export SSH_PATH=$STAG_WEB_ROOT
+        export REMOTE_WEB_ROOT=$STAG_WEB_ROOT
         export CACHE_PATH=$STAG_CACHE_PATH
     ;;
 
@@ -92,7 +92,6 @@ case $REMOTE_ENV in
         logError "Please provide the remote environment (production or staging)"
     ;;
 esac
-
 
 case $JOB_NAME in
 
@@ -144,10 +143,10 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         logLine
         log "${GREEN}Performing some checks before deploying...${NC}"
         logLine
+        checkIsRemoteAllowed
         checkDirectories
         checkPHPVersions
         checkProductionBranch
-        checkIsRemoteAllowed
         logSuccess "All checks successful! Proceeding..."
         logLine
 
@@ -160,7 +159,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
             dry)
                 log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production\r\n"
-                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
+                rsync --dry-run -az --delete --progress --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then
                     log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
                 fi
@@ -174,7 +173,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
                 # Deploy
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
-                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$SSH_PATH"
+                rsync -avz --delete --relative --exclude-from "$SCRIPT_DIR/.deployignore" $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
 
                 # Clear the cache folder
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then
