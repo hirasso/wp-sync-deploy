@@ -166,7 +166,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
                     cd "$LOCAL_WEB_ROOT";
-                    rsync --dry-run -az --delete --progress --relative \
+                    rsync --dry-run -avz --delete --relative \
                         --exclude-from="$SCRIPT_DIR/.deployignore" \
                         $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
@@ -186,7 +186,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
                     cd "$LOCAL_WEB_ROOT";
-                    rsync -avz --delete --progress --relative \
+                    rsync -avz --delete --relative \
                         --exclude-from="$SCRIPT_DIR/.deployignore" \
                         $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
