@@ -52,9 +52,9 @@ REMOTE_ENV="$2"
 # Deployment to production will only be possible from these two branches
 MAIN_BRANCH="master|main"
 
-# Find the closest .env file
-ENV_FILE=$(findUp ".env" $SCRIPT_DIR)
-[ -z "$ENV_FILE" ] && logError "No matching .env file found"
+# Find the closest wp-sync-deploy.env file
+ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
+[ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found, exiting..."
 
 # Make env vars available everywhere
 # @see https://stackoverflow.com/a/30969768/586823

@@ -17,33 +17,13 @@ A bash script that helps you
 
 ```bash
 .
-├── .env # your .env file, copied and adjusted from the .env.example file in this repo
-├── content # your wp-content folder
-│  ├── index.php
-│  ├── languages
+├── wp-sync-deploy.env # your .env file, copied and adjusted from the .env.example file in this repo
+├── content # your WordPress content folder (equivalent to the standard wp-content)
 │  ├── plugins
 │  ├── themes
-├── core # your wp core folder
-│  ├── index.php
-│  ├── license.txt
-│  ├── liesmich.html
-│  ├── readme.html
-│  ├── wp-activate.php
-│  ├── wp-admin
-│  ├── wp-blog-header.php
-│  ├── wp-comments-post.php
-│  ├── wp-config-sample.php
-│  ├── wp-cron.php
-│  ├── wp-includes
-│  ├── wp-links-opml.php
-│  ├── wp-load.php
-│  ├── wp-login.php
-│  ├── wp-mail.php
-│  ├── wp-settings.php
-│  ├── wp-signup.php
-│  ├── wp-trackback.php
-│  └── xmlrpc.php
-├── index.php # main entry file
+│  ├── ...
+├── core # your WordPress core folder (wp-admin, wp-includes, ...)
+├── index.php # main WordPress entry file
 ├── wp-config.php # your wp-config file
 └── wp-sync-deploy # this repo
    └── wp-sync-deploy.sh
@@ -73,6 +53,8 @@ If you want to clone your main repo and already have wp-sync-deploy as a submodu
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
 
+Now, move the file `wp-sync-deploy.env.example` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+
 ## Remote server preparation
 
 Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding:
@@ -89,9 +71,7 @@ So when you are starting, you will need to
 
 ## Usage
 
-1. Move the file `.env.example` into your webroot, rename it to `.env` and adjust all variables for your needs
-
-2. Run the script:
+Run of the following scripts:
 
 ```bash
 # sync the database from your production server
