@@ -167,9 +167,9 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
             run)
                 # Build assets in the provided theme. Deactivate/modify this if you don't have an npm script called "build"
-                cd "$ROOT_DIR/content/themes/$WP_THEME";
-                npm run build
-                cd $ROOT_DIR;
+                # cd "$ROOT_DIR/content/themes/$WP_THEME";
+                # npm run build
+                # cd $ROOT_DIR;
 
                 # Deploy
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production…"
