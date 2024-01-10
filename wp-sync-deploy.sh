@@ -126,6 +126,10 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         rm "$SCRIPT_DIR/$LOCAL_FILE";
 
         log "🔄 Replacing $REMOTE_URL with $LOCAL_URL..."
+
+        logLine
+
+        # Replace the remoge URL with the local URL
         wp search-replace "$REMOTE_URL" "$LOCAL_URL" --all-tables-with-prefix
 
         # Deactivate maintenance mode
