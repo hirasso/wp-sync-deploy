@@ -107,7 +107,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
 
         # Activate maintenance mode
-        wp maintenance-mode activate --skip-plugins="qtranslate-xt"
+        wp maintenance-mode activate
 
         REMOTE_FILE="remote-$REMOTE_DB_NAME.sql"
         LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
@@ -125,15 +125,15 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         rm "$SCRIPT_DIR/$LOCAL_FILE";
 
         log "🔄 Replacing $REMOTE_URL with $LOCAL_URL..."
-        wp search-replace "$REMOTE_URL" "$LOCAL_URL" --all-tables-with-prefix --skip-plugins="qtranslate-xt"
+        wp search-replace "$REMOTE_URL" "$LOCAL_URL" --all-tables-with-prefix
 
         log "\n🔄 Syncing ACF field groups..."
         # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
         # If you don't need this, go ahead and comment it out
-        wp rhau acf-sync-field-groups --skip-plugins="qtranslate-xt"
+        wp rhau acf-sync-field-groups
 
         # Deactivate maintenance mode
-        wp maintenance-mode deactivate --skip-plugins="qtranslate-xt"
+        wp maintenance-mode deactivate
 
         log "\n✅ Done!"
     ;;
