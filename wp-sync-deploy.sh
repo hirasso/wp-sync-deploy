@@ -109,20 +109,19 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         REMOTE_FILE="remote-$REMOTE_DB_NAME.sql"
         LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
 
-        log "💾 Dumping remote database to $REMOTE_FILE"
+        log "💾 Dumping remote database to ${GREEN}$REMOTE_FILE${NC}"
         SSH_COMMAND="mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4"
         ssh $SSH_USER@$SSH_HOST "$SSH_COMMAND" > "$SCRIPT_DIR/$REMOTE_FILE"
 
-        log "💾 Dumping local database to $LOCAL_FILE"
+        log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
         MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 > "$SCRIPT_DIR/$LOCAL_FILE"
 
-        log "🍭 Importing remote database into local database"
+        log "🍭 Importing ${GREEN}remote${NC} database into the ${GREEN}local${NC} database"
         MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" < "$SCRIPT_DIR/$REMOTE_FILE"
 
         rm "$SCRIPT_DIR/$REMOTE_FILE";
-        rm "$SCRIPT_DIR/$LOCAL_FILE";
 
-        log "🔄 Replacing $REMOTE_URL with $LOCAL_URL..."
+        log "🔄 Replacing ${GREEN}$REMOTE_URL${NC} with ${GREEN}$LOCAL_URL${NC} ..."
 
         logLine
 
