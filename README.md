@@ -12,8 +12,9 @@ A bash script that helps you
 
 ## Prerequesites
 
-- [WP CLI](https://wp-cli.org/) installed locally on your machine
-- A WordPress directory structure like this (adjustable through an `.env` file):
+- [WP-CLI](https://wp-cli.org/) installed locally on your machine
+- Not required but nice for some convenience: WP-CLI also installed on the remote machine
+- A WordPress directory structure like this (adjustable through a `wp-sync-deploy.env` file):
 
 ```bash
 .
@@ -53,15 +54,15 @@ If you want to clone your main repo and already have wp-sync-deploy as a submodu
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
 
-Now, move the file `wp-sync-deploy.env.example` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
 
 ## Remote server preparation
 
 Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding:
 
-- It checks if all `$DEPLOY_DIRS` actually exist at both destinations (locally and remotely)
+- It checks if all directories actually exist in both environments (locally and remotely)
 - It checks if a hidden file `.allow-deployment` is present at the destination.
-- It will check if the *web-facing* (NOT CLI) PHP versions match between your local and remote environments
+- It checks if the *web-facing* (NOT CLI) PHP versions match between your local and remote environments
 
 So when you are starting, you will need to
 
@@ -92,3 +93,10 @@ Run of the following scripts:
 # deploy your files to your staging server (non-dry)
 ./wp-sync-deploy/wp-sync-deploy.sh deploy staging run
 ```
+
+## Things to check after deployment:
+
+- [ ] Were the rewrite rules updated? (If your remote server has WP-CLI installed, the script does this automatically)
+- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script will attempt to automatically do that)
+- [ ] Any other cached things to prune? (transients, for example)
+
