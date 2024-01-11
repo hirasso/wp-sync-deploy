@@ -97,6 +97,6 @@ Run of the following scripts:
 ## Things to check after deployment:
 
 - [ ] Were the rewrite rules updated? (If your remote server has WP-CLI installed, the script does this automatically)
-- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script will attempt to automatically do that)
-- [ ] Any other cached things to prune? (transients, for example)
+- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script does this automatically)
+- [ ] Any other cached things to take care of? (transients, for example)
 
