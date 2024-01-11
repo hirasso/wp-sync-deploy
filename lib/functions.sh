@@ -130,3 +130,8 @@ function checkDirectories() {
 
     logSuccess "All directories exist in both environments"
 }
+
+# Run wp cli on a remote server, forwarding all arguments
+function wpRemote() {
+    wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" "$@"
+}

@@ -179,11 +179,6 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
             ;;
 
             run)
-                # Build assets in the provided theme. Deactivate/modify this if you don't have an npm script called "build"
-                # cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME";
-                # npm run build
-                # cd $LOCAL_WEB_ROOT;
-
                 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
 
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
@@ -202,6 +197,11 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
                 logLine
                 log "✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
+
+                logLine
+                log "🔥 Flushing the rewrite rules on the ${GREEN}$REMOTE_ENV${NC} server ..."
+                wpRemote rewrite flush
+
             ;;
 
             *)
