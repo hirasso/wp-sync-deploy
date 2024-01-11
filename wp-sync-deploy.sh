@@ -161,7 +161,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         case $DEPLOY_MODE in
 
             dry)
-                log "🚀 ${GREEN}${BOLD}[ PREVIEW ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
+                log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
 
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
@@ -175,7 +175,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 fi
 
                 logLine
-                log "✅ ${GREEN}${BOLD}[ PREVIEW ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
+                log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
             ;;
 
             run)
