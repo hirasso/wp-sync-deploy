@@ -90,6 +90,11 @@ case $REMOTE_ENV in
     ;;
 esac
 
+# Construct the directories to deploy from the provided env variables
+export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
+# Construct the supercache path
+export SUPERCACHE_PATH="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+
 case $JOB_NAME in
 
     # SYNC the production database to the local database
@@ -170,9 +175,8 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                         --exclude-from="$SCRIPT_DIR/.deployignore" \
                         $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
-                if [[ $CACHE_PATH == *"/supercache/"* ]]; then
-                    log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
-                fi
+                logLine
+                log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
 
                 logLine
                 log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
@@ -189,11 +193,9 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                         $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
                 )
 
-                # Clear the cache folder
-                if [[ $CACHE_PATH == *"/supercache/"* ]]; then
-                    log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $CACHE_PATH"
-                    ssh $SSH_USER@$SSH_HOST "rm -r $CACHE_PATH"
-                fi
+                # Clear the supercache folder
+                log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
+                ssh $SSH_USER@$SSH_HOST "rm -r $SUPERCACHE_PATH"
 
                 logLine
                 log "✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
