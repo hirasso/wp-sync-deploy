@@ -152,7 +152,6 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         checkProductionBranch
         logSuccess "All checks successful! Proceeding..."
         logLine
-        exit;
 
         DEPLOY_MODE="dry"
         if [[ ! -z "${3+x}" && $3 == 'run' ]]; then
