@@ -144,13 +144,13 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
     # DEPLOY to the production or staging server
     deploy)
         logLine
-        log "${GREEN}Performing some checks before deploying...${NC}"
+        log "Performing some checks before deploying ..."
         logLine
         checkIsRemoteAllowed
         checkDirectories
         checkPHPVersions
         checkProductionBranch
-        logSuccess "All checks successful! Proceeding..."
+        logSuccess "All checks successful! Proceeding ..."
         logLine
 
         DEPLOY_MODE="dry"
@@ -161,7 +161,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         case $DEPLOY_MODE in
 
             dry)
-                log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to production ..."
+                log "🚀 ${GREEN}${BOLD}[ PREVIEW ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
 
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
@@ -173,6 +173,9 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 if [[ $CACHE_PATH == *"/supercache/"* ]]; then
                     log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $CACHE_PATH"
                 fi
+
+                logLine
+                log "✅ ${GREEN}${BOLD}[ PREVIEW ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
             ;;
 
             run)
@@ -181,7 +184,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 # npm run build
                 # cd $LOCAL_WEB_ROOT;
 
-                log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to production ..."
+                log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
 
                 # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
                 (
@@ -196,6 +199,9 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                     log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $CACHE_PATH"
                     ssh $SSH_USER@$SSH_HOST "rm -r $CACHE_PATH"
                 fi
+
+                logLine
+                log "✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
             ;;
 
             *)

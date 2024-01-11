@@ -63,11 +63,14 @@ function checkIsRemoteAllowed() {
     fi;
 }
 
+# Create a hash from a string
+function createHash() {
+    echo "$1" | sha256sum | head -c 10
+}
+
 # Check the PHP version between two environments
 function checkPHPVersions() {
-    # The file name for the PHP check. Appends a hash to make the file hard to detect.
-    local HASH=$(echo $(date +%s%N) | sha256sum | head -c 10)
-    local FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
+    local FILE_NAME="___wp-sync-deploy-php-version.php"
 
     # Create the test file on the local server
     echo "<?= phpversion();" > "$LOCAL_WEB_ROOT/$FILE_NAME"
@@ -82,6 +85,10 @@ function checkPHPVersions() {
     # Log the detected PHP version
     log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$LOCAL_URL${NC}"
 
+
+    # Append a hash to the remote test file to make it harder to detect
+    local HASH=$(createHash $REMOTE_WEB_ROOT)
+    FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
     # Create the test file on the remote server
     ssh "$SSH_USER@$SSH_HOST" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
     # Get the output of the test file
