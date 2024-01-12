@@ -18,7 +18,7 @@ A bash script that helps you
 
 ```bash
 .
-├── wp-sync-deploy.env # your .env file, copied and adjusted from the .env.example file in this repo
+├── wp-sync-deploy.env # your .env file, copied and adjusted from the wp-sync-deploy.example file in this repo
 ├── content # your WordPress content folder (equivalent to the standard wp-content)
 │  ├── plugins
 │  ├── themes
@@ -53,8 +53,13 @@ If you want to clone your main repo and already have wp-sync-deploy as a submodu
 ```bash
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
+### Adjust the variables
 
 Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+
+> [!CAUTION]
+> Make sure you add `wp-sync-deploy.env` to your `.gitignore` file!
+> otherwise, it's likely that sensitive information makes it to your repo.
 
 ## Remote server preparation
 
