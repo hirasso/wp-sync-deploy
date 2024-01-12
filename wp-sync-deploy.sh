@@ -128,7 +128,7 @@ case $JOB_NAME in
 
         logLine
 
-        # Replace the remoge URL with the local URL
+        # Replace the remote URL with the local URL
         wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
 
         # Deactivate maintenance mode
