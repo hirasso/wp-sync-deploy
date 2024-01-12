@@ -213,7 +213,8 @@ deleteSuperCacheDir() {
         remote)
             SUPERCACHE_DIR="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
 
-            log "Would you like to 💥 ${RED}delete the cache directory${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+            log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+            log "${GREEN}$SUPERCACHE_DIR${NC}"
             read -r -p "[y/N] " PROMPT_RESPONSE
 
             # Return early if not confirmed
