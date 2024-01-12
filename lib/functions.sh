@@ -181,7 +181,7 @@ function wpRemote() {
     local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
     # Check for "error" or "command not found" in the response
     if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
-        log "🚨 Unable to run WP-CLI on ${BOLD}$REMOTE_ENV${NORMAL}: \n\n $FIRST_LINE"
+        log "🚨 Unable to run WP-CLI on ${BOLD}$REMOTE_ENV${NORMAL}: \n\n $PREFLIGHT"
         return;
     fi
 
