@@ -90,8 +90,6 @@ esac
 
 # Construct the directories to deploy from the provided env variables
 export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
-# Construct the supercache path
-export SUPERCACHE_PATH="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
 
 case $JOB_NAME in
 
@@ -134,6 +132,7 @@ case $JOB_NAME in
         # Deactivate maintenance mode
         wp maintenance-mode deactivate
 
+        deleteSuperCacheDir local
 
         log "\n🔄 Syncing ACF field groups ..."
         # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
@@ -193,14 +192,12 @@ case $JOB_NAME in
                         $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
                 )
 
-                # Clear the supercache folder
-                log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
-                ssh $REMOTE_SSH "rm -r $SUPERCACHE_PATH"
-
                 log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
 
                 wpRemote rewrite flush
                 wpRemote transient delete --all
+
+                deleteSuperCacheDir remote
 
                 log "\n✅ Done!"
             ;;

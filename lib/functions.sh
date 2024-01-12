@@ -188,3 +188,36 @@ function wpRemote() {
     # preflight passed, exectute the command
     wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" $ARGS
 }
+
+# Delete the supercache directory on either the local or remote server
+deleteSuperCacheDir() {
+    ENV="$1"
+    ENV_NAME=$ENV
+
+    [ $ENV_NAME == 'remote' ] && ENV_NAME=$REMOTE_ENV
+
+    log "Would you like to 💥 ${RED}delete the cache directory${NC} on the ${BOLD}$ENV_NAME${NORMAL} server?"
+    read -r -p "[y/N] " PROMPT_RESPONSE
+
+    # Exit if not confirmed
+    [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && return;
+
+    local SUPERCACHE_PATH
+
+    case $ENV in
+        local)
+            SUPERCACHE_PATH="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+            [ -d $SUPERCACHE_PATH ] && rm -r $SUPERCACHE_PATH
+        ;;
+        remote)
+            SUPERCACHE_PATH="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+            ssh $REMOTE_SSH "[ -d $SUPERCACHE_PATH ] && rm -r $SUPERCACHE_PATH"
+        ;;
+        *)
+            logError "Usage: deleteSuperCacheDir <local|remote>"
+        ;;
+
+    esac
+
+    log "🔥 Deleted the supercache directory at the ${BOLD}$ENV${NC} server"
+}
