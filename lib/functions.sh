@@ -274,6 +274,4 @@ deleteSuperCacheDir() {
         ;;
 
     esac
-
-
 }
