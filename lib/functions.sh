@@ -2,7 +2,7 @@
 
 # Log a string
 function log() {
-    printf "\r\n$1 ";
+    printf "\r\n$1 "
 }
 
 # Log an empty line
@@ -12,13 +12,13 @@ function logLine() {
 
 # Log an error message and exit with code 1
 function logError() {
-    log "🚨${BOLD}${RED} Error: ${NC}$1";
-    exit 1;
+    log "🚨${BOLD}${RED} Error: ${NC}$1"
+    exit 1
 }
 
 # Log a success message
 function logSuccess() {
-    log "✅${BOLD}${GREEN} Success: ${NC}$1";
+    log "✅${BOLD}${GREEN} Success: ${NC}$1"
 }
 
 # Remove unnecessary slashes from a path
@@ -51,12 +51,12 @@ function findUp() {
 # Check the git branch from the theme
 function checkProductionBranch() {
     # Bail early if not deploying to production
-    [[ $REMOTE_ENV != "production" ]] && return;
+    [[ $REMOTE_ENV != "production" ]] && return
 
     # Get the branch from the theme
-    cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME";
-    BRANCH=$(git branch --show);
-    cd $LOCAL_WEB_ROOT;
+    cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME"
+    BRANCH=$(git branch --show)
+    cd $LOCAL_WEB_ROOT
 
     # Check it
     if [[ ! $BRANCH =~ $MAIN_BRANCH ]]; then
@@ -75,7 +75,7 @@ function checkIsRemoteAllowed() {
         logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
     else
         logSuccess ".allow-deployment detected on remote server"
-    fi;
+    fi
 }
 
 # Create a hash from a string
@@ -92,18 +92,18 @@ function constructURL() {
     local AUTH
 
     case $ENV in
-        local)
-            HOST=$LOCAL_HOST
-            PROTOCOL=$LOCAL_PROTOCOL
-            AUTH=$LOCAL_HTTP_AUTH
+    local)
+        HOST=$LOCAL_HOST
+        PROTOCOL=$LOCAL_PROTOCOL
+        AUTH=$LOCAL_HTTP_AUTH
         ;;
-        remote)
-            HOST=$REMOTE_HOST
-            PROTOCOL=$REMOTE_PROTOCOL
-            AUTH=$REMOTE_HTTP_AUTH
+    remote)
+        HOST=$REMOTE_HOST
+        PROTOCOL=$REMOTE_PROTOCOL
+        AUTH=$REMOTE_HTTP_AUTH
         ;;
-        *)
-            logError "Usage: constructURL <local|remote>"
+    *)
+        logError "Usage: constructURL <local|remote>"
         ;;
 
     esac
@@ -144,7 +144,7 @@ function checkWebFacingPHPVersions() {
     local FILE_NAME="___wp-sync-deploy-php-version.php"
 
     # Create the test file on the local server
-    echo "<?= phpversion();" > "$LOCAL_WEB_ROOT/$FILE_NAME"
+    echo "<?= phpversion();" >"$LOCAL_WEB_ROOT/$FILE_NAME"
     # Get the output of the test file
     local LOCAL_OUTPUT=$(curl -s "$LOCAL_URL/$FILE_NAME")
     # Cleanup the test file
@@ -155,7 +155,6 @@ function checkWebFacingPHPVersions() {
     [[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
     # Log the detected PHP version
     log "- Web-facing PHP version at ${BOLD}$LOCAL_HOST${NORMAL}: ${GREEN}$LOCAL_VERSION${NC}"
-
 
     # Append a hash to the remote test file to make it harder to detect
     local HASH=$(createHash $REMOTE_WEB_ROOT)
@@ -183,7 +182,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1";
+    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1"
 }
 
 # Validate that the required directories exist locally and remotely
@@ -210,7 +209,7 @@ function wpRemote() {
     read -r -p "[y/N] " PROMPT_RESPONSE
 
     # Return early if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
+    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
 
     log "proceeding ..."
 
@@ -219,7 +218,7 @@ function wpRemote() {
     # Check for "error" or "command not found" in the response
     if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
         log "🚨 Unable to run WP-CLI on ${BOLD}$REMOTE_ENV${NORMAL}: \n\n $PREFLIGHT"
-        return;
+        return
     fi
 
     # preflight passed, exectute the command
@@ -243,34 +242,34 @@ deleteSuperCacheDir() {
 
     case $ENV in
 
-        local)
-            SUPERCACHE_DIR="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+    local)
+        SUPERCACHE_DIR="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
 
-            if [[ -d $SUPERCACHE_DIR ]]; then
-                rm -r $SUPERCACHE_DIR
-                log "🔥 Deleted the supercache directory at the ${BOLD}local${NC} server"
-            fi
+        if [[ -d $SUPERCACHE_DIR ]]; then
+            rm -r $SUPERCACHE_DIR
+            log "🔥 Deleted the supercache directory at the ${BOLD}local${NC} server"
+        fi
         ;;
 
-        remote)
-            SUPERCACHE_DIR="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+    remote)
+        SUPERCACHE_DIR="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
 
-            if [[ $(checkRemoteFile $SUPERCACHE_DIR) == 1 ]]; then
+        if [[ $(checkRemoteFile $SUPERCACHE_DIR) == 1 ]]; then
 
-                log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server:"
-                log "$SUPERCACHE_DIR"
-                read -r -p "[y/N] " PROMPT_RESPONSE
+            log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server:"
+            log "$SUPERCACHE_DIR"
+            read -r -p "[y/N] " PROMPT_RESPONSE
 
-                # Return early if not confirmed
-                [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
+            # Return early if not confirmed
+            [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
 
-                ssh $REMOTE_SSH "[ -d $SUPERCACHE_DIR ] && rm -r $SUPERCACHE_DIR"
-                log "🔥 Deleted the supercache directory at the ${BOLD}$REMOTE_ENV${NC} server"
-            fi
+            ssh $REMOTE_SSH "[ -d $SUPERCACHE_DIR ] && rm -r $SUPERCACHE_DIR"
+            log "🔥 Deleted the supercache directory at the ${BOLD}$REMOTE_ENV${NC} server"
+        fi
         ;;
 
-        *)
-            logError "Usage: deleteSuperCacheDir <local|remote>"
+    *)
+        logError "Usage: deleteSuperCacheDir <local|remote>"
         ;;
 
     esac
