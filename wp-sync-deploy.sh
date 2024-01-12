@@ -97,12 +97,12 @@ case $JOB_NAME in
     # @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
     sync)
         # Confirmation dialog
-        log "🔄  Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
+        log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
         log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_HOST)?"
         read -r -p "[y/N] " PROMPT_RESPONSE
 
         # Return early if not confirmed
-        [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
+        [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1;
 
         # Activate maintenance mode
         wp maintenance-mode activate
@@ -147,9 +147,13 @@ case $JOB_NAME in
 
     # DEPLOY to the production or staging server
     deploy)
-        logLine
-        log "Performing some checks before deploying ..."
-        logLine
+        log "🚀 Would you really like to deploy to ${GREEN}$REMOTE_HOST${NC}" ?
+        read -r -p "[y/N] " PROMPT_RESPONSE
+
+        # Return early if not confirmed
+        [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1;
+
+        # Perform checks
         checkIsRemoteAllowed
         checkDirectories
         checkPHPVersions
@@ -199,7 +203,9 @@ case $JOB_NAME in
 
                 deleteSuperCacheDir remote
 
-                log "\n✅ Done!"
+                REMOTE_URL=$(constructURL remote)
+                log "\n✅ Done! Be sure to check ${GREEN}$REMOTE_ENV${NC} for possible regressions:"
+                log "\n${GREEN}$REMOTE_URL${NC}"
             ;;
 
             *)
