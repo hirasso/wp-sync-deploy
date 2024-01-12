@@ -146,7 +146,7 @@ function checkPHPVersions() {
 
 # Checks if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $REMOTE_SSH "[ -e \"$REMOTE_WEB_ROOT/$1\" ] && echo 1";
+    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1";
 }
 
 # Validate that the required directories exist locally and remotely
@@ -157,8 +157,8 @@ function checkDirectories() {
             logError "The directory ${RED}$LOCAL_WEB_ROOT/$DEPLOY_DIR${NC} does not exist locally"
         fi
         # check on remote machine
-        if [[ $(checkRemoteFile $DEPLOY_DIR) != 1 ]]; then
-            logError "The directory ${GREEN}$deploy_dir${RED} does not exist on the remote server"
+        if [[ $(checkRemoteFile "$REMOTE_WEB_ROOT/$DEPLOY_DIR") != 1 ]]; then
+            logError "The directory ${RED}$DEPLOY_DIR${RED} does not exist on the remote server"
         fi
     done
 
