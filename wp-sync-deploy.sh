@@ -175,7 +175,7 @@ case $JOB_NAME in
                         $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
                 )
                 logLine
-                log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
+                log "🔥 Would clear the cache at ${GREEN}$REMOTE_ENV${NC}"
 
                 logLine
                 log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
