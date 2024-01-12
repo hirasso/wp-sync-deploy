@@ -54,7 +54,7 @@ function checkProductionBranch() {
 # Check if there is a file `.allow-deployment` present at the remote root
 function checkIsRemoteAllowed() {
     local FILE_PATH="$REMOTE_WEB_ROOT/.allow-deployment"
-    IS_ALLOWED=$(ssh "$SSH_USER@$SSH_HOST" test -e "$FILE_PATH" && echo "yes" || echo "no")
+    IS_ALLOWED=$(ssh "$REMOTE_SSH" test -e "$FILE_PATH" && echo "yes" || echo "no")
 
     if [[ $IS_ALLOWED != "yes" ]]; then
         logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
@@ -68,14 +68,48 @@ function createHash() {
     echo "$1" | sha256sum | head -c 10
 }
 
+# Construct a URL
+function constructURL() {
+    ENV="$1"
+
+    local PROTOCOL
+    local HOST
+    local AUTH
+
+    case $ENV in
+        local)
+            HOST=$LOCAL_HOST
+            PROTOCOL=$LOCAL_PROTOCOL
+            AUTH=$LOCAL_HTTP_AUTH
+        ;;
+        remote)
+            HOST=$REMOTE_HOST
+            PROTOCOL=$REMOTE_PROTOCOL
+            AUTH=$REMOTE_HTTP_AUTH
+        ;;
+        *)
+            logError "Usage: constructURL <local|remote>"
+        ;;
+
+    esac
+
+    if [[ -n "$AUTH" ]]; then
+        echo "$PROTOCOL://$AUTH@$HOST"
+    else
+        echo "$PROTOCOL://$HOST"
+    fi
+}
+
 # Check the PHP version between two environments
 function checkPHPVersions() {
+    local LOCAL_URL=$(constructURL local)
+    local REMOTE_URL=$(constructURL remote)
     local FILE_NAME="___wp-sync-deploy-php-version.php"
 
     # Create the test file on the local server
     echo "<?= phpversion();" > "$LOCAL_WEB_ROOT/$FILE_NAME"
     # Get the output of the test file
-    local LOCAL_OUTPUT=$(curl -s "$LOCAL_PROTOCOL://$LOCAL_URL/$FILE_NAME")
+    local LOCAL_OUTPUT=$(curl -s "$LOCAL_URL/$FILE_NAME")
     # Cleanup the test file
     rm "$LOCAL_WEB_ROOT/$FILE_NAME"
     # substring from position 0-3
@@ -83,24 +117,24 @@ function checkPHPVersions() {
     # validate if the version looks legit
     [[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
     # Log the detected PHP version
-    log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$LOCAL_URL${NC}"
+    log "- PHP version ${GREEN}$LOCAL_VERSION${NC} detected at ${BOLD}$LOCAL_HOST${NC}"
 
 
     # Append a hash to the remote test file to make it harder to detect
     local HASH=$(createHash $REMOTE_WEB_ROOT)
     FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
     # Create the test file on the remote server
-    ssh "$SSH_USER@$SSH_HOST" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
+    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
     # Get the output of the test file
-    local REMOTE_OUTPUT=$(curl -s "$REMOTE_PROTOCOL://$REMOTE_URL/$FILE_NAME")
+    local REMOTE_OUTPUT=$(curl -s "$REMOTE_URL/$FILE_NAME")
     # Cleanup the test file
-    ssh "$SSH_USER@$SSH_HOST" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
+    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
     # substring from position 0-3
     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
     # validate if the version looks legit
     [[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $REMOTE_VERSION"
     # Log the detected PHP version
-    log "- PHP version ${GREEN}$REMOTE_VERSION${NC} detected at ${BOLD}$REMOTE_URL${NC}"
+    log "- PHP version ${GREEN}$REMOTE_VERSION${NC} detected at ${BOLD}$REMOTE_HOST${NC}"
 
     # Error out if the two PHP versions aren't a match
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
@@ -112,19 +146,19 @@ function checkPHPVersions() {
 
 # Checks if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $SSH_USER@$SSH_HOST "[ -e \"$REMOTE_WEB_ROOT/$1\" ] && echo 1";
+    ssh $REMOTE_SSH "[ -e \"$REMOTE_WEB_ROOT/$1\" ] && echo 1";
 }
 
 # Validate that the required directories exist locally and remotely
 function checkDirectories() {
     for DEPLOY_DIR in $DEPLOY_DIRS; do
-        # check on remote machine
-        if [[ $(checkRemoteFile $DEPLOY_DIR) != 1 ]]; then
-            logError "The directory ${GREEN}$deploy_dir${RED} does not exist on the remote server"
-        fi
         # check on local machine
         if [ ! -d "$LOCAL_WEB_ROOT/$DEPLOY_DIR" ]; then
             logError "The directory ${RED}$LOCAL_WEB_ROOT/$DEPLOY_DIR${NC} does not exist locally"
+        fi
+        # check on remote machine
+        if [[ $(checkRemoteFile $DEPLOY_DIR) != 1 ]]; then
+            logError "The directory ${GREEN}$deploy_dir${RED} does not exist on the remote server"
         fi
     done
 
@@ -143,7 +177,7 @@ function wpRemote() {
 
     log "proceeding ..."
 
-    local PREFLIGHT=$(wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" option get home 2>&1)
+    local PREFLIGHT=$(wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" option get home 2>&1)
     local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
     # Check for "error" or "command not found" in the response
     if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
@@ -152,5 +186,5 @@ function wpRemote() {
     fi
 
     # preflight passed, exectute the command
-    wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" $ARGS
+    wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" $ARGS
 }

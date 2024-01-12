@@ -67,19 +67,19 @@ case $REMOTE_ENV in
 
     production)
         # Define your production vars
-        export REMOTE_URL=$PROD_URL
+        export REMOTE_HOST=$PROD_HOST
         export REMOTE_PROTOCOL=$PROD_PROTOCOL
-        export SSH_USER=$PROD_SSH_USER
-        export SSH_HOST=$PROD_SSH_HOST
+        export REMOTE_HTTP_AUTH=$PROD_HTTP_AUTH
+        export REMOTE_SSH=$PROD_SSH
         export REMOTE_WEB_ROOT=$PROD_WEB_ROOT
     ;;
 
     staging)
         # Define your staging vars
-        export REMOTE_URL=$STAG_URL
+        export REMOTE_HOST=$STAG_HOST
         export REMOTE_PROTOCOL=$STAG_PROTOCOL
-        export SSH_USER=$STAG_SSH_USER
-        export SSH_HOST=$STAG_SSH_HOST
+        export REMOTE_HTTP_AUTH=$STAG_HTTP_AUTH
+        export REMOTE_SSH=$STAG_SSH
         export REMOTE_WEB_ROOT=$STAG_WEB_ROOT
     ;;
 
@@ -99,8 +99,8 @@ case $JOB_NAME in
     # @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
     sync)
         # Confirmation dialog
-        log "🔄  Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_URL)"
-        log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_URL)?"
+        log "🔄  Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
+        log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_HOST)?"
         read -r -p "[y/N] " PROMPT_RESPONSE
 
         # Exit if not confirmed
@@ -114,7 +114,7 @@ case $JOB_NAME in
 
         log "💾 Dumping remote database to ${GREEN}$REMOTE_FILE${NC}"
         SSH_COMMAND="mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4"
-        ssh $SSH_USER@$SSH_HOST "$SSH_COMMAND" > "$SCRIPT_DIR/$REMOTE_FILE"
+        ssh $REMOTE_SSH "$SSH_COMMAND" > "$SCRIPT_DIR/$REMOTE_FILE"
 
         log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
         MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 > "$SCRIPT_DIR/$LOCAL_FILE"
@@ -124,12 +124,12 @@ case $JOB_NAME in
 
         rm "$SCRIPT_DIR/$REMOTE_FILE";
 
-        log "\n🔄 Replacing ${GREEN}$REMOTE_URL${NC} with ${GREEN}$LOCAL_URL${NC} ..."
+        log "\n🔄 Replacing ${GREEN}$REMOTE_HOST${NC} with ${GREEN}$LOCAL_HOST${NC} ..."
 
         logLine
 
         # Replace the remoge URL with the local URL
-        wp search-replace "//$REMOTE_URL" "//$LOCAL_URL" --all-tables-with-prefix
+        wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
 
         # Deactivate maintenance mode
         wp maintenance-mode deactivate
@@ -173,7 +173,7 @@ case $JOB_NAME in
                     cd "$LOCAL_WEB_ROOT";
                     rsync --dry-run -avz --delete --relative \
                         --exclude-from="$SCRIPT_DIR/.deployignore" \
-                        $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                        $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
                 )
                 logLine
                 log "🔥 ${BOLD}Would clear the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
@@ -190,12 +190,12 @@ case $JOB_NAME in
                     cd "$LOCAL_WEB_ROOT";
                     rsync -avz --delete --relative \
                         --exclude-from="$SCRIPT_DIR/.deployignore" \
-                        $DEPLOY_DIRS "$SSH_USER@$SSH_HOST:$REMOTE_WEB_ROOT"
+                        $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
                 )
 
                 # Clear the supercache folder
                 log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
-                ssh $SSH_USER@$SSH_HOST "rm -r $SUPERCACHE_PATH"
+                ssh $REMOTE_SSH "rm -r $SUPERCACHE_PATH"
 
                 log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
 
