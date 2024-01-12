@@ -162,7 +162,7 @@ case $JOB_NAME in
         # Perform checks
         checkIsRemoteAllowed
         checkDirectories
-        checkPHPVersions
+        checkWebFacingPHPVersions
         checkProductionBranch
         logSuccess "All checks successful! Proceeding ..."
         logLine

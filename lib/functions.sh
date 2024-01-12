@@ -115,8 +115,8 @@ function constructURL() {
     fi
 }
 
-# Check the PHP version between two environments
-function checkPHPVersions() {
+# Check the web-facing PHP versions between two environments
+function checkWebFacingPHPVersions() {
     local LOCAL_URL=$(constructURL local)
     local REMOTE_URL=$(constructURL remote)
     local FILE_NAME="___wp-sync-deploy-php-version.php"
