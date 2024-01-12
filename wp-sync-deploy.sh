@@ -72,7 +72,6 @@ case $REMOTE_ENV in
         export SSH_USER=$PROD_SSH_USER
         export SSH_HOST=$PROD_SSH_HOST
         export REMOTE_WEB_ROOT=$PROD_WEB_ROOT
-        export CACHE_PATH=$PROD_CACHE_PATH
     ;;
 
     staging)
@@ -82,7 +81,6 @@ case $REMOTE_ENV in
         export SSH_USER=$STAG_SSH_USER
         export SSH_HOST=$STAG_SSH_HOST
         export REMOTE_WEB_ROOT=$STAG_WEB_ROOT
-        export CACHE_PATH=$STAG_CACHE_PATH
     ;;
 
     *)
@@ -101,9 +99,9 @@ case $JOB_NAME in
     # @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
     sync)
         # Confirmation dialog
-read -r -p "
-🔄  Would you really like to 💥 ${BOLD}reset the local database${NORMAL} ($LOCAL_URL)
-and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
+        log "🔄  Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_URL)"
+        log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_URL)?"
+        read -r -p "[y/N] " PROMPT_RESPONSE
 
         # Exit if not confirmed
         [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
@@ -126,7 +124,7 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
 
         rm "$SCRIPT_DIR/$REMOTE_FILE";
 
-        log "🔄 Replacing ${GREEN}$REMOTE_URL${NC} with ${GREEN}$LOCAL_URL${NC} ..."
+        log "\n🔄 Replacing ${GREEN}$REMOTE_URL${NC} with ${GREEN}$LOCAL_URL${NC} ..."
 
         logLine
 
@@ -136,12 +134,14 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
         # Deactivate maintenance mode
         wp maintenance-mode deactivate
 
-        logLine
 
-        log "🔄 Syncing ACF field groups..."
+        log "\n🔄 Syncing ACF field groups ..."
         # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
         # If you don't need this, go ahead and comment it out
         wp rhau acf-sync-field-groups
+
+        log "\n🔥 Deleteting transients from ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        wp transient delete --all
 
         log "\n✅ Done!"
     ;;
@@ -197,13 +197,12 @@ and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_URL)? [y/N] " PROMPT_RESPONSE
                 log "🔥 ${BOLD}Clearing the cache at:${NORMAL}\r\n $SUPERCACHE_PATH"
                 ssh $SSH_USER@$SSH_HOST "rm -r $SUPERCACHE_PATH"
 
-                logLine
-                log "✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
+                log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
 
-                logLine
-                log "🔥 Flushing the rewrite rules on the ${GREEN}$REMOTE_ENV${NC} server ..."
                 wpRemote rewrite flush
+                wpRemote transient delete --all
 
+                log "\n✅ Done!"
             ;;
 
             *)

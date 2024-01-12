@@ -133,5 +133,24 @@ function checkDirectories() {
 
 # Run wp cli on a remote server, forwarding all arguments
 function wpRemote() {
-    wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" "$@"
+    ARGS="$@"
+
+    log "Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+    read -r -p "[y/N] " PROMPT_RESPONSE
+
+    # Exit if not confirmed
+    [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && return;
+
+    log "proceeding ..."
+
+    local PREFLIGHT=$(wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" option get home 2>&1)
+    local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
+    # Check for "error" or "command not found" in the response
+    if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
+        log "🚨 Unable to run WP-CLI on ${BOLD}$REMOTE_ENV${NORMAL}: \n\n $FIRST_LINE"
+        return;
+    fi
+
+    # preflight passed, exectute the command
+    wp --ssh="$SSH_USER@$SSH_HOST$REMOTE_WEB_ROOT" $ARGS
 }
