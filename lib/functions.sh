@@ -21,6 +21,21 @@ function logSuccess() {
     log "✅${BOLD}${GREEN} Success: ${NC}$1";
 }
 
+# Remove unnecessary slashes from a path
+# Prepends a leading slash to the provided path
+# to prevent realpath from making the path absolute
+#
+function normalizePath() {
+    realpath -sm "/$1"
+}
+
+# Trim a leading slash from a string
+function trimLeadingSlash() {
+    local input_path="$1"
+    local trimmed_path="${input_path#/}"
+    echo "$trimmed_path"
+}
+
 # Find the closest file in parent directories
 # @see https://unix.stackexchange.com/a/573499/504158
 function findUp() {
