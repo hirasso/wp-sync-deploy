@@ -160,10 +160,11 @@ case $JOB_NAME in
         [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1;
 
         # Perform checks
+        checkProductionBranch
+        checkCommandLinePHPVersions
+        checkWebFacingPHPVersions
         checkIsRemoteAllowed
         checkDirectories
-        checkWebFacingPHPVersions
-        checkProductionBranch
         logSuccess "All checks successful! Proceeding ..."
         logLine
 

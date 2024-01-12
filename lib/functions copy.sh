@@ -116,26 +116,16 @@ function constructURL() {
 }
 
 # Check the PHP versions on the command line between two environments
-function checkCommandLinePHPVersions() {
-    local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
-    local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
-    log "- Command line PHP version at ${BOLD}local${NORMAL} server: ${GREEN}$LOCAL_VERSION${NC}"
+# function checkCommandLinePHPVersions() {
+#     local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
+#     local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
+#     log "- Command line PHP version at ${BOLD}local${NORMAL} server: ${GREEN}$LOCAL_VERSION${NC}"
 
-    local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "php -r 'echo PHP_VERSION;'")
-    local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
-    log "- Command line PHP version at ${BOLD}$REMOTE_ENV${NORMAL} server: ${GREEN}$REMOTE_VERSION${NC}"
-
-    if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
-        log "🚨 Command line PHP version mismatch detected. Proceed anyways?"
-        read -r -p "[y/N] " PROMPT_RESPONSE
-
-        # Exit early if not confirmed
-        if [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]]; then
-            log "🚨 Deploy to ${GREEN}$REMOTE_ENV${NC} canceled ..."
-            exit
-        fi
-    fi
-}
+#     local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "php -r 'echo PHP_VERSION;'")
+#     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
+#     log "- Command line PHP version at ${BOLD}$REMOTE_ENV${NORMAL} server: ${GREEN}$REMOTE_VERSION${NC}"
+#     exit;
+# }
 
 # Check the web-facing PHP versions between two environments
 function checkWebFacingPHPVersions() {
@@ -181,7 +171,7 @@ function checkWebFacingPHPVersions() {
     fi
 }
 
-# Check if a file exists on a remote server
+# Checks if a file exists on a remote server
 function checkRemoteFile() {
     ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1";
 }
