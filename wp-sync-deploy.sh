@@ -101,8 +101,8 @@ case $JOB_NAME in
         log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_HOST)?"
         read -r -p "[y/N] " PROMPT_RESPONSE
 
-        # Exit if not confirmed
-        [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && exit 1;
+        # Return early if not confirmed
+        [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
 
         # Activate maintenance mode
         wp maintenance-mode activate
@@ -139,7 +139,7 @@ case $JOB_NAME in
         # If you don't need this, go ahead and comment it out
         wp rhau acf-sync-field-groups
 
-        log "\n🔥 Deleteting transients from ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        # Delete local transients
         wp transient delete --all
 
         log "\n✅ Done!"

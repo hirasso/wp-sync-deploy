@@ -172,8 +172,8 @@ function wpRemote() {
     log "Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
     read -r -p "[y/N] " PROMPT_RESPONSE
 
-    # Exit if not confirmed
-    [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && return;
+    # Return early if not confirmed
+    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
 
     log "proceeding ..."
 
@@ -189,29 +189,43 @@ function wpRemote() {
     wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" $ARGS
 }
 
+# Checks a prompt response
+checkPromptResponse() {
+    (
+        shopt -s nocasematch
+
+        [[ "$1" =~ ^(yes|y)$ ]] && echo 1
+    )
+}
+
 # Delete the supercache directory on either the local or remote server
 deleteSuperCacheDir() {
     ENV="$1"
-    ENV_NAME=$ENV
 
-    [ $ENV_NAME == 'remote' ] && ENV_NAME=$REMOTE_ENV
-
-    log "Would you like to 💥 ${RED}delete the cache directory${NC} on the ${BOLD}$ENV_NAME${NORMAL} server?"
-    read -r -p "[y/N] " PROMPT_RESPONSE
-
-    # Exit if not confirmed
-    [[ ! "$PROMPT_RESPONSE" =~ ^([yY][eE][sS]|[yY])$ ]] && return;
-
-    local SUPERCACHE_PATH
+    local SUPERCACHE_DIR
 
     case $ENV in
         local)
-            SUPERCACHE_PATH="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
-            [ -d $SUPERCACHE_PATH ] && rm -r $SUPERCACHE_PATH
+            SUPERCACHE_DIR="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+            [ -d $SUPERCACHE_DIR ] && rm -r $SUPERCACHE_DIR
+            log "🔥 Deleted the supercache directory at the ${BOLD}local${NC} server"
         ;;
         remote)
-            SUPERCACHE_PATH="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
-            ssh $REMOTE_SSH "[ -d $SUPERCACHE_PATH ] && rm -r $SUPERCACHE_PATH"
+            SUPERCACHE_DIR="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
+
+            log "Would you like to 💥 ${RED}delete the cache directory${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+            read -r -p "[y/N] " PROMPT_RESPONSE
+
+            # Return early if not confirmed
+            [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
+
+            if [[ $(checkRemoteFile $SUPERCACHE_DIR) != 1 ]]; then
+                log "❌ Cache directory not found on the ${GREEN}$REMOTE_ENV${NC} server:"
+                log $SUPERCACHE_DIR
+            else
+                ssh $REMOTE_SSH "[ -d $SUPERCACHE_DIR ] && rm -r $SUPERCACHE_DIR"
+                log "🔥 Deleted the supercache directory at the ${BOLD}$REMOTE_ENV${NC} server"
+            fi
         ;;
         *)
             logError "Usage: deleteSuperCacheDir <local|remote>"
@@ -219,5 +233,5 @@ deleteSuperCacheDir() {
 
     esac
 
-    log "🔥 Deleted the supercache directory at the ${BOLD}$ENV${NC} server"
+
 }
