@@ -197,7 +197,7 @@ function wpRemote() {
     ARGS="$@"
 
     log "Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
-    read -r -p "[y/N] " PROMPT_RESPONSE
+    read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;
@@ -249,7 +249,7 @@ deleteSuperCacheDir() {
 
                 log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server:"
                 log "$SUPERCACHE_DIR"
-                read -r -p "[y/N] " PROMPT_RESPONSE
+                read -r -p "[y/n] " PROMPT_RESPONSE
 
                 # Return early if not confirmed
                 [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return;

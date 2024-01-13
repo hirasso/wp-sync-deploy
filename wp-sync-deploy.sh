@@ -72,6 +72,7 @@ production)
     export REMOTE_HTTP_AUTH=$PROD_HTTP_AUTH
     export REMOTE_SSH=$PROD_SSH
     export REMOTE_WEB_ROOT=$PROD_WEB_ROOT
+    export REMOTE_WP_CLI=$PROD_WP_CLI
     ;;
 
 staging)
@@ -81,6 +82,7 @@ staging)
     export REMOTE_HTTP_AUTH=$STAG_HTTP_AUTH
     export REMOTE_SSH=$STAG_SSH
     export REMOTE_WEB_ROOT=$STAG_WEB_ROOT
+    export REMOTE_WP_CLI=$STAG_WP_CLI
     ;;
 
 *)
@@ -105,7 +107,7 @@ sync)
     # Confirmation dialog
     log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
     log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_HOST)?"
-    read -r -p "[y/N] " PROMPT_RESPONSE
+    read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
@@ -154,7 +156,7 @@ sync)
 # DEPLOY to the production or staging server
 deploy)
     log "🚀 Would you really like to deploy to ${GREEN}$REMOTE_HOST${NC}" ?
-    read -r -p "[y/N] " PROMPT_RESPONSE
+    read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1

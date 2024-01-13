@@ -127,7 +127,7 @@ function checkCommandLinePHPVersions() {
 
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         log "🚨 Command line PHP version mismatch detected. Proceed anyways?"
-        read -r -p "[y/N] " PROMPT_RESPONSE
+        read -r -p "[y/n] " PROMPT_RESPONSE
 
         # Exit early if not confirmed
         if [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]]; then
@@ -205,15 +205,18 @@ function checkDirectories() {
 function wpRemote() {
     ARGS="$@"
 
+    if test -z "$REMOTE_WP_CLI"; then
+        log "❌ '\$REMOTE_WP_CLI' not set, skipping running ${BLUE}wp $ARGS${NC} on ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        return
+    fi
+
     log "Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
-    read -r -p "[y/N] " PROMPT_RESPONSE
+    read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
 
-    log "proceeding ..."
-
-    local PREFLIGHT=$(wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" option get home 2>&1)
+    local PREFLIGHT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI option get home" 2>&1)
     local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
     # Check for "error" or "command not found" in the response
     if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
@@ -222,7 +225,7 @@ function wpRemote() {
     fi
 
     # preflight passed, exectute the command
-    wp --ssh="$REMOTE_SSH$REMOTE_WEB_ROOT" $ARGS
+    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI $ARGS"
 }
 
 # Checks a prompt response
@@ -258,7 +261,7 @@ deleteSuperCacheDir() {
 
             log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server:"
             log "$SUPERCACHE_DIR"
-            read -r -p "[y/N] " PROMPT_RESPONSE
+            read -r -p "[y/n] " PROMPT_RESPONSE
 
             # Return early if not confirmed
             [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
