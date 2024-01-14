@@ -90,6 +90,15 @@ staging)
     ;;
 esac
 
+# Validate required variables
+test -z "$LOCAL_WEB_ROOT" && logError "LOCAL_WEB_ROOT is not defined"
+test -z "$REMOTE_WEB_ROOT" && logError "REMOTE_WEB_ROOT is not defined"
+test -z "$WP_CONTENT_DIR" && logError "WP_CONTENT_DIR is not defined"
+test -z "$WP_CORE_DIR" && logError "WP_CORE_DIR is not defined"
+test -z "$REMOTE_SSH" && logError "REMOTE_SSH is not defined"
+test -z "$REMOTE_HOST" && logError "REMOTE_HOST is not defined"
+test -z "$REMOTE_PROTOCOL" && logError "REMOTE_PROTOCOL is not defined"
+
 # Normalize paths from the .env file
 LOCAL_WEB_ROOT=$(normalizePath $LOCAL_WEB_ROOT)
 REMOTE_WEB_ROOT=$(normalizePath $REMOTE_WEB_ROOT)
