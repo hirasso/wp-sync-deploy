@@ -208,11 +208,12 @@ function checkDirectories() {
 REMOTE_WP_CLI_INSTALLED=0
 function installRemoteWpCli() {
     [ "$REMOTE_WP_CLI_INSTALLED" == 1 ] && return
-    log "⏳ Installing WP-CLI on $PRETTY_REMOTE_ENV server ..."
+    log "⏳ Installing WP-CLI on $PRETTY_REMOTE_ENV server ... "
     RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo 'success'")
     if [[ "$RESULT" == 'success' ]]; then
         REMOTE_WP_CLI_INSTALLED=1
-        echo "done!"
+        printf "done!"
+        logLine
         logLine
     else
         logError "Failed to install WP-CLI on the server"
