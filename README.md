@@ -48,11 +48,13 @@ Alternatively, you can install this script as submodule:
 ```bash
 git submodule add git@github.com:hirasso/wp-sync-deploy.git
 ```
+
 If you want to clone your main repo and already have wp-sync-deploy as a submodule, use this command:
 
 ```bash
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
+
 ### Adjust the variables
 
 Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
@@ -65,15 +67,17 @@ Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to 
 
 Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding:
 
-- It checks if all directories actually exist in both environments (locally and remotely)
-- It checks if a hidden file `.allow-deployment` is present at the destination.
-- It checks if the *web-facing* (NOT CLI) PHP versions match between your local and remote environments
+- [x] Do all directories marked for deployment actually exist in both environments (locally and remotely)?
+- [x] Does a hidden file `.allow-deployment` exist on the remote environment's web root?
+- [x] Does the local _command-line_ PHP version match the one on the remote environment?
+- [x] Does the local _web-facing_ PHP version match the one on the remote environment?
 
 So when you are starting, you will need to
 
-- perform the first deployment manually
-- Add an empty file `.allow-deployment` to your remote webroot
+- Perform the first deployment manually
+- Add an empty file `.allow-deployment` to your remote web root
 - Make sure that your local and remote server are set to use the same PHP version
+- Optional: Install WP-CLI on the remote server. This will unlock additional functionality in your script
 
 ## Usage
 
@@ -101,7 +105,6 @@ Run of the following scripts:
 
 ## Things to check after deployment:
 
-- [ ] Were the rewrite rules updated? (If your remote server has WP-CLI installed, the script does this automatically)
-- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script does this automatically)
-- [ ] Any other cached things to take care of? (transients, for example)
-
+- [ ] Do you have to update your rewrite rules? (The script attempts to do this automatically)
+- [ ] - [ ] Do you need to delete transients on the remote server? (The script attempts to do this automatically)
+- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script attempts to do this automatically)
