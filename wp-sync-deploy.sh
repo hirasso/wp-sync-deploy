@@ -138,7 +138,7 @@ sync)
     log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
     MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 >"$SCRIPT_DIR/$LOCAL_FILE"
 
-    log "🍭 Importing ${GREEN}remote${NC} database into the PRETTY_LOCAL_ENV database"
+    log "🍭 Importing ${GREEN}remote${NC} database into the $PRETTY_LOCAL_ENV database"
     MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" <"$SCRIPT_DIR/$REMOTE_FILE"
 
     rm "$SCRIPT_DIR/$REMOTE_FILE"

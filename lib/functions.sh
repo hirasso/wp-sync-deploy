@@ -119,9 +119,9 @@ function constructURL() {
 function checkCommandLinePHPVersions() {
     local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
     local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
-    log "- Command line PHP version at PRETTY_LOCAL_ENV server: ${GREEN}$LOCAL_VERSION${NC}"
+    log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${GREEN}$LOCAL_VERSION${NC}"
 
-    local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "php -r 'echo PHP_VERSION;'")
+    local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "$REMOTE_PHP_BINARY -r 'echo PHP_VERSION;'")
     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
     log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${GREEN}$REMOTE_VERSION${NC}"
 
@@ -135,7 +135,7 @@ function checkCommandLinePHPVersions() {
             exit
         fi
     else
-        logSuccess "Command line PHP versions match between PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
+        logSuccess "Command line PHP versions match between $PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
     fi
 }
 
@@ -178,7 +178,7 @@ function checkWebFacingPHPVersions() {
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         logError "PHP version mismatch, aborting"
     else
-        logSuccess "Web-facing PHP versions match between PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
+        logSuccess "Web-facing PHP versions match between $PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
     fi
 }
 
