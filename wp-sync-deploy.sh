@@ -112,10 +112,6 @@ WP_CORE_DIR=$(trimLeadingSlash $(normalizePath $WP_CORE_DIR))
 # Construct the directories to deploy from the provided env variables
 export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
 
-wpRemote --info
-wpRemote --info
-exit
-
 case $JOB_NAME in
 
 # SYNC the production database to the local database
