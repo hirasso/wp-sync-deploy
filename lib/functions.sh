@@ -209,7 +209,7 @@ REMOTE_WP_CLI_INSTALLED=0
 function installRemoteWpCli() {
     [ "$REMOTE_WP_CLI_INSTALLED" == 1 ] && return
     log "⏳ Installing WP-CLI on $PRETTY_REMOTE_ENV server ... "
-    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo 'success'")
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT/.. && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo 'success'")
     if [[ "$RESULT" == 'success' ]]; then
         REMOTE_WP_CLI_INSTALLED=1
         printf "done!"
@@ -230,19 +230,13 @@ function wpRemote() {
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
 
+    # Install WP-CLI on remote server
     installRemoteWpCli
 
-    # local PREFLIGHT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI option get home" 2>&1)
-    # local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
-    # # Check for "error" or "command not found" in the response
-    # if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
-    #     log "🚨 Unable to run WP-CLI on $PRETTY_REMOTE_ENV: \n\n $PREFLIGHT"
-    #     return
-    # fi
+    # Exectute the command
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ../wp-cli.phar $ARGS")
 
-    # preflight passed, exectute the command
-    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./wp-cli.phar $ARGS")
-
+    # Print the result of the command
     printf "Result: \n\n$RESULT"
 }
 

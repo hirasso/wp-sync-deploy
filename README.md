@@ -3,7 +3,7 @@
 A bash script that helps you
 
 - sync your WordPress database from production or staging to your local dev environment
-- deploy your local core, plugins and theme folders to production or staging
+- deploy your local core, plugins and theme to production or staging
 
 > [!NOTE]
 > It's likely that this script won't work with your specific setup
@@ -65,7 +65,7 @@ Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to 
 
 ## Remote server preparation
 
-Since deploying can be a pretty destructive task, the script performs a few security checks before proceeding:
+Since deploying can be a pretty destructive task, wp-sync-deploy performs a few security checks before proceeding:
 
 - [x] Do all directories marked for deployment actually exist in both environments (locally and remotely)?
 - [x] Does a hidden file `.allow-deployment` exist on the remote environment's web root?
@@ -103,14 +103,14 @@ Run of the following scripts:
 ./wp-sync-deploy/wp-sync-deploy.sh deploy staging run
 ```
 
-## Things to check after deployment:
+## WP-CLI on remote server after deployment
 
-- [ ] Do you have to update your rewrite rules? (The script attempts to do this automatically)
-- [ ] - [ ] Do you need to delete transients on the remote server? (The script attempts to do this automatically)
-- [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script attempts to do this automatically)
+To ensure compatibility with the widest range of hosting servers, this script installs WP-CLI automatically on the remote server.
 
-## WP-CLI on the remote server
+This also has the advantage that you can provide a custom alias for the `php` binary to be used on the remote server. This comes in handy in scenarios where your staging and production environments share the same server.
 
-To ensure compatibility with the widest range of hosting servers, this script installs WP-CLI automatically on the remote server. This also has the advantage that you can provide a custom
-alias for the `php` binary to be used on the remote server (handy scenarios where staging and
-production share the same server)
+## If WP-CLI can be installed on your server, wp-sync-deploy asks you if it should:
+
+- update the rewrite rules
+- delete all transients
+- delete your [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/) folder if it exists
