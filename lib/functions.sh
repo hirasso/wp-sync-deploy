@@ -131,9 +131,11 @@ function checkCommandLinePHPVersions() {
 
         # Exit early if not confirmed
         if [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]]; then
-            log "🚨 Deploy to ${GREEN}$REMOTE_ENV${NC} canceled ..."
+            log "🚨 Deploy to ${BOLD}$REMOTE_ENV${NORMAL} canceled ..."
             exit
         fi
+    else
+        logSuccess "Command line PHP versions match between ${BOLD}local${NORMAL} and ${BOLD}$REMOTE_ENV${NORMAL}"
     fi
 }
 
@@ -176,7 +178,7 @@ function checkWebFacingPHPVersions() {
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         logError "PHP version mismatch, aborting"
     else
-        logSuccess "PHP versions match between environments"
+        logSuccess "Web-facing PHP versions match between ${BOLD}local${NORMAL} and ${BOLD}$REMOTE_ENV${NORMAL}"
     fi
 }
 
@@ -206,11 +208,11 @@ function wpRemote() {
     ARGS="$@"
 
     if test -z "$REMOTE_WP_CLI"; then
-        log "❌ '\$REMOTE_WP_CLI' not set, skipping running ${BLUE}wp $ARGS${NC} on ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        log "ℹ️ 'REMOTE_WP_CLI' not defined, skipping ${BLUE}wp $ARGS${NC} on ${BOLD}$REMOTE_ENV${NORMAL} ..."
         return
     fi
 
-    log "Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+    log "🚀 Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed

@@ -134,7 +134,7 @@ sync)
     log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
     MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 >"$SCRIPT_DIR/$LOCAL_FILE"
 
-    log "🍭 Importing ${GREEN}remote${NC} database into the ${GREEN}local${NC} database"
+    log "🍭 Importing ${GREEN}remote${NC} database into the ${BOLD}local${NORMAL} database"
     MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" <"$SCRIPT_DIR/$REMOTE_FILE"
 
     rm "$SCRIPT_DIR/$REMOTE_FILE"
@@ -187,7 +187,7 @@ deploy)
     case $DEPLOY_MODE in
 
     dry)
-        log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
+        log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to ${BOLD}$REMOTE_ENV${NORMAL} ..."
 
         # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
         (
@@ -197,14 +197,14 @@ deploy)
                 $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
         )
         logLine
-        log "🔥 Would clear the cache at ${GREEN}$REMOTE_ENV${NC}"
+        log "🔥 Would clear the cache at ${BOLD}$REMOTE_ENV${NORMAL}"
 
         logLine
-        log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${GREEN}$REMOTE_ENV${NC} completed"
+        log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${BOLD}$REMOTE_ENV${NORMAL} completed"
         ;;
 
     run)
-        log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to ${GREEN}$REMOTE_ENV${NC} ..."
+        log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to ${BOLD}$REMOTE_ENV${NORMAL} ..."
 
         # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
         (
@@ -214,7 +214,9 @@ deploy)
                 $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
         )
 
-        log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${GREEN}$REMOTE_ENV${NC} completed"
+        log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${BOLD}$REMOTE_ENV${NORMAL} completed"
+
+        logLine
 
         wpRemote rewrite flush
         wpRemote transient delete --all
@@ -222,7 +224,7 @@ deploy)
         deleteSuperCacheDir remote
 
         REMOTE_URL=$(constructURL remote)
-        log "\n✅ Done! Be sure to check ${GREEN}$REMOTE_ENV${NC} for possible regressions:"
+        log "\n✅ Done! Be sure to check ${BOLD}$REMOTE_ENV${NORMAL} for possible regressions:"
         log "\n${GREEN}$REMOTE_URL${NC}"
         ;;
 
