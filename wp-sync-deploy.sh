@@ -228,7 +228,7 @@ deploy)
         deleteSuperCacheDir remote
 
         REMOTE_URL=$(constructURL remote)
-        log "\n✅ Done! Be sure to check $PRETTY_REMOTE_ENV for possible regressions:"
+        log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
         log "\n${GREEN}$REMOTE_URL${NC}"
         ;;
 
