@@ -108,3 +108,9 @@ Run of the following scripts:
 - [ ] Do you have to update your rewrite rules? (The script attempts to do this automatically)
 - [ ] - [ ] Do you need to delete transients on the remote server? (The script attempts to do this automatically)
 - [ ] Was the cache flushed? (If you are using [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/), the script attempts to do this automatically)
+
+## WP-CLI on the remote server
+
+To ensure compatibility with the widest range of hosting servers, this script installs WP-CLI automatically on the remote server. This also has the advantage that you can provide a custom
+alias for the `php` binary to be used on the remote server (handy scenarios where staging and
+production share the same server)
