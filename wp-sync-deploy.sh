@@ -72,7 +72,7 @@ production)
     export REMOTE_HTTP_AUTH=$PROD_HTTP_AUTH
     export REMOTE_SSH=$PROD_SSH
     export REMOTE_WEB_ROOT=$PROD_WEB_ROOT
-    export REMOTE_WP_CLI=$PROD_WP_CLI
+    export REMOTE_PHP_BINARY=$PROD_PHP_BINARY
     ;;
 
 staging)
@@ -82,13 +82,17 @@ staging)
     export REMOTE_HTTP_AUTH=$STAG_HTTP_AUTH
     export REMOTE_SSH=$STAG_SSH
     export REMOTE_WEB_ROOT=$STAG_WEB_ROOT
-    export REMOTE_WP_CLI=$STAG_WP_CLI
+    export REMOTE_PHP_BINARY=$STAG_PHP_BINARY
     ;;
 
 *)
     logError "Please provide the remote environment (production or staging)"
     ;;
 esac
+
+# Prepare variables for printing
+export PRETTY_LOCAL_ENV=$(printf "${BOLD}local${NORMAL}")
+export PRETTY_REMOTE_ENV=$(printf "${BOLD}$REMOTE_ENV${NORMAL}")
 
 # Validate required variables
 test -z "$LOCAL_WEB_ROOT" && logError "LOCAL_WEB_ROOT is not defined"
@@ -107,6 +111,10 @@ WP_CORE_DIR=$(trimLeadingSlash $(normalizePath $WP_CORE_DIR))
 
 # Construct the directories to deploy from the provided env variables
 export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
+
+wpRemote --info
+wpRemote --info
+exit
 
 case $JOB_NAME in
 
@@ -134,7 +142,7 @@ sync)
     log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
     MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 >"$SCRIPT_DIR/$LOCAL_FILE"
 
-    log "🍭 Importing ${GREEN}remote${NC} database into the ${BOLD}local${NORMAL} database"
+    log "🍭 Importing ${GREEN}remote${NC} database into the PRETTY_LOCAL_ENV database"
     MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" <"$SCRIPT_DIR/$REMOTE_FILE"
 
     rm "$SCRIPT_DIR/$REMOTE_FILE"
@@ -187,7 +195,7 @@ deploy)
     case $DEPLOY_MODE in
 
     dry)
-        log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
         # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
         (
@@ -197,14 +205,14 @@ deploy)
                 $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
         )
         logLine
-        log "🔥 Would clear the cache at ${BOLD}$REMOTE_ENV${NORMAL}"
+        log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
         logLine
-        log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to ${BOLD}$REMOTE_ENV${NORMAL} completed"
+        log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
         ;;
 
     run)
-        log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to ${BOLD}$REMOTE_ENV${NORMAL} ..."
+        log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
         # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
         (
@@ -214,7 +222,7 @@ deploy)
                 $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
         )
 
-        log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to ${BOLD}$REMOTE_ENV${NORMAL} completed"
+        log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
 
         logLine
 
@@ -224,7 +232,7 @@ deploy)
         deleteSuperCacheDir remote
 
         REMOTE_URL=$(constructURL remote)
-        log "\n✅ Done! Be sure to check ${BOLD}$REMOTE_ENV${NORMAL} for possible regressions:"
+        log "\n✅ Done! Be sure to check $PRETTY_REMOTE_ENV for possible regressions:"
         log "\n${GREEN}$REMOTE_URL${NC}"
         ;;
 

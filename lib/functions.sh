@@ -119,11 +119,11 @@ function constructURL() {
 function checkCommandLinePHPVersions() {
     local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
     local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
-    log "- Command line PHP version at ${BOLD}local${NORMAL} server: ${GREEN}$LOCAL_VERSION${NC}"
+    log "- Command line PHP version at PRETTY_LOCAL_ENV server: ${GREEN}$LOCAL_VERSION${NC}"
 
     local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "php -r 'echo PHP_VERSION;'")
     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
-    log "- Command line PHP version at ${BOLD}$REMOTE_ENV${NORMAL} server: ${GREEN}$REMOTE_VERSION${NC}"
+    log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${GREEN}$REMOTE_VERSION${NC}"
 
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         log "🚨 Command line PHP version mismatch detected. Proceed anyways?"
@@ -131,11 +131,11 @@ function checkCommandLinePHPVersions() {
 
         # Exit early if not confirmed
         if [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]]; then
-            log "🚨 Deploy to ${BOLD}$REMOTE_ENV${NORMAL} canceled ..."
+            log "🚨 Deploy to $PRETTY_REMOTE_ENV canceled ..."
             exit
         fi
     else
-        logSuccess "Command line PHP versions match between ${BOLD}local${NORMAL} and ${BOLD}$REMOTE_ENV${NORMAL}"
+        logSuccess "Command line PHP versions match between PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
     fi
 }
 
@@ -178,7 +178,7 @@ function checkWebFacingPHPVersions() {
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         logError "PHP version mismatch, aborting"
     else
-        logSuccess "Web-facing PHP versions match between ${BOLD}local${NORMAL} and ${BOLD}$REMOTE_ENV${NORMAL}"
+        logSuccess "Web-facing PHP versions match between PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
     fi
 }
 
@@ -203,31 +203,46 @@ function checkDirectories() {
     logSuccess "All directories exist in both environments"
 }
 
+# Install WP-CLI on the remote server
+# This makes it possible to easily run wp-cli with a custom command line PHP version
+REMOTE_WP_CLI_INSTALLED=0
+function installRemoteWpCli() {
+    [ "$REMOTE_WP_CLI_INSTALLED" == 1 ] && return
+    log "⏳ Installing WP-CLI on $PRETTY_REMOTE_ENV server ..."
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo 'success'")
+    if [[ "$RESULT" == 'success' ]]; then
+        REMOTE_WP_CLI_INSTALLED=1
+        echo "done!"
+        logLine
+    else
+        logError "Failed to install WP-CLI on the server"
+    fi
+}
+
 # Run wp cli on a remote server, forwarding all arguments
 function wpRemote() {
     ARGS="$@"
 
-    if test -z "$REMOTE_WP_CLI"; then
-        log "ℹ️ 'REMOTE_WP_CLI' not defined, skipping ${BLUE}wp $ARGS${NC} on ${BOLD}$REMOTE_ENV${NORMAL} ..."
-        return
-    fi
-
-    log "🚀 Would you like to run ${BLUE}wp $ARGS${NC} on the ${BOLD}$REMOTE_ENV${NORMAL} server?"
+    log "🚀 Would you like to run ${BLUE}wp $ARGS${NC} on the $PRETTY_REMOTE_ENV server?"
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
 
-    local PREFLIGHT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI option get home" 2>&1)
-    local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
-    # Check for "error" or "command not found" in the response
-    if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
-        log "🚨 Unable to run WP-CLI on ${BOLD}$REMOTE_ENV${NORMAL}: \n\n $PREFLIGHT"
-        return
-    fi
+    installRemoteWpCli
+
+    # local PREFLIGHT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI option get home" 2>&1)
+    # local FIRST_LINE=$(echo "$PREFLIGHT" | head -n 1)
+    # # Check for "error" or "command not found" in the response
+    # if [[ $PREFLIGHT == *"Error"* || $PREFLIGHT == *"command not found"* ]]; then
+    #     log "🚨 Unable to run WP-CLI on $PRETTY_REMOTE_ENV: \n\n $PREFLIGHT"
+    #     return
+    # fi
 
     # preflight passed, exectute the command
-    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_WP_CLI $ARGS"
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./wp-cli.phar $ARGS")
+
+    printf "Result: \n\n$RESULT"
 }
 
 # Checks a prompt response
@@ -261,7 +276,7 @@ deleteSuperCacheDir() {
 
         if [[ $(checkRemoteFile $SUPERCACHE_DIR) == 1 ]]; then
 
-            log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the ${BOLD}$REMOTE_ENV${NORMAL} server:"
+            log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the $PRETTY_REMOTE_ENV server:"
             log "$SUPERCACHE_DIR"
             read -r -p "[y/n] " PROMPT_RESPONSE
 
