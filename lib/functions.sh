@@ -156,7 +156,7 @@ function checkWebFacingPHPVersions() {
     # validate if the version looks legit
     [[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
     # Log the detected PHP version
-    log "- Web-facing PHP version at ${BOLD}$LOCAL_HOST${NORMAL}: ${GREEN}$LOCAL_VERSION${NC}"
+    log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${GREEN}$LOCAL_VERSION${NC}"
 
     # Append a hash to the remote test file to make it harder to detect
     local HASH=$(createHash $REMOTE_WEB_ROOT)
@@ -172,7 +172,7 @@ function checkWebFacingPHPVersions() {
     # validate if the version looks legit
     [[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $REMOTE_VERSION"
     # Log the detected PHP version
-    log "- Web-facing PHP version at ${BOLD}$REMOTE_HOST${NC}: ${GREEN}$REMOTE_VERSION${NC}"
+    log "- Web-facing PHP version at $PRETTY_REMOTE_HOST: ${GREEN}$REMOTE_VERSION${NC}"
 
     # Error out if the two PHP versions aren't a match
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
@@ -293,8 +293,8 @@ deleteSuperCacheDir() {
 # Pull the remote database into the local database
 function pullDatabase() {
     # Confirmation dialog
-    log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
-    log "and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_HOST)?"
+    log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($PRETTY_LOCAL_HOST)"
+    log "and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($PRETTY_REMOTE_HOST)?"
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
@@ -317,7 +317,7 @@ function pullDatabase() {
     # Delete local transients
     wp transient delete --all
 
-    log "\n✅ Database imported from $REMOTE_HOST to $LOCAL_HOST!"
+    log "\n✅ Database imported from $PRETTY_REMOTE_HOST to $PRETTY_LOCAL_HOST"
 }
 
 # Push the local database to the remote environment
@@ -326,8 +326,8 @@ function pushDatabase() {
     [ "$REMOTE_ENV" == "production" ] && logError "Syncing to the production database is not allowed for security reasons"
 
     # Confirmation dialog
-    log "🚨 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($REMOTE_HOST)"
-    log "and ${RED}push from local${NC} ($LOCAL_HOST)?"
+    log "🚨 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($PRETTY_REMOTE_HOST)"
+    log "and ${RED}push from local${NC}?"
     read -r -p "Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
 
     # Return early if not confirmed
@@ -351,5 +351,5 @@ function pushDatabase() {
     # Delete remote transients
     runRemoteWp transient delete --all
 
-    log "\n✅ Pushed the database from $LOCAL_HOST to $REMOTE_HOST"
+    log "\n✅ Pushed the database from $PRETTY_LOCAL_HOST to $PRETTY_REMOTE_HOST"
 }
