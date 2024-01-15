@@ -222,8 +222,8 @@ deploy)
 
         logLine
 
-        wpRemote rewrite flush
-        wpRemote transient delete --all
+        runRemoteWpWithPrompt rewrite flush
+        runRemoteWpWithPrompt transient delete --all
 
         deleteSuperCacheDir remote
 

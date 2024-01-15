@@ -220,8 +220,8 @@ function installRemoteWpCli() {
     fi
 }
 
-# Run wp cli on a remote server, forwarding all arguments
-function wpRemote() {
+# Runs wp-cli on the remote server if the user approves
+function runRemoteWpWithPrompt() {
     ARGS="$@"
 
     log "🚀 Would you like to run ${BLUE}wp $ARGS${NC} on the $PRETTY_REMOTE_ENV server?"
@@ -229,6 +229,12 @@ function wpRemote() {
 
     # Return early if not confirmed
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
+
+    runRemoteWp "$ARGS"
+}
+
+# Run wp cli on a remote server, forwarding all arguments
+function runRemoteWp() {
 
     # Install WP-CLI on remote server
     installRemoteWpCli
