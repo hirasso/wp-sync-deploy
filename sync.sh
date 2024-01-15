@@ -40,7 +40,7 @@ push)
     pushDatabase
     ;;
 *)
-    logError "Usage: sync <production|staging> <pull|push>"
+    logError "$USAGE_MESSAGE"
     ;;
 
 esac
