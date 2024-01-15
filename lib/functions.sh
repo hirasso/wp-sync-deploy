@@ -21,10 +21,9 @@ function logSuccess() {
     log "✅${BOLD}${GREEN} Success: ${NC}$1"
 }
 
-# Remove unnecessary slashes from a path
+# Normalize a path:
 # Prepends a leading slash to the provided path
 # to prevent realpath from making the path absolute
-#
 function normalizePath() {
     realpath -sm "/$1"
 }
