@@ -317,7 +317,7 @@ function pullDatabase() {
     # Delete local transients
     wp transient delete --all
 
-    log "\n✅ Done!"
+    log "\n✅ Imported the database from $REMOTE_HOST to $LOCAL_HOST!"
 }
 
 # Push the local database to the remote environment
@@ -351,5 +351,5 @@ function pushDatabase() {
     # Delete remote transients
     runRemoteWp transient delete --all
 
-    log "\n✅ Done!"
+    log "\n✅ Pushed the database from $LOCAL_HOST to $REMOTE_HOST!"
 }

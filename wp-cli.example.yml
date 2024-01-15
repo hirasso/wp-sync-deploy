@@ -1,3 +1,0 @@
-# Put this file in your web root and adjust it to your needs
-skip-plugins:
-  - qtranslate-xt
