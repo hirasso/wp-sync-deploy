@@ -30,3 +30,5 @@ admin-post-navigation
 .is-built
 wp-sync-deploy
 wp-content
+*.sql
+wp-cli.yml
