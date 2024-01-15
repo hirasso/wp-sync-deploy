@@ -81,15 +81,28 @@ So when you are starting, you will need to
 
 ## Usage
 
-Run one of the following commands:
+### Synchronise the database between environments
 
-```bash
+```shell
 # sync the database from your production server
 ./wp-sync-deploy/wp-sync-deploy.sh sync production
 
 # sync the database from your staging server
 ./wp-sync-deploy/wp-sync-deploy.sh sync staging
 
+# push your local database to your staging server
+./wp-sync-deploy/wp-sync-deploy.sh sync staging push
+
+```
+
+> [!NOTE]
+> Syncing your local database is only possible to the staging server by default.
+> If you are sure you know what you are doing, you can also enable syncing to
+> the production server.
+
+### Deploy your local files to remote environments
+
+```shell
 # deploy your files to your production server (dry)
 ./wp-sync-deploy/wp-sync-deploy.sh deploy production
 

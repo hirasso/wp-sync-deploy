@@ -289,3 +289,67 @@ deleteSuperCacheDir() {
 
     esac
 }
+
+# Pull the remote database into the local database
+function pullDatabase() {
+    # Confirmation dialog
+    log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
+    log "and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($REMOTE_HOST)?"
+    read -r -p "[y/n] " PROMPT_RESPONSE
+
+    # Return early if not confirmed
+    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+
+    # Activate maintenance mode
+    wp maintenance-mode activate &&
+
+        # Import the remote database into the local database
+        runRemoteWp db export --default-character-set=utf8mb4 - | wp db import - &&
+
+        # Replace the remote URL with the local URL
+        wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
+
+    # Deactivate maintenance mode
+    wp maintenance-mode deactivate
+
+    deleteSuperCacheDir local
+
+    # Delete local transients
+    wp transient delete --all
+
+    log "\n✅ Done!"
+}
+
+# Push the local database to the remote environment
+function pushDatabase() {
+
+    [ "$REMOTE_ENV" == "production" ] && logError "Syncing to the production database is not allowed for security reasons"
+
+    # Confirmation dialog
+    log "🔄 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($REMOTE_HOST)"
+    log "and push from ${BOLD}local${NORMAL} ($LOCAL_HOST)?"
+    read -r -p "[y/n] " PROMPT_RESPONSE
+
+    # Return early if not confirmed
+    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+
+    # Activate maintenance mode on the remote server
+    runRemoteWp maintenance-mode activate &&
+
+        # Import the local database into the remote database
+        wp db export --default-character-set=utf8mb4 - | runRemoteWp db import - &&
+
+        # Replace the local URL with the remote URL
+        runRemoteWp search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix
+
+    # Deactivate maintenance mode on the remote server
+    runRemoteWp maintenance-mode deactivate
+
+    # Delete the supercache directory on the remote server
+    deleteSuperCacheDir remote
+
+    # Delete remote transients
+    runRemoteWp transient delete --all
+
+    log "\n✅ Done!"
+}

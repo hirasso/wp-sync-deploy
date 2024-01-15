@@ -114,35 +114,24 @@ export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/
 
 case $JOB_NAME in
 
-# SYNC the production database to the local database
-# @see https://gist.github.com/samhernandez/25e26269438e4ceaf37f
+# SYNC the local database with the production or staging database
 sync)
-    # Confirmation dialog
-    log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($LOCAL_HOST)"
-    log "and sync from ${BLUE}$REMOTE_ENV${NC} ($REMOTE_HOST)?"
-    read -r -p "[y/n] " PROMPT_RESPONSE
+    SYNC_MODE="pull"
+    [ ! -z "${3+x}" ] && SYNC_MODE="$3"
 
-    # Return early if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+    case $SYNC_MODE in
 
-    # Activate maintenance mode
-    wp maintenance-mode activate &&
+    pull)
+        pullDatabase
+        ;;
+    push)
+        pushDatabase
+        ;;
+    *)
+        logError "Usage: sync <production|staging> <pull|push>"
+        ;;
 
-    # Import the remote database into the local database
-    runRemoteWp db export --default-character-set=utf8mb4 - | wp db import - &&
-
-    # Replace the remote URL with the local URL
-    wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix &&
-
-    # Deactivate maintenance mode
-    wp maintenance-mode deactivate &&
-
-    deleteSuperCacheDir local
-
-    # Delete local transients
-    wp transient delete --all
-
-    log "\n✅ Done!"
+    esac
     ;;
 
 # DEPLOY to the production or staging server
@@ -163,9 +152,7 @@ deploy)
     logLine
 
     DEPLOY_MODE="dry"
-    if [[ ! -z "${3+x}" && $3 == 'run' ]]; then
-        DEPLOY_MODE="run"
-    fi
+    [ ! -z "${3+x}" ] && DEPLOY_MODE="$3"
 
     case $DEPLOY_MODE in
 
