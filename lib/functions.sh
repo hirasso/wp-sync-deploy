@@ -330,7 +330,7 @@ function pushDatabase() {
     read -r -p "Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
 
     # Return early if not confirmed
-    [[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && exit 1
+    [[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && logError "Permission denied, aborting ..."
 
     # Activate maintenance mode on the remote server
     runRemoteWp maintenance-mode activate &&
