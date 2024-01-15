@@ -126,24 +126,18 @@ sync)
     [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
 
     # Activate maintenance mode
-    wp maintenance-mode activate
+    wp maintenance-mode activate &&
 
     # Import the remote database into the local database
     runRemoteWp db export --default-character-set=utf8mb4 - | wp db import - &&
 
     # Replace the remote URL with the local URL
-    log "\n🔄 Replacing ${GREEN}//$REMOTE_HOST${NC} with ${GREEN}//$LOCAL_HOST${NC} ... \n"
-    wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
+    wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix &&
 
     # Deactivate maintenance mode
-    wp maintenance-mode deactivate
+    wp maintenance-mode deactivate &&
 
     deleteSuperCacheDir local
-
-    log "\n🔄 Syncing ACF field groups ...\n "
-    # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
-    # If you don't need this, go ahead and comment it out
-    wp rhau acf-sync-field-groups
 
     # Delete local transients
     wp transient delete --all
