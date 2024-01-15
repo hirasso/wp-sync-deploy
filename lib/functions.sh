@@ -326,12 +326,12 @@ function pushDatabase() {
     [ "$REMOTE_ENV" == "production" ] && logError "Syncing to the production database is not allowed for security reasons"
 
     # Confirmation dialog
-    log "🔄 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($REMOTE_HOST)"
-    log "and push from ${BOLD}local${NORMAL} ($LOCAL_HOST)?"
-    read -r -p "[y/n] " PROMPT_RESPONSE
+    log "🚨 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($REMOTE_HOST)"
+    log "and ${RED}push from local${NC} ($LOCAL_HOST)?"
+    read -r -p "Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
 
     # Return early if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+    [[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && exit 1
 
     # Activate maintenance mode on the remote server
     runRemoteWp maintenance-mode activate &&
