@@ -128,26 +128,11 @@ sync)
     # Activate maintenance mode
     wp maintenance-mode activate
 
-    REMOTE_FILE="remote-$REMOTE_DB_NAME.sql"
-    LOCAL_FILE="local-$LOCAL_DB_NAME.sql"
-
-    log "💾 Dumping remote database to ${GREEN}$REMOTE_FILE${NC}"
-    SSH_COMMAND="mysqldump --no-tablespaces -h$REMOTE_DB_HOST -u$REMOTE_DB_USER -p$REMOTE_DB_PASS $REMOTE_DB_NAME --default-character-set=utf8mb4"
-    ssh $REMOTE_SSH "$SSH_COMMAND" >"$SCRIPT_DIR/$REMOTE_FILE"
-
-    log "💾 Dumping local database to ${GREEN}$LOCAL_FILE${NC}"
-    MYSQL_PWD="$LOCAL_DB_PASS" mysqldump -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" --default-character-set=utf8mb4 >"$SCRIPT_DIR/$LOCAL_FILE"
-
-    log "🍭 Importing ${GREEN}remote${NC} database into the $PRETTY_LOCAL_ENV database"
-    MYSQL_PWD="$LOCAL_DB_PASS" mysql -h "$LOCAL_DB_HOST" -u"$LOCAL_DB_USER" "$LOCAL_DB_NAME" <"$SCRIPT_DIR/$REMOTE_FILE"
-
-    rm "$SCRIPT_DIR/$REMOTE_FILE"
-
-    log "\n🔄 Replacing ${GREEN}$REMOTE_HOST${NC} with ${GREEN}$LOCAL_HOST${NC} ..."
-
-    logLine
+    # Import the remote database into the local database
+    runRemoteWp db export --default-character-set=utf8mb4 - | wp db import - &&
 
     # Replace the remote URL with the local URL
+    log "\n🔄 Replacing ${GREEN}//$REMOTE_HOST${NC} with ${GREEN}//$LOCAL_HOST${NC} ... \n"
     wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
 
     # Deactivate maintenance mode
@@ -155,7 +140,7 @@ sync)
 
     deleteSuperCacheDir local
 
-    log "\n🔄 Syncing ACF field groups ..."
+    log "\n🔄 Syncing ACF field groups ...\n "
     # @see https://gist.github.com/hirasso/c48c04def92f839f6264349a1be773b3
     # If you don't need this, go ahead and comment it out
     wp rhau acf-sync-field-groups
