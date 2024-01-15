@@ -27,7 +27,9 @@ A bash script that helps you
 ├── index.php # main WordPress entry file
 ├── wp-config.php # your wp-config file
 └── wp-sync-deploy # this repo
-   └── wp-sync-deploy.sh
+   └── deploy.sh
+   └── sync.sh
+   └── ...
 ```
 
 ## Installation
@@ -36,11 +38,11 @@ A bash script that helps you
 # CD into your projects webroot
 cd /path/to/your/webroot
 
-# clone this repo
+# Clone this repo
 git clone git@github.com:hirasso/wp-sync-deploy.git
 
-# make the script exectutable
-chmod +x ./wp-sync-deploy/wp-sync-deploy.sh
+# Make the scripts exectutable
+chmod +x ./wp-sync-deploy/sync.sh ./wp-sync-deploy/deploy.sh
 ```
 
 Alternatively, you can install this script as submodule:
