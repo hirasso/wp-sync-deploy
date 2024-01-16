@@ -59,7 +59,7 @@ git clone --recurse-submodules git@github.com:yourname/your-repo.git
 
 ### Adjust the variables
 
-Now, move the file `wp-sync-deploy.example.env` into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+Now, move the file [`wp-sync-deploy.example.env`](https://github.com/hirasso/wp-sync-deploy/blob/main/wp-sync-deploy.example.env) into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
 
 > [!CAUTION]
 > Make sure you add `wp-sync-deploy.env` to your `.gitignore` file!
@@ -120,7 +120,7 @@ So when you are starting, you will need to
 
 ## Run automated tasks after each deploy / sync
 
-- copy the file `wp-sync-deploy.tasks.example.php` somewhere above the `/wp-sync-deploy` folder
+- copy the file [`wp-sync-deploy.tasks.example.php`](https://github.com/hirasso/wp-sync-deploy/blob/main/wp-sync-deploy.tasks.example.php) somewhere above the `/wp-sync-deploy` folder
 - rename the file to `wp-sync-deploy.tasks.php`
 - adjust the content of the file to your needs
 
