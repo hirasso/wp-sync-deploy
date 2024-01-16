@@ -118,16 +118,16 @@ So when you are starting, you will need to
 ./wp-sync-deploy/deploy.sh deploy staging run
 ```
 
-## Run automated tasks after each deploy / sync
+## Run automated tasks after each deploy / sync ✨
+
+wp-sync-deploy can automatically run tasks for you on the target server each time you trigger a deploy or a sync. To enable this feature, follow these steps:
 
 - copy the file [`wp-sync-deploy.tasks.example.php`](https://github.com/hirasso/wp-sync-deploy/blob/main/wp-sync-deploy.tasks.example.php) somewhere above the `/wp-sync-deploy` folder
 - rename the file to `wp-sync-deploy.tasks.php`
-- adjust the content of the file to your needs
-
-✨ **wp-sync-deploy will automatically run this file on the target server each time you either run a deploy or a sync** ✨
+- **adjust the code** in the file to your needs
 
 This helps with repetitive tasks you would otherwise have to do manually, for example:
 
-- update the rewrite rules
 - delete all transients
-- delete your [WP Super Cache](https://wordpress.org/plugins/wp-super-cache/) folder if it exists
+- delete your static cache
+- when deploying: Update the rewrite rules
