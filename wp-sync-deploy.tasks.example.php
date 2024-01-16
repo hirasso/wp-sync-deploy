@@ -1,6 +1,14 @@
 <?php
 
+/**
+ * This file can be used as a starting point for adding custom code
+ * that should be executed on the target server after each sync or deploy.
+ *
+ * @see https://github.com/hirasso/wp-sync-deploy#run-automated-tasks-after-each-deploy--sync-
+ */
+
 /** Feel free to change the namespace to whatever */
+
 namespace WPSyncDeploy\Tasks;
 
 /** Exit if accessed directly */
