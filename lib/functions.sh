@@ -42,7 +42,7 @@ function findUp() {
     local dir="$2"
 
     test -e "$dir/$file" && echo "$dir/$file" && return 0
-    [ '/' = "$dir" ] && return 0 # couldn't find a way to handle return code 1, so leaving it at zero for now
+    [ "/" = "$dir" ] && return 0 # couldn't find a way to handle return code 1, so leaving it at zero for now
 
     findUp "$file" "$(dirname "$dir")"
 }
@@ -118,18 +118,18 @@ function constructURL() {
 function checkCommandLinePHPVersions() {
     local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
     local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
-    log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${GREEN}$LOCAL_VERSION${NC}"
+    log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
     local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "$REMOTE_PHP_BINARY -r 'echo PHP_VERSION;'")
     local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
-    log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${GREEN}$REMOTE_VERSION${NC}"
+    log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
         log "🚨 Command line PHP version mismatch detected. Proceed anyways?"
         read -r -p "[y/n] " PROMPT_RESPONSE
 
         # Exit early if not confirmed
-        if [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]]; then
+        if [[ "$PROMPT_RESPONSE" != "y" ]]; then
             log "🚨 Deploy to $PRETTY_REMOTE_ENV canceled ..."
             exit
         fi
@@ -155,7 +155,7 @@ function checkWebFacingPHPVersions() {
     # validate if the version looks legit
     [[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
     # Log the detected PHP version
-    log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${GREEN}$LOCAL_VERSION${NC}"
+    log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
     # Append a hash to the remote test file to make it harder to detect
     local HASH=$(createHash $REMOTE_WEB_ROOT)
@@ -171,7 +171,7 @@ function checkWebFacingPHPVersions() {
     # validate if the version looks legit
     [[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $REMOTE_VERSION"
     # Log the detected PHP version
-    log "- Web-facing PHP version at $PRETTY_REMOTE_HOST: ${GREEN}$REMOTE_VERSION${NC}"
+    log "- Web-facing PHP version at $PRETTY_REMOTE_HOST: ${BLUE}$REMOTE_VERSION${NC}"
 
     # Error out if the two PHP versions aren't a match
     if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
@@ -204,32 +204,17 @@ function checkDirectories() {
 
 # Install WP-CLI on the remote server
 # This makes it possible to easily run wp-cli with a custom command line PHP version
-REMOTE_WP_CLI_INSTALLED=0
+
 function installRemoteWpCli() {
-    [ "$REMOTE_WP_CLI_INSTALLED" == 1 ] && return
-    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo 'success'")
-    if [[ "$RESULT" == 'success' ]]; then
-        REMOTE_WP_CLI_INSTALLED=1
-    else
-        logError "Failed to install WP-CLI on the server"
-    fi
-}
+    [ $(checkRemoteFile "$REMOTE_WEB_ROOT/wp-cli.phar") -eq 1 ] && return
 
-# Runs wp-cli on the remote server if the user approves
-function runRemoteWpWithPrompt() {
-    local ARGS="$@"
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
-    log "🚀 Would you like to run ${BLUE}wp $ARGS${NC} on the $PRETTY_REMOTE_ENV server?"
-    read -r -p "[y/n] " PROMPT_RESPONSE
-
-    # Return early if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
-
-    runRemoteWp "$ARGS"
+    [ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 }
 
 # Run wp cli on a remote server, forwarding all arguments
-function runRemoteWp() {
+function wpRemote() {
     local ARGS="$@"
 
     # Install WP-CLI on remote server
@@ -239,54 +224,19 @@ function runRemoteWp() {
     ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./wp-cli.phar $ARGS"
 }
 
-# Checks a prompt response
-checkPromptResponse() {
-    (
-        shopt -s nocasematch
+# Runs the task file on the remote server
+function runRemoteTasks() {
+    [ ! -e "$TASKS_FILE" ] && return;
 
-        [[ "$1" =~ ^(yes|y)$ ]] && echo 1
-    )
-}
+    local TASK="$1"
 
-# Delete the supercache directory on either the local or remote server
-deleteSuperCacheDir() {
-    ENV="$1"
+    log "Running ${BLUE}wp eval-file wp-sync-deploy.tasks.php $TASK${NC} on $PRETTY_REMOTE_ENV server ... \n"
 
-    local SUPERCACHE_DIR
+    # Upload the file to the remote web root
+    scp -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT"
 
-    case $ENV in
-
-    local)
-        SUPERCACHE_DIR="$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
-
-        if [[ -d $SUPERCACHE_DIR ]]; then
-            rm -r $SUPERCACHE_DIR
-            log "🔥 Deleted the supercache directory at the ${BOLD}local${NC} server"
-        fi
-        ;;
-
-    remote)
-        SUPERCACHE_DIR="$REMOTE_WEB_ROOT/$WP_CONTENT_DIR/cache/supercache"
-
-        if [[ $(checkRemoteFile $SUPERCACHE_DIR) == 1 ]]; then
-
-            log "Would you like to 💥 ${BOLD}delete the cache directory${NORMAL} on the $PRETTY_REMOTE_ENV server:"
-            log "$SUPERCACHE_DIR"
-            read -r -p "[y/n] " PROMPT_RESPONSE
-
-            # Return early if not confirmed
-            [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && return
-
-            ssh $REMOTE_SSH "[ -d $SUPERCACHE_DIR ] && rm -r $SUPERCACHE_DIR"
-            log "🔥 Deleted the supercache directory at the ${BOLD}$REMOTE_ENV${NC} server"
-        fi
-        ;;
-
-    *)
-        logError "Usage: deleteSuperCacheDir <local|remote>"
-        ;;
-
-    esac
+    # Execute the file on the remote server
+    wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
 }
 
 # Pull the remote database into the local database
@@ -297,13 +247,13 @@ function pullDatabase() {
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Return early if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+    [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
     # Activate maintenance mode
     wp maintenance-mode activate &&
 
         # Import the remote database into the local database
-        runRemoteWp db export --default-character-set=utf8mb4 - | wp db import - &&
+        wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
 
         # Replace the remote URL with the local URL
         wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
@@ -311,7 +261,8 @@ function pullDatabase() {
     # Deactivate maintenance mode
     wp maintenance-mode deactivate
 
-    deleteSuperCacheDir local
+    # Run tasks on the local server
+    wp eval-file "$TASKS_FILE" sync
 
     # Delete local transients
     wp transient delete --all
@@ -333,22 +284,22 @@ function pushDatabase() {
     [[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && logError "Permission denied, aborting ..."
 
     # Activate maintenance mode on the remote server
-    runRemoteWp maintenance-mode activate &&
+    wpRemote maintenance-mode activate &&
 
         # Import the local database into the remote database
-        wp db export --default-character-set=utf8mb4 - | runRemoteWp db import - &&
+        wp db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
         # Replace the local URL with the remote URL
-        runRemoteWp search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix
+        wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix
 
     # Deactivate maintenance mode on the remote server
-    runRemoteWp maintenance-mode deactivate
+    wpRemote maintenance-mode deactivate
 
-    # Delete the supercache directory on the remote server
-    deleteSuperCacheDir remote
+    # Run tasks on the remote server
+    runRemoteTasks sync
 
     # Delete remote transients
-    runRemoteWp transient delete --all
+    wpRemote transient delete --all
 
     log "\n✅ Pushed the database from $PRETTY_LOCAL_HOST to $PRETTY_REMOTE_HOST"
 }

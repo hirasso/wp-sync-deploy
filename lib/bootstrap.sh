@@ -25,6 +25,9 @@ REMOTE_ENV="$1"
 ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
 [ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found, exiting..."
 
+# Find the tasks file wp-sync-deploy.tasks.php
+TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
+
 # Load the environment variables
 source $ENV_FILE
 

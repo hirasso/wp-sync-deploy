@@ -32,3 +32,4 @@ wp-sync-deploy
 wp-content
 *.sql
 wp-cli.yml
+wp-sync-deploy.tasks.php

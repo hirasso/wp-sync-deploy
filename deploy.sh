@@ -63,11 +63,11 @@ dry)
 
 run)
     # Confirmation is needed for a non-dry run
-    log "🚀 Would you really like to deploy to ${GREEN}$REMOTE_HOST${NC}" ?
+    log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST" ?
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Exit if not confirmed
-    [[ $(checkPromptResponse "$PROMPT_RESPONSE") != 1 ]] && exit 1
+    [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
     log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
@@ -83,10 +83,7 @@ run)
 
     logLine
 
-    runRemoteWpWithPrompt rewrite flush
-    runRemoteWpWithPrompt transient delete --all
-
-    deleteSuperCacheDir remote
+    runRemoteTasks deploy
 
     REMOTE_URL=$(constructURL remote)
     log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"

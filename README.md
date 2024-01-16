@@ -118,13 +118,15 @@ So when you are starting, you will need to
 ./wp-sync-deploy/deploy.sh deploy staging run
 ```
 
-## WP-CLI on remote server after deployment
+## Run automated tasks after each deploy / sync
 
-To ensure compatibility with the widest range of hosting servers, this script installs WP-CLI automatically on the remote server.
+- copy the file `wp-sync-deploy.tasks.example.php` somewhere above the `/wp-sync-deploy` folder
+- rename the file to `wp-sync-deploy.tasks.php`
+- adjust the content of the file to your needs
 
-This also has the advantage that you can provide a custom alias for the `php` binary to be used on the remote server. This comes in handy in scenarios where your staging and production environments share the same server.
+✨ **wp-sync-deploy will automatically run this file on the target server each time you either run a deploy or a sync** ✨
 
-## If WP-CLI can be installed on your server, wp-sync-deploy asks you if it should:
+This helps with repetitive tasks you would otherwise have to do manually, for example:
 
 - update the rewrite rules
 - delete all transients
