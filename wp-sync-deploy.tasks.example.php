@@ -5,6 +5,12 @@
  * that should be executed on the target server after each sync or deploy.
  *
  * @see https://github.com/hirasso/wp-sync-deploy#run-automated-tasks-after-each-deploy--sync-
+ *
+ * Debug this file for sync tasks:
+ * `wp eval-file wp-sync-deploy.tasks.php sync`
+ *
+ * Debug this file for deploy tasks:
+ * `wp eval-file wp-sync-deploy.tasks.php deploy`
  */
 
 /** Feel free to change the namespace to whatever */
@@ -38,8 +44,11 @@ function ask(string $question, string $options = 'y/n')
 if (ask("Do you want to clear the cache on '$host'?") === 'y') {
     // delete all transients
     \WP_CLI::runcommand('transient delete --all');
-    // delete the cache if Super Cache is installed
-    function_exists('wp_cache_clear_cache') && wp_cache_clear_cache();
+    // delete the Super Cache files if the function exists
+    if (function_exists('wp_cache_clear_cache')) {
+        wp_cache_clear_cache();
+        \WP_CLI::success('Cleared the cache');
+    }
 }
 
 /**
