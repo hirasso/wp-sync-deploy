@@ -183,7 +183,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1"
+    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
 }
 
 # Validate that the required directories exist locally and remotely
