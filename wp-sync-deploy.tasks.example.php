@@ -57,3 +57,10 @@ if (ask("Do you want to clear the cache on '$host'?") === 'y') {
 if ($task === 'deploy' && ask("Do you want to flush the rewrite rules on '$host'?") === 'y') {
     \WP_CLI::runcommand('rewrite flush');
 }
+
+/**
+ * Activate all plugins on the target environment
+ */
+if ($task === 'deploy') {
+    \WP_CLI::runcommand('plugin activate --all');
+}
