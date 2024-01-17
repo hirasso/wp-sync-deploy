@@ -183,7 +183,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1"
+    ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
 }
 
 # Validate that the required directories exist locally and remotely
@@ -206,7 +206,7 @@ function checkDirectories() {
 # This makes it possible to easily run wp-cli with a custom command line PHP version
 
 function installRemoteWpCli() {
-    [ $(checkRemoteFile "$REMOTE_WEB_ROOT/wp-cli.phar") == "1" ] && return
+    [ $(checkRemoteFile "$REMOTE_WEB_ROOT/wp-cli.phar") == 1 ] && return
 
     RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
