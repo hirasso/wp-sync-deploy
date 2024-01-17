@@ -61,7 +61,7 @@ function checkProductionBranch() {
     if [[ ! $BRANCH =~ $MAIN_BRANCH ]]; then
         logError "Deploying to production is only allowed from ${NC}\$MAIN_BRANCH${RED} ($MAIN_BRANCH)"
     else
-        logSuccess "Branch $BRANCH allowed in production"
+        logSuccess "Branch ${BLUE}$BRANCH${NC} allowed in production"
     fi
 }
 
