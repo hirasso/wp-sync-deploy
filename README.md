@@ -85,13 +85,13 @@ So when you are starting, you will need to
 
 ```shell
 # sync the database from your production server
-./wp-sync-deploy/sync.sh sync production
+./wp-sync-deploy/sync.sh production
 
 # sync the database from your staging server
-./wp-sync-deploy/sync.sh sync staging
+./wp-sync-deploy/sync.sh staging
 
 # push your local database to your staging server
-./wp-sync-deploy/sync.sh sync staging push
+./wp-sync-deploy/sync.sh staging push
 
 ```
 
@@ -104,16 +104,16 @@ So when you are starting, you will need to
 
 ```shell
 # deploy your files to your production server (dry)
-./wp-sync-deploy/deploy.sh deploy production
+./wp-sync-deploy/deploy.sh production
 
 # deploy your files to your staging server (dry)
-./wp-sync-deploy/deploy.sh deploy staging
+./wp-sync-deploy/deploy.sh staging
 
 # deploy your files to your production server (non-dry)
-./wp-sync-deploy/deploy.sh deploy production run
+./wp-sync-deploy/deploy.sh production run
 
 # deploy your files to your staging server (non-dry)
-./wp-sync-deploy/deploy.sh deploy staging run
+./wp-sync-deploy/deploy.sh staging run
 ```
 
 ## Run automated tasks after each deploy / sync ✨
