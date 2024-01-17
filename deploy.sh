@@ -29,11 +29,14 @@ USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-loca
 
 # Construct the directories to deploy from the provided env variables
 export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
+# Add mu-plugins to the deploy dirs if it exists
+test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
 
+# Default to dry mode
 DEPLOY_MODE="dry"
 [ ! -z "${2+x}" ] && DEPLOY_MODE="$2"
 
-# Perform checks
+# Perform checks before proceeding
 checkProductionBranch
 checkCommandLinePHPVersions
 checkWebFacingPHPVersions
