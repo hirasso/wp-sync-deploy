@@ -45,7 +45,7 @@ cd /path/to/your/webroot
 # Clone this repo
 git clone git@github.com:hirasso/wp-sync-deploy.git
 
-# Make the scripts exectutable
+# Make sure the scripts are exectutable
 chmod +x ./wp-sync-deploy/*.sh
 ```
 
