@@ -31,9 +31,10 @@ A bash script that helps you
 ```
 
 > [!TIP]
-> Frameworks like [Bedrock](https://roots.io/bedrock/), [WPStarter](https://github.com/wecodemore/wpstarter) or
-> [wordplate](https://github.com/vinkla/wordplate) all provide a directory structure that would support
-> using wp-sync-deploy.
+> While it's easy to setup the custom directory structure yourself, I'd recommend to use a framework
+> like [Bedrock](https://roots.io/bedrock/), [WPStarter](https://github.com/wecodemore/wpstarter) or
+> [wordplate](https://github.com/vinkla/wordplate). All of these provide amazing convencience features for
+> modern WordPress development.
 
 ## Installation
 
