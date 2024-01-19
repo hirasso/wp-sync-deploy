@@ -11,7 +11,7 @@ A bash script that helps you
 
 ## Prerequesites
 
-- [WP-CLI](https://wp-cli.org/) installed locally on your machine
+- [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy takes care of installing WP-CLI automatically.
 - A WordPress directory structure similar to this (adjustable through a `wp-sync-deploy.env` file):
 
 ```shell
