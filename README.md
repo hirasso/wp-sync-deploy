@@ -12,7 +12,7 @@ A bash script that helps you
 ## Prerequesites
 
 - [WP-CLI](https://wp-cli.org/) installed locally on your machine
-- A WordPress directory structure like this (adjustable through a `wp-sync-deploy.env` file):
+- A WordPress directory structure similar to this (adjustable through a `wp-sync-deploy.env` file):
 
 ```bash
 .
@@ -29,6 +29,11 @@ A bash script that helps you
    └── sync.sh
    └── ...
 ```
+
+> [!TIP]
+> Frameworks like [Bedrock](https://roots.io/bedrock/), [WPStarter](https://github.com/wecodemore/wpstarter) or
+> [wordplate](https://github.com/vinkla/wordplate) all provide a directory structure that would support
+> using wp-sync-deploy.
 
 ## Installation
 
@@ -65,7 +70,7 @@ Now, move the file [`wp-sync-deploy.example.env`](https://github.com/hirasso/wp-
 
 ## Remote server preparation
 
-Since deploying can be a pretty destructive task, wp-sync-deploy performs a few security checks before proceeding:
+wp-sync-deploy performs a few security checks before proceeding with a deploy:
 
 - [x] Do all directories marked for deployment actually exist in both environments (locally and remotely)?
 - [x] Does a hidden file `.allow-deployment` exist on the remote environment's web root?
@@ -77,7 +82,6 @@ So when you are starting, you will need to
 - Perform the first deployment manually
 - Add an empty file `.allow-deployment` to your remote web root
 - Make sure that your local and remote server are set to use the same PHP version
-- Optional: Install WP-CLI on the remote server. This will unlock additional functionality in your script
 
 ## Usage
 
