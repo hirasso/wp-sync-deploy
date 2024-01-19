@@ -5,6 +5,7 @@ A bash script that helps you
 - sync your WordPress database from production or staging to your local dev environment
 - deploy your local core, plugins, mu-plugins and theme to production or staging
 - run common tasks through wp-cli on the remote server to ensure your deploy works as expected
+- tested on OSX and Linux systems
 
 > [!NOTE]
 >  For less technical users I recommend to use a plugin instead. For database migrations, I'd recommend [WP Migrate](https://deliciousbrains.com/wp-migrate-db-pro/). For deployment, I'd recommend good old (S)FTP.
