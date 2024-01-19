@@ -66,7 +66,7 @@ Now, move the file [`wp-sync-deploy.example.env`](https://github.com/hirasso/wp-
 
 > [!CAUTION]
 > Make sure you add `wp-sync-deploy.env` to your `.gitignore` file!
-> otherwise, it's likely that sensitive information makes it to your repo.
+> otherwise, it's possible that sensitive information makes it into your repo.
 
 ## Remote server preparation
 
