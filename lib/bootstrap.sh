@@ -5,16 +5,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Font Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE="\033[0;36m"
-NC='\033[0m' # No Color
-
-# Font styles
-BOLD=$(tput bold)
-NORMAL=$(tput sgr0)
-
 # Deployment to production will only be possible from these two branches
 MAIN_BRANCH="master|main"
 
@@ -23,7 +13,7 @@ REMOTE_ENV="$1"
 
 # Find the closest wp-sync-deploy.env file
 ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
-[ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found, exiting..."
+[ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found. Please run ${BLUE}./wp-sync-deploy/setup.sh${NC} and adjust your env file afterwards"
 
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)

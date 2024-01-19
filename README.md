@@ -14,7 +14,7 @@ A bash script that helps you
 - [WP-CLI](https://wp-cli.org/) installed locally on your machine
 - A WordPress directory structure similar to this (adjustable through a `wp-sync-deploy.env` file):
 
-```bash
+```shell
 .
 ├── wp-sync-deploy.env # your .env file, copied and adjusted from the wp-sync-deploy.example file in this repo
 ├── content # your WordPress content folder (equivalent to the standard wp-content)
@@ -38,7 +38,7 @@ A bash script that helps you
 
 ## Installation
 
-```bash
+```shell
 # CD into your projects webroot
 cd /path/to/your/webroot
 
@@ -46,28 +46,40 @@ cd /path/to/your/webroot
 git clone git@github.com:hirasso/wp-sync-deploy.git
 
 # Make the scripts exectutable
-chmod +x ./wp-sync-deploy/sync.sh ./wp-sync-deploy/deploy.sh
+chmod +x ./wp-sync-deploy/*.sh
 ```
 
 Alternatively, you can install this script as submodule:
 
-```bash
+```shell
 git submodule add git@github.com:hirasso/wp-sync-deploy.git
 ```
 
 If you want to clone your main repo and already have wp-sync-deploy as a submodule, use this command:
 
-```bash
+```shell
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
 
-### Adjust the variables
+### Setup
 
-Now, move the file [`wp-sync-deploy.example.env`](https://github.com/hirasso/wp-sync-deploy/blob/main/wp-sync-deploy.example.env) into your webroot, rename it to `wp-sync-deploy.env` and adjust all variables for your needs. VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+Run this script:
 
-> [!CAUTION]
-> Make sure you add `wp-sync-deploy.env` to your `.gitignore` file!
-> otherwise, it's possible that sensitive information makes it into your repo.
+```shell
+./wp-sync-deploy/setup.sh
+```
+
+This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
+
+### `./wp-sync-deploy.env`
+
+This file holds all information about your various environments (local, staging, production). Make sure you **add `wp-sync-deploy.env` to your `.gitignore` file**! Otherwise, it's possible that sensitive information makes it into your repo.
+
+VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+
+### `./wp-sync-deploy.tasks.php`
+
+This file is being used to run [automated tasks](https://github.com/hirasso/wp-sync-deploy?tab=readme-ov-file#run-automated-tasks-after-each-deploy--sync-) after deployment. You can adjust this file as you wish or delete it if you don't want it to be executed.
 
 ## Remote server preparation
 
@@ -123,14 +135,10 @@ So when you are starting, you will need to
 
 ## Run automated tasks after each deploy / sync ✨
 
-wp-sync-deploy can **automatically run tasks on the target server** each time you trigger a deploy or a sync. To enable this feature, follow these steps:
+wp-sync-deploy will **automatically run tasks on the target server** each time you trigger a deploy or a sync. You can adjust what tasks should be run by modifying the file `wp-sync-deploy.tasks.php` created by the [setup script](#setup).
 
-- copy the file [`wp-sync-deploy.tasks.example.php`](https://github.com/hirasso/wp-sync-deploy/blob/main/wp-sync-deploy.tasks.example.php) somewhere above the `/wp-sync-deploy` folder
-- rename the file to `wp-sync-deploy.tasks.php`
-- **adjust the code** in the file to your needs
+Default tasks defined in the file are:
 
-This helps with repetitive tasks you would otherwise have to do manually, for example:
-
-- delete all transients
-- delete your static cache
-- when deploying: Update the rewrite rules
+- Optionally delete all transients
+- Optionally delete your static cache
+- When deploying: Optionally update the rewrite rules

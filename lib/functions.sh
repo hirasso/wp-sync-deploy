@@ -1,5 +1,15 @@
 #!/usr/bin/env bash
 
+# Font Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE="\033[0;36m"
+NC='\033[0m' # No Color
+
+# Font styles
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
+
 # Log a string
 function log() {
     printf "\r\n$1 "
