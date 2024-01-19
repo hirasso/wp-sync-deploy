@@ -12,7 +12,7 @@ NORMAL=$(tput sgr0)
 
 # Log a string
 function log() {
-    printf "\r\n$1 "
+    printf "\n\r$1 "
 }
 
 # Log an empty line
@@ -83,7 +83,7 @@ function checkIsRemoteAllowed() {
     if [[ $IS_ALLOWED != "yes" ]]; then
         logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
     else
-        logSuccess ".allow-deployment detected on remote server"
+        logSuccess "${BLUE}.allow-deployment${NC} detected on remote server"
     fi
 }
 
@@ -212,15 +212,32 @@ function checkDirectories() {
     logSuccess "All directories exist in both environments"
 }
 
+# Get the remote wp-cli.phar file name
+function getRemoteWPCLIFilename() {
+    local HASH=$(createHash $REMOTE_WEB_ROOT)
+    echo "wp-cli-$HASH.phar"
+}
+
 # Install WP-CLI on the remote server
 # This makes it possible to easily run wp-cli with a custom command line PHP version
 
 function installRemoteWpCli() {
-    [ $(checkRemoteFile "$REMOTE_WEB_ROOT/wp-cli.phar") == 1 ] && return
+    # Get the hashed filename of the wp-cli.phar
+    local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
-    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -Os https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
+    # Don't install twice
+    if [ $(checkRemoteFile "$REMOTE_WEB_ROOT/$WP_CLI_PHAR") == 1 ]; then
+        logSuccess "WP-CLI available on the remote server."
+        return
+    fi
+
+    log "🚀 Installing WP-CLI on the remote server ..."
+
+    RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
     [ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
+
+    logSuccess "WP-CLI installed on the remote server\n"
 }
 
 # Run wp cli on a remote server, forwarding all arguments
@@ -230,8 +247,13 @@ function wpRemote() {
     # Install WP-CLI on remote server
     installRemoteWpCli
 
+    printf "\n\n\n"
+
+    # Get the hashed file name of the wp-cli.phar
+    local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
+
     # Exectute the command
-    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./wp-cli.phar $ARGS"
+    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS"
 }
 
 # Runs the task file on the remote server
