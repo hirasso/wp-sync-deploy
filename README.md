@@ -17,18 +17,13 @@ A bash script that helps you
 
 ```shell
 .
-├── wp-sync-deploy.env # your .env file, copied and adjusted from the wp-sync-deploy.example file in this repo
 ├── content # your WordPress content folder (equivalent to the standard wp-content)
 │  ├── plugins
 │  ├── themes
 │  ├── ...
 ├── core # your WordPress core folder (wp-admin, wp-includes, ...)
 ├── index.php # main WordPress entry file
-├── wp-config.php # your wp-config file
-└── wp-sync-deploy # this repo
-   └── deploy.sh
-   └── sync.sh
-   └── ...
+└── wp-config.php # your wp-config file
 ```
 
 > [!TIP]
