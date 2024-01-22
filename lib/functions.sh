@@ -251,7 +251,7 @@ function wpRemote() {
     local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
     # Construct the remote command
-    local COMMAND="cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS";
+    local COMMAND="cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS"
 
     # Exectute the command
     ssh "$REMOTE_SSH" "$COMMAND"
@@ -283,10 +283,10 @@ function pullDatabase() {
     [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
     # Activate maintenance mode
-    # wp maintenance-mode activate || exit 1
+    wp maintenance-mode activate &&
 
-    # Import the remote database into the local database
-    wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
+        # Import the remote database into the local database
+        wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
 
         # Replace the remote URL with the local URL
         wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
