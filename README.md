@@ -131,7 +131,7 @@ So when you are starting, you will need to
 
 ## Run automated tasks after each deploy / sync ✨
 
-wp-sync-deploy will **automatically run tasks on the target server** each time you trigger a deploy or a sync. You can adjust what tasks should be run by modifying the file `wp-sync-deploy.tasks.php` created by the [setup script](#setup).
+wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup script](#setup), to customize which tasks should be executed.
 
 Default tasks defined in the file are:
 
