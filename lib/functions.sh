@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
 
-# Log a string and redirect to stderr
+# Log a string and redirect to stderr to prevent function return pollution
 # @see https://unix.stackexchange.com/a/331620/504158
 function log() {
     printf "\n\r$1 " >&2
