@@ -92,9 +92,10 @@ function createHash() {
     echo "$1" | sha256sum | head -c 10
 }
 
-# Construct a URL
-function constructURL() {
-    ENV="$1"
+# Construct CURL args for a URL with optional -u (HTTP AUTH) flag
+function constructCURLArgs() {
+    FILE="$1"
+    ENV="$2"
 
     local PROTOCOL
     local HOST
@@ -112,15 +113,15 @@ function constructURL() {
         AUTH=$REMOTE_HTTP_AUTH
         ;;
     *)
-        logError "Usage: constructURL <local|remote>"
+        logError "Usage: constructCURLArgs file <local|remote>"
         ;;
 
     esac
 
     if [[ -n "$AUTH" ]]; then
-        echo "$PROTOCOL://$AUTH@$HOST"
+        echo "-u $AUTH $PROTOCOL://$HOST/$FILE"
     else
-        echo "$PROTOCOL://$HOST"
+        echo "$PROTOCOL://$HOST/$FILE"
     fi
 }
 
@@ -150,14 +151,17 @@ function checkCommandLinePHPVersions() {
 
 # Check the web-facing PHP versions between two environments
 function checkWebFacingPHPVersions() {
-    local LOCAL_URL=$(constructURL local)
-    local REMOTE_URL=$(constructURL remote)
-    local FILE_NAME="___wp-sync-deploy-php-version.php"
+    # Append a hash to the test file to make it harder to detect on the remote server
+    local HASH=$(createHash $REMOTE_WEB_ROOT)
+    FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
+
+    local LOCAL_CURL_ARGS=$(constructCURLArgs "$FILE_NAME" local)
+    local REMOTE_CURL_ARGS=$(constructCURLArgs "$FILE_NAME" remote)
 
     # Create the test file on the local server
     echo "<?= phpversion();" >"$LOCAL_WEB_ROOT/$FILE_NAME"
     # Get the output of the test file
-    local LOCAL_OUTPUT=$(curl -s "$LOCAL_URL/$FILE_NAME")
+    local LOCAL_OUTPUT=$(curl -s $LOCAL_CURL_ARGS)
     # Cleanup the test file
     rm "$LOCAL_WEB_ROOT/$FILE_NAME"
     # substring from position 0-3
@@ -167,13 +171,12 @@ function checkWebFacingPHPVersions() {
     # Log the detected PHP version
     log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
-    # Append a hash to the remote test file to make it harder to detect
-    local HASH=$(createHash $REMOTE_WEB_ROOT)
-    FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
     # Create the test file on the remote server
     ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
+
     # Get the output of the test file
-    local REMOTE_OUTPUT=$(curl -s "$REMOTE_URL/$FILE_NAME")
+    local REMOTE_OUTPUT=$(curl -s $REMOTE_CURL_ARGS)
+
     # Cleanup the test file
     ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
     # substring from position 0-3
