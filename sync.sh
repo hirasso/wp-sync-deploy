@@ -20,6 +20,9 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 source "$SCRIPT_DIR/lib/functions.sh"
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
+wpRemote db export --default-character-set=utf8mb4 - | wp db import -
+exit;
+
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#synchronise-the-database-between-environments
 

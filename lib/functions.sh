@@ -227,17 +227,17 @@ function installRemoteWpCli() {
 
     # Don't install twice
     if [ $(checkRemoteFile "$REMOTE_WEB_ROOT/$WP_CLI_PHAR") == 1 ]; then
-        logSuccess "WP-CLI available on the remote server."
+        # logSuccess "WP-CLI available on the remote server."
         return
     fi
 
-    log "🚀 Installing WP-CLI on the remote server ..."
+    # log "🚀 Installing WP-CLI on the remote server ..."
 
     RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
     [ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 
-    logSuccess "WP-CLI installed on the remote server\n"
+    # logSuccess "WP-CLI installed on the remote server\n"
 }
 
 # Run wp cli on a remote server, forwarding all arguments
@@ -247,18 +247,19 @@ function wpRemote() {
     # Install WP-CLI on remote server
     installRemoteWpCli
 
-    printf "\n\n\n"
-
     # Get the hashed file name of the wp-cli.phar
     local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
+    # Construct the remote command
+    local COMMAND="cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS";
+
     # Exectute the command
-    ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS"
+    ssh "$REMOTE_SSH" "$COMMAND"
 }
 
 # Runs the task file on the remote server
 function runRemoteTasks() {
-    [ ! -e "$TASKS_FILE" ] && return;
+    [ ! -e "$TASKS_FILE" ] && return
 
     local TASK="$1"
 
@@ -282,10 +283,10 @@ function pullDatabase() {
     [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
     # Activate maintenance mode
-    wp maintenance-mode activate &&
+    # wp maintenance-mode activate || exit 1
 
-        # Import the remote database into the local database
-        wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
+    # Import the remote database into the local database
+    wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
 
         # Replace the remote URL with the local URL
         wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
