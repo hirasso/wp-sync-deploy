@@ -67,3 +67,7 @@ LOCAL_WEB_ROOT=$(normalizePath $LOCAL_WEB_ROOT)
 REMOTE_WEB_ROOT=$(normalizePath $REMOTE_WEB_ROOT)
 WP_CONTENT_DIR=$(trimLeadingSlash $(normalizePath $WP_CONTENT_DIR))
 WP_CORE_DIR=$(trimLeadingSlash $(normalizePath $WP_CORE_DIR))
+
+# URLs
+LOCAL_URL="$LOCAL_PROTOCOL://$LOCAL_HOST"
+REMOTE_URL="$REMOTE_PROTOCOL://$REMOTE_HOST"

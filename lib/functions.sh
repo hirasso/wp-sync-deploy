@@ -251,6 +251,9 @@ function wpRemote() {
     # Install WP-CLI on remote server
     installRemoteWpCli
 
+    # Log an empty line
+    logLine
+
     # Get the hashed file name of the wp-cli.phar
     local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
@@ -304,7 +307,7 @@ function pullDatabase() {
     # Delete local transients
     wp transient delete --all
 
-    log "\n✅ Database imported from $PRETTY_REMOTE_HOST to $PRETTY_LOCAL_HOST"
+    logLine && logSuccess "Database imported from ${GREEN}$REMOTE_URL${NC} to ${GREEN}$LOCAL_URL${NC}"
 }
 
 # Push the local database to the remote environment
@@ -338,5 +341,6 @@ function pushDatabase() {
     # Delete remote transients
     wpRemote transient delete --all
 
-    log "\n✅ Pushed the database from $PRETTY_LOCAL_HOST to $PRETTY_REMOTE_HOST"
+
+    logLine && logSuccess "Pushed the database from ${GREEN}$LOCAL_URL${NC} to ${GREEN}$REMOTE_URL${NC}"
 }
