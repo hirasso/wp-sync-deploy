@@ -10,9 +10,10 @@ NC='\033[0m' # No Color
 BOLD=$(tput bold)
 NORMAL=$(tput sgr0)
 
-# Log a string
+# Log a string and redirect to stderr
+# @see https://unix.stackexchange.com/a/331620/504158
 function log() {
-    printf "\n\r$1 "
+    printf "\n\r$1 " >&2
 }
 
 # Log an empty line
@@ -230,17 +231,17 @@ function installRemoteWpCli() {
 
     # Don't install twice
     if [ $(checkRemoteFile "$REMOTE_WEB_ROOT/$WP_CLI_PHAR") == 1 ]; then
-        # logSuccess "WP-CLI available on the remote server."
+        logSuccess "WP-CLI available on the remote server."
         return
     fi
 
-    # log "🚀 Installing WP-CLI on the remote server ..."
+    log "🚀 Installing WP-CLI on the remote server ..."
 
     RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
     [ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 
-    # logSuccess "WP-CLI installed on the remote server\n"
+    logSuccess "WP-CLI installed on the remote server\n"
 }
 
 # Run wp cli on a remote server, forwarding all arguments
