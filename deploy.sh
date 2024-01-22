@@ -88,9 +88,8 @@ run)
 
     runRemoteTasks deploy
 
-    REMOTE_URL=$(constructURL remote)
     log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
-    log "\n${GREEN}$REMOTE_URL${NC}"
+    log "\n${GREEN}$REMOTE_PROTOCOL://$REMOTE_HOST${NC}"
     ;;
 
 *)
