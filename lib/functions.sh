@@ -64,7 +64,7 @@ function checkProductionBranch() {
     [[ $REMOTE_ENV != "production" ]] && return
 
     # Get the branch from the theme
-    cd "$LOCAL_WEB_ROOT/content/themes/$WP_THEME"
+    cd "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/themes/$WP_THEME"
     BRANCH=$(git branch --show)
     cd $LOCAL_WEB_ROOT
 
