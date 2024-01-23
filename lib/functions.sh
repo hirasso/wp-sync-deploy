@@ -52,30 +52,32 @@ function normalizeUrl() {
 
 # Trim all leading slashes from a string
 function trimLeadingSlashes() {
-    [ "$1" == "/" ] && echo "$1" && return;
+    [ "$1" == "/" ] && echo "$1" && return
     (
-        shopt -s extglob; echo "${1##*(/)}"
+        shopt -s extglob
+        echo "${1##*(/)}"
     )
 }
 
 # Trim all trailing slashes from a string
 function trimTrailingSlashes() {
-    [ "$1" == "/" ] && echo "$1" && return;
+    [ "$1" == "/" ] && echo "$1" && return
     (
-        shopt -s extglob; echo "${@%%+(/)}"
+        shopt -s extglob
+        echo "${@%%+(/)}"
     )
 }
 
 # Trim slashes from both ends of a string
 function trimSlashes() {
-    [ "$1" == "/" ] && echo "$1" && return;
+    [ "$1" == "/" ] && echo "$1" && return
     echo $(trimLeadingSlashes $(trimTrailingSlashes "$1"))
 }
 
 # Trim whitespace from the beginning and end of a string
 function trimWhitespace() {
     (
-        shopt -s extglob;
+        shopt -s extglob
         # trim from the beginning
         local trimmed="${@##*( )}"
         # trim from the end and echo
@@ -130,39 +132,6 @@ function createHash() {
     echo "$1" | sha256sum | head -c 10
 }
 
-# Construct CURL args for a URL with optional -u (HTTP AUTH) flag
-function constructCURLArgs() {
-    FILE="$1"
-    ENV="$2"
-
-    local PROTOCOL
-    local HOST
-    local AUTH
-
-    case $ENV in
-    local)
-        HOST=$LOCAL_HOST
-        PROTOCOL=$LOCAL_PROTOCOL
-        AUTH=$LOCAL_HTTP_AUTH
-        ;;
-    remote)
-        HOST=$REMOTE_HOST
-        PROTOCOL=$REMOTE_PROTOCOL
-        AUTH=$REMOTE_HTTP_AUTH
-        ;;
-    *)
-        logError "Usage: constructCURLArgs file <local|remote>"
-        ;;
-
-    esac
-
-    if [[ -n "$AUTH" ]]; then
-        echo "-u $AUTH $PROTOCOL://$HOST/$FILE"
-    else
-        echo "$PROTOCOL://$HOST/$FILE"
-    fi
-}
-
 # Check if a URL is available
 function validateUrlIsAvailable() {
     local URL="$1"
@@ -196,19 +165,30 @@ function checkCommandLinePHPVersions() {
     fi
 }
 
+# Fetch something with CURL.
+# - follow redirects (--location)
+# - optional http authentication, e.g. "username:password" as second argument
+function fetch() {
+    local URL="$1"
+    local AUTH=""; [ ! -z "${2+x}" ] && AUTH="$2"
+
+    if [ -z "$AUTH" ]; then
+        curl --silent --fail --location "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
+    else
+        curl --silent --fail --location --user "$AUTH" "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
+    fi
+}
+
 # Check the web-facing PHP versions between two environments
 function checkWebFacingPHPVersions() {
     # Append a hash to the test file to make it harder to detect on the remote server
     local HASH=$(createHash $REMOTE_WEB_ROOT)
     FILE_NAME="___wp-sync-deploy-php-version-$HASH.php"
 
-    local LOCAL_CURL_ARGS=$(constructCURLArgs "$FILE_NAME" local)
-    local REMOTE_CURL_ARGS=$(constructCURLArgs "$FILE_NAME" remote)
-
     # Create the test file on the local server
     echo "<?= phpversion();" >"$LOCAL_WEB_ROOT/$FILE_NAME"
     # Get the output of the test file
-    local LOCAL_OUTPUT=$(curl -s $LOCAL_CURL_ARGS)
+    local LOCAL_OUTPUT=$(fetch "$LOCAL_URL/$FILE_NAME" "$LOCAL_HTTP_AUTH")
     # Cleanup the test file
     rm "$LOCAL_WEB_ROOT/$FILE_NAME"
     # substring from position 0-3
@@ -222,7 +202,7 @@ function checkWebFacingPHPVersions() {
     ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
 
     # Get the output of the test file
-    local REMOTE_OUTPUT=$(curl -s $REMOTE_CURL_ARGS)
+    local REMOTE_OUTPUT=$(fetch "$REMOTE_URL/$FILE_NAME" "$REMOTE_HTTP_AUTH")
 
     # Cleanup the test file
     ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"

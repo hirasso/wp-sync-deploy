@@ -80,5 +80,3 @@ WP_CORE_DIR=$(trimLeadingSlashes $(normalizePath $WP_CORE_DIR))
 # Construct and normalize URLs
 LOCAL_URL=$(normalizeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST")
 REMOTE_URL=$(normalizeUrl "$REMOTE_PROTOCOL://$REMOTE_HOST")
-
-echo $LOCAL_URL; exit;
