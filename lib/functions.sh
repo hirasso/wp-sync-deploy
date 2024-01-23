@@ -33,17 +33,54 @@ function logSuccess() {
 }
 
 # Normalize a path:
-# Prepends a leading slash to the provided path
-# to prevent realpath from making the path absolute
+#
+# Feed the provided path into `realpath` to make sure the path is correct.
+# (Prepends a leading slash to the provided path to prevent
+# realpath from automatically making the path absolute)
+#
 function normalizePath() {
     realpath -sm "/$1"
 }
 
-# Trim a leading slash from a string
-function trimLeadingSlash() {
-    local input_path="$1"
-    local trimmed_path="${input_path#/}"
-    echo "$trimmed_path"
+# Normalize a URL
+# - trim whitespace
+# - trim trailing slashes
+function normalizeUrl() {
+    local URL=$(trimTrailingSlashes $(trimWhitespace "$1"))
+    echo $URL
+}
+
+# Trim all leading slashes from a string
+function trimLeadingSlashes() {
+    [ "$1" == "/" ] && echo "$1" && return;
+    (
+        shopt -s extglob; echo "${1##*(/)}"
+    )
+}
+
+# Trim all trailing slashes from a string
+function trimTrailingSlashes() {
+    [ "$1" == "/" ] && echo "$1" && return;
+    (
+        shopt -s extglob; echo "${@%%+(/)}"
+    )
+}
+
+# Trim slashes from both ends of a string
+function trimSlashes() {
+    [ "$1" == "/" ] && echo "$1" && return;
+    echo $(trimLeadingSlashes $(trimTrailingSlashes "$1"))
+}
+
+# Trim whitespace from the beginning and end of a string
+function trimWhitespace() {
+    (
+        shopt -s extglob;
+        # trim from the beginning
+        local trimmed="${@##*( )}"
+        # trim from the end and echo
+        echo "${trimmed%%+( )}"
+    )
 }
 
 # Find the closest file in parent directories
@@ -123,6 +160,15 @@ function constructCURLArgs() {
         echo "-u $AUTH $PROTOCOL://$HOST/$FILE"
     else
         echo "$PROTOCOL://$HOST/$FILE"
+    fi
+}
+
+# Check if a URL is available
+function validateUrlIsAvailable() {
+    local URL="$1"
+
+    if ! curl -s -f "$URL" >/dev/null; then
+        logError "The URL '$URL' is not available."
     fi
 }
 
@@ -340,7 +386,6 @@ function pushDatabase() {
 
     # Delete remote transients
     wpRemote transient delete --all
-
 
     logLine && logSuccess "Pushed the database from ${GREEN}$LOCAL_URL${NC} to ${GREEN}$REMOTE_URL${NC}"
 }

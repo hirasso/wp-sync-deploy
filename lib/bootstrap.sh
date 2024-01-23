@@ -21,25 +21,34 @@ TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
 # Load the environment variables
 source $ENV_FILE
 
+# Normalize variables
+LOCAL_HOST=$(trimWhitespace "$LOCAL_HOST")
+LOCAL_PROTOCOL=$(trimWhitespace "$LOCAL_PROTOCOL")
+LOCAL_HTTP_AUTH=$(trimWhitespace "$LOCAL_HTTP_AUTH")
+LOCAL_WEB_ROOT=$(trimWhitespace "$LOCAL_WEB_ROOT")
+WP_CONTENT_DIR=$(trimWhitespace "$WP_CONTENT_DIR")
+WP_CORE_DIR=$(trimWhitespace "$WP_CORE_DIR")
+WP_THEME=$(trimWhitespace "$WP_THEME")
+
 # Set variables based on provided environment (production or staging)
 case $REMOTE_ENV in
 
 production)
-    REMOTE_HOST=$PROD_HOST
-    REMOTE_PROTOCOL=$PROD_PROTOCOL
-    REMOTE_HTTP_AUTH=$PROD_HTTP_AUTH
-    REMOTE_SSH=$PROD_SSH
-    REMOTE_WEB_ROOT=$PROD_WEB_ROOT
-    REMOTE_PHP_BINARY=$PROD_PHP_BINARY
+    REMOTE_HOST=$(trimWhitespace "$PROD_HOST")
+    REMOTE_PROTOCOL=$(trimWhitespace "$PROD_PROTOCOL")
+    REMOTE_HTTP_AUTH=$(trimWhitespace "$PROD_HTTP_AUTH")
+    REMOTE_SSH=$(trimWhitespace "$PROD_SSH")
+    REMOTE_WEB_ROOT=$(trimWhitespace "$PROD_WEB_ROOT")
+    REMOTE_PHP_BINARY=$(trimWhitespace "$PROD_PHP_BINARY")
     ;;
 
 staging)
-    REMOTE_HOST=$STAG_HOST
-    REMOTE_PROTOCOL=$STAG_PROTOCOL
-    REMOTE_HTTP_AUTH=$STAG_HTTP_AUTH
-    REMOTE_SSH=$STAG_SSH
-    REMOTE_WEB_ROOT=$STAG_WEB_ROOT
-    REMOTE_PHP_BINARY=$STAG_PHP_BINARY
+    REMOTE_HOST=$(trimWhitespace "$STAG_HOST")
+    REMOTE_PROTOCOL=$(trimWhitespace "$STAG_PROTOCOL")
+    REMOTE_HTTP_AUTH=$(trimWhitespace "$STAG_HTTP_AUTH")
+    REMOTE_SSH=$(trimWhitespace "$STAG_SSH")
+    REMOTE_WEB_ROOT=$(trimWhitespace "$STAG_WEB_ROOT")
+    REMOTE_PHP_BINARY=$(trimWhitespace "$STAG_PHP_BINARY")
     ;;
 
 *)
@@ -65,9 +74,11 @@ test -z "$REMOTE_PROTOCOL" && logError "REMOTE_PROTOCOL is not defined"
 # Normalize paths
 LOCAL_WEB_ROOT=$(normalizePath $LOCAL_WEB_ROOT)
 REMOTE_WEB_ROOT=$(normalizePath $REMOTE_WEB_ROOT)
-WP_CONTENT_DIR=$(trimLeadingSlash $(normalizePath $WP_CONTENT_DIR))
-WP_CORE_DIR=$(trimLeadingSlash $(normalizePath $WP_CORE_DIR))
+WP_CONTENT_DIR=$(trimLeadingSlashes $(normalizePath $WP_CONTENT_DIR))
+WP_CORE_DIR=$(trimLeadingSlashes $(normalizePath $WP_CORE_DIR))
 
-# URLs
-LOCAL_URL="$LOCAL_PROTOCOL://$LOCAL_HOST"
-REMOTE_URL="$REMOTE_PROTOCOL://$REMOTE_HOST"
+# Construct and normalize URLs
+LOCAL_URL=$(normalizeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST")
+REMOTE_URL=$(normalizeUrl "$REMOTE_PROTOCOL://$REMOTE_HOST")
+
+echo $LOCAL_URL; exit;
