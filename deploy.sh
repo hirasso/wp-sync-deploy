@@ -28,7 +28,7 @@ USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-loca
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
 
 # Construct the directories to deploy from the provided env variables
-export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
+export DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME $WP_CONTENT_DIR/languages"
 # Add mu-plugins to the deploy dirs if it exists
 test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
 
