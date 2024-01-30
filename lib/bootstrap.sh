@@ -14,6 +14,9 @@ REMOTE_ENV="$1"
 # Load the environment file
 loadEnvFile
 
+# Find the deployignore file
+DEPLOYIGNORE_FILE=$(findUp ".deployignore" $SCRIPT_DIR)
+
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
 

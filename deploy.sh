@@ -58,7 +58,7 @@ dry)
     (
         cd "$LOCAL_WEB_ROOT"
         rsync --dry-run -avz --delete --relative \
-            --exclude-from="$SCRIPT_DIR/.deployignore" \
+            --exclude-from="$DEPLOYIGNORE_FILE" \
             $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
     )
     logLine
@@ -82,7 +82,7 @@ run)
     (
         cd "$LOCAL_WEB_ROOT"
         rsync -avz --delete --relative \
-            --exclude-from="$SCRIPT_DIR/.deployignore" \
+            --exclude-from="$DEPLOYIGNORE_FILE" \
             $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
     )
 
