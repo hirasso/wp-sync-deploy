@@ -1,37 +1,39 @@
-.DS_Store
-.htpasswd
-.htaccess
-node_modules
-robots.txt
-.user.ini
-.deploylog
-.git*
-.maintenance
-postcss.config.js
-tsconfig.json
-webpack.config.js
-webpack.config.mjs
-*.log
+# These files won't be deployed
+
+# Always ignore wp-content. wp-sync-deploy isn't built
+# to deal with the default WordPress folder structure.
+wp-content
+
+# Dotfiles
+.*
+
+# Env files in all shapes
 .env
 *.env
 .env.*
-.editorconfig
-.npmrc
-.nvmrc
-.prettierrc.json
-.browserslistrc
-.cache
-.sync-exclude
-TODO
-gsap-bonus.tgz
-README.md
-twentytwentyone
-twentytwentythree
-twentytwentytwo
-admin-post-navigation
-.is-built
+
+# NPM
+node_modules
+package-lock.json
+pnpm-lock.yaml
+
+# Configs
+*.config.js
+*.config.mjs
+*.config.ts
+*.config.mts
+tsconfig.json
+
+# Composer
+composer.json
+composer.lock
+
+# Logs
+*.log
+
+# Files from this tool
 wp-sync-deploy
-wp-content
-*.sql
-wp-cli.yml
 wp-sync-deploy.tasks.php
+
+# DB dumps
+*.sql
