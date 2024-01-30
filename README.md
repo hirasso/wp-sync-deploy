@@ -67,13 +67,13 @@ Run this script:
 
 This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
 
-### `./.env.wp-sync-deploy`
+### `.env.wp-sync-deploy`
 
 This file holds all information about your various environments (local, staging, production). Make sure you **add `.env.wp-sync-deploy` to your `.gitignore` file**! Otherwise, it's possible that sensitive information makes it into your repo.
 
 VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
 
-### `./wp-sync-deploy.tasks.php`
+### `wp-sync-deploy.tasks.php`
 
 This file is being used to run [automated tasks](https://github.com/hirasso/wp-sync-deploy?tab=readme-ov-file#run-automated-tasks-after-each-deploy--sync-) after deployment. You can adjust this file as you wish or delete it if you don't want it to be executed.
 
