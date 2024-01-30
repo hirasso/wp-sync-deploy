@@ -37,3 +37,11 @@ wp-sync-deploy.tasks.php
 
 # DB dumps
 *.sql
+
+# Readmes
+README.md
+readme.md
+
+# Todo files
+TODO
+*.todo
