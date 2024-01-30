@@ -138,3 +138,7 @@ Default tasks defined in the file are:
 - Optionally delete all transients
 - Optionally delete your static cache
 - When deploying: Optionally update the rewrite rules
+
+## Other notes
+
+wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, you can do so by modifying the file [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore).
