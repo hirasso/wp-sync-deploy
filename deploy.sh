@@ -33,8 +33,8 @@ DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THE
 test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
 # Add /languages to the deploy dirs if it exists
 test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/languages"
-# Add $ADDITIONAL_DIRS to the end
-DEPLOY_DIRS="$DEPLOY_DIRS $ADDITIONAL_DIRS"
+# Add $ADDITIONAL_DIRS to the end if defined
+[ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_DIRS="$DEPLOY_DIRS $ADDITIONAL_DIRS"
 
 # Default to dry mode
 DEPLOY_MODE="dry"
