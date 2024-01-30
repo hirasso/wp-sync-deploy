@@ -19,6 +19,15 @@ ENV_FILE=".env.wp-sync-deploy"
 TASKS_EXAMPLE_FILE="./wp-sync-deploy/wp-sync-deploy.tasks.example.php"
 TASKS_FILE="wp-sync-deploy.tasks.php"
 
+# Ask before running the setup
+log "🚀 Setup ${BLUE}wp-sync-deploy${NC} at this location?"
+log "  ${GREEN}$(pwd)${NC}"
+
+read -r -p "[y/n] " PROMPT_RESPONSE
+
+# Exit if not confirmed
+[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+
 log "🚀 Installing ${GREEN}wp-sync-deploy${NC} ... \n"
 
 # Copy and rename the wp-sync-deploy.example.env to the working directory
