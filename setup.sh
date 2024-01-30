@@ -13,11 +13,11 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 # Source functions for logging
 source "$SCRIPT_DIR/lib/functions.sh"
 
-ENV_EXAMPLE_FILE="./wp-sync-deploy/wp-sync-deploy.example.env"
-ENV_FILE="./wp-sync-deploy.env"
+ENV_EXAMPLE_FILE="./wp-sync-deploy/.env.wp-sync-deploy.example"
+ENV_FILE=".env.wp-sync-deploy"
 
 TASKS_EXAMPLE_FILE="./wp-sync-deploy/wp-sync-deploy.tasks.example.php"
-TASKS_FILE="./wp-sync-deploy.tasks.php"
+TASKS_FILE="wp-sync-deploy.tasks.php"
 
 log "🚀 Installing ${GREEN}wp-sync-deploy${NC} ... \n"
 

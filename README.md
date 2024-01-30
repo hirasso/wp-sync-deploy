@@ -13,7 +13,7 @@ A bash script that helps you
 ## Prerequesites
 
 - [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy takes care of installing WP-CLI automatically.
-- A WordPress directory structure similar to this (adjustable through a `wp-sync-deploy.env` file):
+- A WordPress directory structure similar to this (adjustable through a `.env.wp-sync-deploy` file):
 
 ```shell
 .
@@ -67,9 +67,9 @@ Run this script:
 
 This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
 
-### `./wp-sync-deploy.env`
+### `./.env.wp-sync-deploy`
 
-This file holds all information about your various environments (local, staging, production). Make sure you **add `wp-sync-deploy.env` to your `.gitignore` file**! Otherwise, it's possible that sensitive information makes it into your repo.
+This file holds all information about your various environments (local, staging, production). Make sure you **add `.env.wp-sync-deploy` to your `.gitignore` file**! Otherwise, it's possible that sensitive information makes it into your repo.
 
 VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
 

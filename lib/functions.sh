@@ -32,6 +32,25 @@ function logSuccess() {
     log "✅${BOLD}${GREEN} Success: ${NC}$1"
 }
 
+# Load the env file for wp-sync-deploy
+# - first, look for .env.wp-sync-deploy file
+# - second, fall back to the deprecated wp-sync-deploy.env file
+function loadEnvFile() {
+    # Find the closest wp-sync-deploy.env file
+    ENV_FILE=$(findUp ".env.wp-sync-deploy" $SCRIPT_DIR)
+
+    if [[ -z "$ENV_FILE" ]]; then
+        ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
+        [ -e "$ENV_FILE" ] && log "💡 Using ${RED}wp-sync-deploy.env${NC}. \n\r   Consider renaming the file to ${GREEN}.env.wp-sync-deploy${NC} instead\n\n\r"
+    fi
+
+    # Throw an error if no env file could be found
+    [ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found. Please run ${BLUE}./wp-sync-deploy/setup.sh${NC} and adjust your env file afterwards"
+
+    # Load the environment variables
+    source $ENV_FILE
+}
+
 # Normalize a path:
 #
 # Feed the provided path into `realpath` to make sure the path is correct.
@@ -170,7 +189,8 @@ function checkCommandLinePHPVersions() {
 # - optional http authentication, e.g. "username:password" as second argument
 function fetch() {
     local URL="$1"
-    local AUTH=""; [ ! -z "${2+x}" ] && AUTH="$2"
+    local AUTH=""
+    [ ! -z "${2+x}" ] && AUTH="$2"
 
     if [ -z "$AUTH" ]; then
         curl --silent --fail --location "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"

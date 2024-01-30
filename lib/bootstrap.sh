@@ -11,15 +11,11 @@ MAIN_BRANCH="master|main"
 # Required positional arguments
 REMOTE_ENV="$1"
 
-# Find the closest wp-sync-deploy.env file
-ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
-[ -z "$ENV_FILE" ] && logError "No wp-sync-deploy.env file found. Please run ${BLUE}./wp-sync-deploy/setup.sh${NC} and adjust your env file afterwards"
+# Load the environment file
+loadEnvFile
 
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
-
-# Load the environment variables
-source $ENV_FILE
 
 # Normalize variables
 LOCAL_HOST=$(trimWhitespace "$LOCAL_HOST")
