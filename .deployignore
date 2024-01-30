@@ -13,6 +13,8 @@ webpack.config.js
 webpack.config.mjs
 *.log
 .env
+*.env
+.env.*
 .editorconfig
 .npmrc
 .nvmrc
