@@ -24,10 +24,11 @@ TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
 LOCAL_HOST=$(trimWhitespace "$LOCAL_HOST")
 LOCAL_PROTOCOL=$(trimWhitespace "$LOCAL_PROTOCOL")
 LOCAL_HTTP_AUTH=$(trimWhitespace "$LOCAL_HTTP_AUTH")
-LOCAL_WEB_ROOT=$(trimWhitespace "$LOCAL_WEB_ROOT")
+LOCAL_ROOT_DIR=$(trimWhitespace "$LOCAL_ROOT_DIR")
+PUBLIC_DIR=$(trimWhitespace "$PUBLIC_DIR")
 WP_CONTENT_DIR=$(trimWhitespace "$WP_CONTENT_DIR")
 WP_CORE_DIR=$(trimWhitespace "$WP_CORE_DIR")
-WP_THEME=$(trimWhitespace "$WP_THEME")
+WP_THEME_DIR=$(trimWhitespace "$WP_THEME_DIR")
 
 # Set variables based on provided environment (production or staging)
 case $REMOTE_ENV in
@@ -37,7 +38,7 @@ production)
     REMOTE_PROTOCOL=$(trimWhitespace "$PROD_PROTOCOL")
     REMOTE_HTTP_AUTH=$(trimWhitespace "$PROD_HTTP_AUTH")
     REMOTE_SSH=$(trimWhitespace "$PROD_SSH")
-    REMOTE_WEB_ROOT=$(trimWhitespace "$PROD_WEB_ROOT")
+    REMOTE_ROOT_DIR=$(trimWhitespace "$PROD_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "$PROD_PHP_BINARY")
     ;;
 
@@ -46,7 +47,7 @@ staging)
     REMOTE_PROTOCOL=$(trimWhitespace "$STAG_PROTOCOL")
     REMOTE_HTTP_AUTH=$(trimWhitespace "$STAG_HTTP_AUTH")
     REMOTE_SSH=$(trimWhitespace "$STAG_SSH")
-    REMOTE_WEB_ROOT=$(trimWhitespace "$STAG_WEB_ROOT")
+    REMOTE_ROOT_DIR=$(trimWhitespace "$STAG_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "$STAG_PHP_BINARY")
     ;;
 
@@ -62,8 +63,8 @@ PRETTY_REMOTE_ENV=$(printf "${BOLD}$REMOTE_ENV${NORMAL}")
 PRETTY_REMOTE_HOST=$(printf "${BOLD}$REMOTE_HOST${NORMAL}")
 
 # Validate required variables
-test -z "$LOCAL_WEB_ROOT" && logError "LOCAL_WEB_ROOT is not defined"
-test -z "$REMOTE_WEB_ROOT" && logError "REMOTE_WEB_ROOT is not defined"
+test -z "$LOCAL_ROOT_DIR" && logError "LOCAL_ROOT_DIR is not defined"
+test -z "$REMOTE_ROOT_DIR" && logError "REMOTE_ROOT_DIR is not defined"
 test -z "$WP_CONTENT_DIR" && logError "WP_CONTENT_DIR is not defined"
 test -z "$WP_CORE_DIR" && logError "WP_CORE_DIR is not defined"
 test -z "$REMOTE_SSH" && logError "REMOTE_SSH is not defined"
@@ -71,11 +72,12 @@ test -z "$REMOTE_HOST" && logError "REMOTE_HOST is not defined"
 test -z "$REMOTE_PROTOCOL" && logError "REMOTE_PROTOCOL is not defined"
 
 # Normalize paths
-LOCAL_WEB_ROOT=$(normalizePath $LOCAL_WEB_ROOT)
-REMOTE_WEB_ROOT=$(normalizePath $REMOTE_WEB_ROOT)
-WP_CONTENT_DIR=$(trimLeadingSlashes $(normalizePath $WP_CONTENT_DIR))
-WP_CORE_DIR=$(trimLeadingSlashes $(normalizePath $WP_CORE_DIR))
+LOCAL_WEB_ROOT=$(normalizePath "${LOCAL_ROOT_DIR}/${PUBLIC_DIR}")
+REMOTE_WEB_ROOT=$(normalizePath "${REMOTE_ROOT_DIR}/${PUBLIC_DIR}")
+PUBLIC_DIR=$(trimLeadingSlashes $(normalizePath "$PUBLIC_DIR"))
+WP_CONTENT_DIR=$(trimLeadingSlashes $(normalizePath "$WP_CONTENT_DIR"))
+WP_CORE_DIR=$(trimLeadingSlashes $(normalizePath "$WP_CORE_DIR"))
 
 # Construct and normalize URLs
-LOCAL_URL=$(normalizeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST")
-REMOTE_URL=$(normalizeUrl "$REMOTE_PROTOCOL://$REMOTE_HOST")
+LOCAL_URL=$(normalizeUrl "${LOCAL_PROTOCOL}://${LOCAL_HOST}")
+REMOTE_URL=$(normalizeUrl "${REMOTE_PROTOCOL}://${REMOTE_HOST}")

@@ -119,10 +119,10 @@ function findUp() {
 # Check the git branch from the theme
 function checkProductionBranch() {
     # Bail early if not deploying to production
-    [[ $REMOTE_ENV != "production" ]] && return
+    # [[ $REMOTE_ENV != "production" ]] && return
 
     # Get the branch from the theme
-    cd "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/themes/$WP_THEME"
+    cd "${LOCAL_ROOT_DIR}/${WP_THEME_DIR}"
     BRANCH=$(git branch --show)
     cd $LOCAL_WEB_ROOT
 
@@ -249,17 +249,19 @@ function checkRemoteFile() {
 # Validate that the required directories exist locally and remotely
 function checkDirectories() {
     for DEPLOY_DIR in $DEPLOY_DIRS; do
+        local LOCAL_PATH="${LOCAL_ROOT_DIR}/${DEPLOY_DIR}"
+        local REMOTE_PATH="${REMOTE_ROOT_DIR}/${DEPLOY_DIR}"
+
         # check on local machine
-        if [ ! -d "$LOCAL_WEB_ROOT/$DEPLOY_DIR" ]; then
-            logError "The directory ${RED}$LOCAL_WEB_ROOT/$DEPLOY_DIR${NC} does not exist locally"
+        if [ ! -d "$LOCAL_PATH" ]; then
+            logError "The directory ${RED}$LOCAL_PATH${NC} does not exist locally"
         fi
         # check on remote machine
-        if [[ $(checkRemoteFile "$REMOTE_WEB_ROOT/$DEPLOY_DIR") != 1 ]]; then
-            logError "The directory ${RED}$DEPLOY_DIR${RED} does not exist on the remote server"
+        if [[ $(checkRemoteFile "$REMOTE_PATH") != 1 ]]; then
+            logError "The directory ${RED}$REMOTE_PATH${RED} does not exist on the remote server"
         fi
+        logSuccess "Folder exists at ${PRETTY_REMOTE_ENV}: ${BLUE}$DEPLOY_DIR${NC}"
     done
-
-    logSuccess "All directories exist in both environments"
 }
 
 # Get the remote wp-cli.phar file name

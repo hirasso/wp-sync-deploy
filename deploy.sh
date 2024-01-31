@@ -28,11 +28,11 @@ USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-loca
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
 
 # Construct the directories to deploy from the provided env variables
-DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes/$WP_THEME"
+DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_THEME_DIR"
 # Add /mu-plugins to the deploy dirs if it exists
-test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
+test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
 # Add /languages to the deploy dirs if it exists
-test -d "$LOCAL_WEB_ROOT/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/languages"
+test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/languages"
 # Add $ADDITIONAL_DIRS to the end if defined
 [ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_DIRS="$DEPLOY_DIRS $ADDITIONAL_DIRS"
 
@@ -54,12 +54,12 @@ case $DEPLOY_MODE in
 dry)
     log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
-    # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
+    # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
     (
-        cd "$LOCAL_WEB_ROOT"
+        cd "$LOCAL_ROOT_DIR"
         rsync --dry-run -avz --delete --relative \
             --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
+            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
     )
     logLine
     log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
@@ -78,12 +78,12 @@ run)
 
     log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
-    # Execute rsync from $LOCAL_WEB_ROOT in a subshell to make sure we are staying in the current pwd
+    # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
     (
-        cd "$LOCAL_WEB_ROOT"
+        cd "$LOCAL_ROOT_DIR"
         rsync -avz --delete --relative \
             --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_WEB_ROOT"
+            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
     )
 
     log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
