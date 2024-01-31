@@ -44,8 +44,8 @@ DEPLOY_MODE="dry"
 checkProductionBranch
 checkCommandLinePHPVersions
 checkWebFacingPHPVersions
-checkIsRemoteAllowed
 checkDirectories
+checkIsRemoteAllowed
 logSuccess "All checks successful! Proceeding ..."
 logLine
 
