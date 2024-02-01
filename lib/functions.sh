@@ -189,8 +189,7 @@ function checkCommandLinePHPVersions() {
 # - optional http authentication, e.g. "username:password" as second argument
 function fetch() {
     local URL="$1"
-    local AUTH=""
-    [ ! -z "${2+x}" ] && AUTH="$2"
+    local AUTH="${2:-}"
 
     if [ -z "$AUTH" ]; then
         curl --silent --fail --location "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
