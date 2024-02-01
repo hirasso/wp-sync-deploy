@@ -35,8 +35,8 @@ A bash script that helps you
 ## Installation
 
 ```shell
-# CD into your projects webroot
-cd /path/to/your/webroot
+# CD into your project's root folder
+cd /path/to/your/root
 
 # Clone this repo
 git clone git@github.com:hirasso/wp-sync-deploy.git
