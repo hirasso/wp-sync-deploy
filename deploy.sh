@@ -37,8 +37,7 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS
 [ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_DIRS="$DEPLOY_DIRS $ADDITIONAL_DIRS"
 
 # Default to dry mode
-DEPLOY_MODE="dry"
-[ ! -z "${2+x}" ] && DEPLOY_MODE="$2"
+DEPLOY_MODE="${2:-dry}"
 
 # Perform checks before proceeding
 checkProductionBranch
