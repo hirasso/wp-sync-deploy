@@ -117,7 +117,7 @@ function findUp() {
 }
 
 # Check the git branch from the theme
-function validateBranchToDeploy() {
+function validateProductionBranch() {
 
 	# Bail early if $GIT_DIR is not defined
 	if [[ -z "${GIT_DIR+x}" ]]; then

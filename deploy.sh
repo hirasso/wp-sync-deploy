@@ -19,7 +19,7 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 source "$SCRIPT_DIR/lib/functions.sh"
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
-validateBranchToDeploy
+validateProductionBranch
 exit;
 
 # Will be displayed if no arguments are being provided
@@ -43,7 +43,7 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS
 DEPLOY_MODE="${2:-dry}"
 
 # Perform checks before proceeding
-validateBranchToDeploy
+validateProductionBranch
 checkCommandLinePHPVersions
 checkWebFacingPHPVersions
 checkDirectories
