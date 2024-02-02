@@ -26,7 +26,7 @@ PUBLIC_DIR=$(trimWhitespace "${PUBLIC_DIR:-}")
 WP_CONTENT_DIR=$(trimWhitespace "$WP_CONTENT_DIR")
 WP_CORE_DIR=$(trimWhitespace "$WP_CORE_DIR")
 
-# Deployment to production will only be possible from these two branches
+# Fallback for the production branch: master or main
 PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-master|main}"
 
 # Set variables based on provided environment (production or staging)
