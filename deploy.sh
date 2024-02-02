@@ -19,6 +19,9 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 source "$SCRIPT_DIR/lib/functions.sh"
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
+validateBranchToDeploy
+exit;
+
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-local-files-to-remote-environments
 
@@ -28,7 +31,7 @@ USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-loca
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
 
 # Construct the directories to deploy from the provided env variables
-DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_THEME_DIR"
+DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes"
 # Add /mu-plugins to the deploy dirs if it exists
 test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
 # Add /languages to the deploy dirs if it exists
@@ -40,7 +43,7 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS
 DEPLOY_MODE="${2:-dry}"
 
 # Perform checks before proceeding
-checkProductionBranch
+validateBranchToDeploy
 checkCommandLinePHPVersions
 checkWebFacingPHPVersions
 checkDirectories

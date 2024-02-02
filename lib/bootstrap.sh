@@ -5,9 +5,6 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# Deployment to production will only be possible from these two branches
-MAIN_BRANCH="master|main"
-
 # Required positional arguments
 REMOTE_ENV="$1"
 
@@ -28,7 +25,9 @@ LOCAL_ROOT_DIR=$(trimWhitespace "$LOCAL_ROOT_DIR")
 PUBLIC_DIR=$(trimWhitespace "${PUBLIC_DIR:-}")
 WP_CONTENT_DIR=$(trimWhitespace "$WP_CONTENT_DIR")
 WP_CORE_DIR=$(trimWhitespace "$WP_CORE_DIR")
-WP_THEME_DIR=$(trimWhitespace "$WP_THEME_DIR")
+
+# Deployment to production will only be possible from these two branches
+PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-master|main}"
 
 # Set variables based on provided environment (production or staging)
 case $REMOTE_ENV in
