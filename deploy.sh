@@ -19,9 +19,6 @@ SCRIPT_DIR=$(realpath $(dirname $0))
 source "$SCRIPT_DIR/lib/functions.sh"
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
-validateProductionBranch
-exit;
-
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-local-files-to-remote-environments
 
