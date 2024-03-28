@@ -135,7 +135,14 @@ function validateProductionBranch() {
 
 	# Validate the branch
 	if [[ "${REMOTE_ENV}" == "production" && ! $CURRENT_BRANCH =~ $PRODUCTION_BRANCH ]]; then
-		logError "Branch ${BLUE}${CURRENT_BRANCH}${NC} not allowed in ${BLUE}production${NC}"
+		log "🚨 You are on the branch ${RED}${CURRENT_BRANCH}${NC}. Proceed deploy to ${BOLD}production${NORMAL}?"
+		read -r -p "[y/n] " PROMPT_RESPONSE
+
+		# Exit early if not confirmed
+		if [[ "$PROMPT_RESPONSE" != "y" ]]; then
+			log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
+			exit
+		fi
 	else
 		logSuccess "Branch ${BLUE}${CURRENT_BRANCH}${NC} allowed in ${BLUE}${REMOTE_ENV}${NC}"
 	fi
