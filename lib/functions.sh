@@ -151,7 +151,8 @@ function validateProductionBranch() {
 
 # Check if there is a file `.allow-deployment` present at the remote root
 function checkIsRemoteAllowed() {
-	local FILE_PATH="$REMOTE_WEB_ROOT/.allow-deployment"
+	local FILE_PATH="$REMOTE_ROOT_DIR/.allow-deployment"
+
 	IS_ALLOWED=$(ssh "$REMOTE_SSH" test -e "$FILE_PATH" && echo "yes" || echo "no")
 
 	if [[ $IS_ALLOWED != "yes" ]]; then
