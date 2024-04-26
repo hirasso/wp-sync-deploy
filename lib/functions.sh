@@ -32,6 +32,12 @@ function logSuccess() {
 	log "✅${BOLD}${GREEN} Success: ${NC}$1"
 }
 
+# Dump something and exit
+function dd() {
+	log "$1"
+	exit 1
+}
+
 # Load the env file for wp-sync-deploy
 # - first, look for .env.wp-sync-deploy file
 # - second, fall back to the deprecated wp-sync-deploy.env file
@@ -262,13 +268,13 @@ function checkRemoteFile() {
 }
 
 # Validate that the required directories exist locally and remotely
-function checkDirectories() {
-	for DEPLOY_DIR in $DEPLOY_DIRS; do
+function checkDeployPaths() {
+	for DEPLOY_DIR in $DEPLOY_PATHS; do
 		local LOCAL_PATH="${LOCAL_ROOT_DIR}/${DEPLOY_DIR}"
 		local REMOTE_PATH="${REMOTE_ROOT_DIR}/${DEPLOY_DIR}"
 
 		# check on local machine
-		if [ ! -d "$LOCAL_PATH" ]; then
+		if [ ! -e "$LOCAL_PATH" ]; then
 			logError "The directory ${RED}$LOCAL_PATH${NC} does not exist locally"
 		fi
 		# check on remote machine

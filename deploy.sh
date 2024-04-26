@@ -28,13 +28,13 @@ USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-loca
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
 
 # Construct the directories to deploy from the provided env variables
-DEPLOY_DIRS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes"
+DEPLOY_PATHS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes"
 # Add /mu-plugins to the deploy dirs if it exists
-test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/mu-plugins"
+test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/mu-plugins" && DEPLOY_PATHS="$DEPLOY_PATHS $WP_CONTENT_DIR/mu-plugins"
 # Add /languages to the deploy dirs if it exists
-test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_DIRS="$DEPLOY_DIRS $WP_CONTENT_DIR/languages"
+test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PATHS $WP_CONTENT_DIR/languages"
 # Add $ADDITIONAL_DIRS to the end if defined
-[ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_DIRS="$DEPLOY_DIRS $ADDITIONAL_DIRS"
+[ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_PATHS="$DEPLOY_PATHS $ADDITIONAL_DIRS"
 
 # Default to dry mode
 DEPLOY_MODE="${2:-dry}"
@@ -43,10 +43,14 @@ DEPLOY_MODE="${2:-dry}"
 validateProductionBranch
 checkCommandLinePHPVersions
 checkWebFacingPHPVersions
-checkDirectories
+checkDeployPaths
 checkIsRemoteAllowed
 logSuccess "All checks successful! Proceeding ..."
 logLine
+
+# Add the favicon.ico in the public dir if it exists.
+# Doing that after `checkDeployPaths` as it doesn't require an existence check.
+test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR/favicon.ico"
 
 case $DEPLOY_MODE in
 
@@ -58,7 +62,7 @@ dry)
         cd "$LOCAL_ROOT_DIR"
         rsync --dry-run -avz --delete --relative \
             --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
+            $DEPLOY_PATHS $FAVICON_PATH "$REMOTE_SSH:$REMOTE_ROOT_DIR"
     )
     logLine
     log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
@@ -82,7 +86,7 @@ run)
         cd "$LOCAL_ROOT_DIR"
         rsync -avz --delete --relative \
             --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_DIRS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
+            $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
     )
 
     log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
