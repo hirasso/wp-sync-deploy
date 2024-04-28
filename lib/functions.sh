@@ -76,8 +76,8 @@ function normalizeUrl() {
 }
 
 # Trim all leading slashes from a string
-function trimLeadingSlashes() {
-	[ "$1" == "/" ] && echo "$1" && return
+function relativePath() {
+	[[ "$1" == "/" || "$1" == "" ]] && echo "." && return
 	(
 		shopt -s extglob
 		echo "${1##*(/)}"
@@ -96,7 +96,7 @@ function trimTrailingSlashes() {
 # Trim slashes from both ends of a string
 function trimSlashes() {
 	[ "$1" == "/" ] && echo "$1" && return
-	echo $(trimLeadingSlashes $(trimTrailingSlashes "$1"))
+	echo $(relativePath $(trimTrailingSlashes "$1"))
 }
 
 # Trim whitespace from the beginning and end of a string

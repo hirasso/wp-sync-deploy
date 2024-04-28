@@ -73,9 +73,9 @@ test -z "$REMOTE_PROTOCOL" && logError "REMOTE_PROTOCOL is not defined"
 # Normalize paths
 LOCAL_WEB_ROOT=$(normalizePath "${LOCAL_ROOT_DIR}/${PUBLIC_DIR}")
 REMOTE_WEB_ROOT=$(normalizePath "${REMOTE_ROOT_DIR}/${PUBLIC_DIR}")
-PUBLIC_DIR=$(trimLeadingSlashes $(normalizePath "$PUBLIC_DIR"))
-WP_CONTENT_DIR=$(trimLeadingSlashes $(normalizePath "$WP_CONTENT_DIR"))
-WP_CORE_DIR=$(trimLeadingSlashes $(normalizePath "$WP_CORE_DIR"))
+PUBLIC_DIR=$(relativePath $(normalizePath "$PUBLIC_DIR"))
+WP_CONTENT_DIR=$(relativePath $(normalizePath "$WP_CONTENT_DIR"))
+WP_CORE_DIR=$(relativePath $(normalizePath "$WP_CORE_DIR"))
 
 # Construct and normalize URLs
 LOCAL_URL=$(normalizeUrl "${LOCAL_PROTOCOL}://${LOCAL_HOST}")
