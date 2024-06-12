@@ -14,20 +14,20 @@ wp-content
 
 # NPM
 node_modules
-package.json
-package-lock.json
-pnpm-lock.yaml
+-p package.json
+-p package-lock.json
+-p pnpm-lock.yaml
 
 # Configs
-*.config.js
-*.config.mjs
-*.config.ts
-*.config.mts
-tsconfig.json
+-p *.config.js
+-p *.config.mjs
+-p *.config.ts
+-p *.config.mts
+-p tsconfig.json
 
 # Composer
-composer.json
-composer.lock
+-p composer.json
+-p composer.lock
 
 # Logs
 *.log
@@ -40,8 +40,8 @@ wp-sync-deploy.tasks.php
 *.sql
 
 # Readmes
-README.md
-readme.md
+-p README.md
+-p readme.md
 
 # Todo files
 TODO
