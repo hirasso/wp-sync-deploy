@@ -39,6 +39,8 @@ production)
     REMOTE_SSH=$(trimWhitespace "$PROD_SSH")
     REMOTE_ROOT_DIR=$(trimWhitespace "$PROD_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "${PROD_PHP_BINARY:-php}")
+    DEPLOY_STRATEGY=$(trimWhitespace "${PROD_DEPLOY_STRATEGY:-conservative}")
+    REMOTE_ENV_PREFIX="PROD_"
     ;;
 
 staging)
@@ -48,6 +50,8 @@ staging)
     REMOTE_SSH=$(trimWhitespace "$STAG_SSH")
     REMOTE_ROOT_DIR=$(trimWhitespace "$STAG_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "${STAG_PHP_BINARY:-php}")
+    DEPLOY_STRATEGY=$(trimWhitespace "${STAG_DEPLOY_STRATEGY:-conservative}")
+    REMOTE_ENV_PREFIX="STAG_"
     ;;
 
 *)
@@ -80,3 +84,8 @@ WP_CORE_DIR=$(relativePath $(normalizePath "$WP_CORE_DIR"))
 # Construct and normalize URLs
 LOCAL_URL=$(normalizeUrl "${LOCAL_PROTOCOL}://${LOCAL_HOST}")
 REMOTE_URL=$(normalizeUrl "${REMOTE_PROTOCOL}://${REMOTE_HOST}")
+
+# Validate the DEPLOY_STRATEGY
+if ! [[ "$DEPLOY_STRATEGY" =~ ^(conservative|risky)$ ]]; then
+    logError "\$${REMOTE_ENV_PREFIX}DEPLOY_STRATEGY must either be 'conservative' or 'risky'. (provided value: '$DEPLOY_STRATEGY')"
+fi

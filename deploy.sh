@@ -40,11 +40,22 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PAT
 DEPLOY_MODE="${2:-dry}"
 
 # Perform checks before proceeding
-validateProductionBranch
-checkCommandLinePHPVersions
-checkWebFacingPHPVersions
-checkDeployPaths
-checkIsRemoteAllowed
+case $DEPLOY_STRATEGY in
+
+risky)
+  validateProductionBranch
+  ;;
+
+*)
+  validateProductionBranch
+  checkCommandLinePHPVersions
+  checkWebFacingPHPVersions
+  checkDeployPaths
+  checkIsRemoteAllowed
+  ;;
+
+esac
+
 logSuccess "All checks successful! Proceeding ..."
 logLine
 
@@ -55,52 +66,59 @@ test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR
 case $DEPLOY_MODE in
 
 dry)
-    log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
+  log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
-    # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
-    (
-        cd "$LOCAL_ROOT_DIR"
-        rsync --dry-run -avz --delete --relative \
-            --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_PATHS $FAVICON_PATH "$REMOTE_SSH:$REMOTE_ROOT_DIR"
-    )
-    logLine
-    log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
+  # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
+  (
+    cd "$LOCAL_ROOT_DIR"
+    rsync --dry-run -avz --delete --relative \
+      --exclude-from="$DEPLOYIGNORE_FILE" \
+      $DEPLOY_PATHS $FAVICON_PATH "$REMOTE_SSH:$REMOTE_ROOT_DIR"
+  )
+  logLine
+  log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
-    logLine
-    log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
-    ;;
+  logLine
+  log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
+  ;;
 
 run)
-    # Confirmation is needed for a non-dry run
+
+  case $DEPLOY_STRATEGY in
+
+  conservative)
+    # Confirm the deployment if the deploy strategy is conservative
     log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST" ?
     read -r -p "[y/n] " PROMPT_RESPONSE
 
     # Exit if not confirmed
     [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
-
-    log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
-
-    # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
-    (
-        cd "$LOCAL_ROOT_DIR"
-        rsync -avz --delete --relative \
-            --exclude-from="$DEPLOYIGNORE_FILE" \
-            $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
-    )
-
-    log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
-
-    logLine
-
-    runRemoteTasks deploy
-
-    log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
-    log "\n${GREEN}$REMOTE_PROTOCOL://$REMOTE_HOST${NC}"
     ;;
+
+  esac
+
+  log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
+
+  # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
+  (
+    cd "$LOCAL_ROOT_DIR"
+    rsync -avz --delete --relative \
+      --exclude-from="$DEPLOYIGNORE_FILE" \
+      $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
+  )
+
+  log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
+
+  logLine
+
+  runRemoteTasks deploy
+
+  log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
+  log "\n${GREEN}$REMOTE_PROTOCOL://$REMOTE_HOST${NC}"
+  ;;
 
 *)
-    logError $USAGE_MESSAGE
-    ;;
+  logError $USAGE_MESSAGE
+  ;;
 
 esac
