@@ -46,7 +46,7 @@ risky)
   validateProductionBranch
   ;;
 
-*)
+conservative)
   validateProductionBranch
   checkCommandLinePHPVersions
   checkWebFacingPHPVersions
