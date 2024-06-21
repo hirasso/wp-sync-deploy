@@ -327,10 +327,10 @@ function wpRemote() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
 	# Construct the remote command
-	local COMMAND="cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY ./$WP_CLI_PHAR $ARGS"
+	local SSH_COMMAND="ssh $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
 
-	# Exectute the command
-	ssh "$REMOTE_SSH" "$COMMAND"
+	# @see ChatGPT
+	eval $SSH_COMMAND;
 }
 
 # Runs the task file on the remote server
@@ -359,10 +359,12 @@ function pullDatabase() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
 	# Activate maintenance mode
-	wp maintenance-mode activate &&
+	wp maintenance-mode activate;
 
 		# Import the remote database into the local database
-		wpRemote db export --default-character-set=utf8mb4 - | wp db import - &&
+		# Removes lines containing '999999' followed by 'enable the sandbox'
+		# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
+		wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wp db import -;
 
 		# Replace the remote URL with the local URL
 		wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
