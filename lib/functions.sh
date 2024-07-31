@@ -235,7 +235,7 @@ function checkWebFacingPHPVersions() {
 	# substring from position 0-3
 	local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
 	# validate if the version looks legit
-	[[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $LOCAL_VERSION"
+	[[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid local web-facing PHP version number: $LOCAL_VERSION"
 	# Log the detected PHP version
 	log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
@@ -250,13 +250,13 @@ function checkWebFacingPHPVersions() {
 	# substring from position 0-3
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	# validate if the version looks legit
-	[[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid PHP version number: $REMOTE_VERSION"
+	[[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid remote web-facing PHP version number: $REMOTE_VERSION"
 	# Log the detected PHP version
 	log "- Web-facing PHP version at $PRETTY_REMOTE_HOST: ${BLUE}$REMOTE_VERSION${NC}"
 
 	# Error out if the two PHP versions aren't a match
 	if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
-		logError "PHP version mismatch, aborting"
+		logError "Web-Facing PHP versions mismatch. Aborting."
 	else
 		logSuccess "Web-facing PHP versions match between $PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
 	fi
