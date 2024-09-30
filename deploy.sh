@@ -39,6 +39,7 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PAT
 # Default to dry mode
 DEPLOY_MODE="${2:-dry}"
 
+
 # Perform checks before proceeding
 case $DEPLOY_STRATEGY in
 
