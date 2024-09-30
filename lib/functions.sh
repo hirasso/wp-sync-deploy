@@ -159,7 +159,7 @@ function validateProductionBranch() {
 function checkIsRemoteAllowed() {
 	local FILE_PATH="$REMOTE_ROOT_DIR/.allow-deployment"
 
-	IS_ALLOWED=$(ssh "$REMOTE_SSH" test -e "$FILE_PATH" && echo "yes" || echo "no")
+	IS_ALLOWED=$(ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" test -e "$FILE_PATH" && echo "yes" || echo "no")
 
 	if [[ $IS_ALLOWED != "yes" ]]; then
 		logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
@@ -188,7 +188,7 @@ function checkCommandLinePHPVersions() {
 	local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
 	log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
-	local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" "$REMOTE_PHP_BINARY -r 'echo PHP_VERSION;'")
+	local REMOTE_OUTPUT=$(ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" "$REMOTE_PHP_BINARY -r 'echo PHP_VERSION;'")
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
@@ -240,13 +240,13 @@ function checkWebFacingPHPVersions() {
 	log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
 	# Create the test file on the remote server
-	ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
+	ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
 
 	# Get the output of the test file
 	local REMOTE_OUTPUT=$(fetch "$REMOTE_URL/$FILE_NAME" "$REMOTE_HTTP_AUTH")
 
 	# Cleanup the test file
-	ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
+	ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
 	# substring from position 0-3
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	# validate if the version looks legit
@@ -264,7 +264,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-	ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
+	ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" "[ -e \"$1\" ] && echo 1 || echo 0"
 }
 
 # Validate that the required directories exist locally and remotely
@@ -306,7 +306,7 @@ function installRemoteWpCli() {
 
 	log "🚀 Installing WP-CLI on the remote server ..."
 
-	RESULT=$(ssh "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
+	RESULT=$(ssh "$REMOTE_SSH" -p "$REMOTE_SSH_PORT" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
 	[ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 
@@ -327,7 +327,7 @@ function wpRemote() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
 	# Construct the remote command
-	local SSH_COMMAND="ssh $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
+	local SSH_COMMAND="ssh $REMOTE_SSH -p $REMOTE_SSH_PORT 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
 
 	# @see ChatGPT
 	eval $SSH_COMMAND;
@@ -342,7 +342,7 @@ function runRemoteTasks() {
 	log "Running ${BLUE}wp eval-file wp-sync-deploy.tasks.php $TASK${NC} on $PRETTY_REMOTE_ENV server ... \n"
 
 	# Upload the file to the remote web root
-	scp -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT"
+	scp -P "$REMOTE_SSH_PORT" "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT"
 
 	# Execute the file on the remote server
 	wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
