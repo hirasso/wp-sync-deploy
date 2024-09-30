@@ -39,6 +39,9 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PAT
 # Default to dry mode
 DEPLOY_MODE="${2:-dry}"
 
+runRemoteTasks deploy
+exit;
+
 # Perform checks before proceeding
 case $DEPLOY_STRATEGY in
 
@@ -72,8 +75,9 @@ dry)
   (
     cd "$LOCAL_ROOT_DIR"
     rsync --dry-run -avz --delete --relative \
+      -e "ssh -p $REMOTE_SSH_PORT" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
-      $DEPLOY_PATHS $FAVICON_PATH "$REMOTE_SSH:$REMOTE_ROOT_DIR"
+      $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
   logLine
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
@@ -103,6 +107,7 @@ run)
   (
     cd "$LOCAL_ROOT_DIR"
     rsync -avz --delete --relative \
+      -e "ssh -p $REMOTE_SSH_PORT" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
