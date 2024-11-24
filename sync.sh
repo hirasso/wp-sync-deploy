@@ -34,13 +34,16 @@ SYNC_MODE="pull"
 case $SYNC_MODE in
 
 pull)
-    pullDatabase
-    ;;
+  pullDatabase
+  ;;
 push)
-    pushDatabase
-    ;;
+  pushDatabase
+  ;;
+backup)
+  backupDatabase
+  ;;
 *)
-    logError "$USAGE_MESSAGE"
-    ;;
+  logError "$USAGE_MESSAGE"
+  ;;
 
 esac

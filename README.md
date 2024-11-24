@@ -106,6 +106,8 @@ So when you are starting, you will need to
 # push your local database to your staging server
 ./wp-sync-deploy/sync.sh staging push
 
+# Backup the remote database and store it locally
+./wp-sync-deploy/sync.sh <production|staging> backup
 ```
 
 > [!NOTE]
