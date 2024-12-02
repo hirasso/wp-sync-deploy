@@ -264,7 +264,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-	ssh $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
+	ssh -p $REMOTE_SSH_PORT $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
 }
 
 # Validate that the required directories exist locally and remotely
@@ -327,7 +327,7 @@ function wpRemote() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
 	# Construct the remote command
-	local SSH_COMMAND="ssh $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
+	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
 
 	# @see ChatGPT
 	eval $SSH_COMMAND;
