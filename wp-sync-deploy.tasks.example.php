@@ -39,10 +39,12 @@ function ask(string $question, string $options = 'y/n')
 }
 
 /**
- * Activate all plugins on the target environment
+ * Tasks on the target server when deploying
  */
 if ($task === 'deploy') {
+    /** Activate all plugins */
     \WP_CLI::runcommand('plugin activate --all');
+    /** Update the database */
     \WP_CLI::runcommand('core update-db');
 }
 
