@@ -43,6 +43,7 @@ function ask(string $question, string $options = 'y/n')
  */
 if ($task === 'deploy') {
     \WP_CLI::runcommand('plugin activate --all');
+    \WP_CLI::runcommand('core update-db');
 }
 
 /**
