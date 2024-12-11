@@ -156,7 +156,7 @@ function validateProductionBranch() {
 }
 
 # Check if there is a file `.allow-deployment` present at the remote root
-function checkIsRemoteAllowed() {
+function checkIsDeploymentAllowed() {
 	local FILE_PATH="$REMOTE_ROOT_DIR/.allow-deployment"
 
 	IS_ALLOWED=$(ssh "$REMOTE_SSH" test -e "$FILE_PATH" && echo "yes" || echo "no")
@@ -168,15 +168,22 @@ function checkIsRemoteAllowed() {
 	fi
 }
 
-# Check if the remote root is empty
-function checkIsRemoteRootExistsAndIsEmpty() {
+# Check if the remote root is exists
+function checkRemoteRootExists() {
 	# Check if the remote root directory exists
 	EXISTS=$(ssh "$REMOTE_SSH" "[ -d \"$REMOTE_ROOT_DIR\" ] && echo \"yes\" || echo \"no\"")
 
-	if [[ $EXISTS == "no" ]]; then
-					logError "${RED}Remote root does not exist${NC}"
-					return 1
+	if [[ $EXISTS == "yes" ]]; then
+		logSuccess "${BLUE}Remote root exists${NC}"
+	else
+		logError "${RED}Remote root does not exist: $REMOTE_ROOT_DIR${NC}"
 	fi
+
+}
+
+# Check if the remote root exists and is empty
+function checkRemoteRootExistsAndIsEmpty() {
+	checkRemoteRootExists
 
 	# Run the `find` command on the remote server to check for contents
 	IS_EMPTY=$(ssh "$REMOTE_SSH" "find \"$REMOTE_ROOT_DIR\" -mindepth 1 -print -quit | grep -q . && echo \"no\" || echo \"yes\"")
@@ -185,28 +192,6 @@ function checkIsRemoteRootExistsAndIsEmpty() {
 		logSuccess "${BLUE}Remote root is empty${NC}"
 	else
 		logError "Remote root ${RED}is not empty${NC} (contains files or directories)"
-	fi
-}
-
-# Create the `.allow-deployment` file in the remote root directory
-function createAllowDeploymentFileInRemoteRoot() {
-	ssh "$REMOTE_SSH" "touch \"$REMOTE_ROOT_DIR/.allow-deployment\"" &&
-		logSuccess "${BLUE}.allow-deployment${NC} file created in remote root" ||
-		logError "Failed to create ${RED}.allow-deployment${NC} file in remote root"
-}
-
-# Check if the remote root directory contains only `.allow-deployment`
-function checkIsRemoteRootPrepared() {
-	IS_FRESH=$(ssh "$REMOTE_SSH" "
-        shopt -s dotglob;
-        FILES=(\"$REMOTE_ROOT_DIR\"/*);
-        [[ \${#FILES[@]} -eq 1 && \"\${FILES[0]}\" == \"$REMOTE_ROOT_DIR/.allow-deployment\" ]] && echo \"yes\" || echo \"no\";
-    ")
-
-	if [[ $IS_FRESH == "yes" ]]; then
-		logSuccess "${BLUE}Remote root is fresh${NC} (contains only .allow-deployment)"
-	else
-		logError "Remote root ${RED}is not fresh${NC} (it must contain one file ${BLUE}.allow-deployment${NC}, but nothing else)"
 	fi
 }
 

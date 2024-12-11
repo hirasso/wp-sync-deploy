@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# PUSH arbitrary files and folders to the remote root
+# Upload arbitrary files and folders to the remote root
 #
 # Please have a look at ./wp-sync-deploy.example.env to see all required variables.
 #
@@ -8,8 +8,8 @@
 #
 # COMMANDS:
 #
-# Push to production or staging
-# `./wp-sync-deploy/push.sh <production|staging> --paths="file1 folder1 folder2"`
+# Upload to production or staging
+# `./wp-sync-deploy/upload.sh <production|staging> --paths="file1 folder1 folder2"`
 
 # The directory relative to the script
 SCRIPT_DIR=$(realpath $(dirname $0))
@@ -40,9 +40,7 @@ fi
 USAGE_MESSAGE="Usage:
     ./wp-sync-deploy/push.sh <production|staging> --paths='file1 folder1 folder2'"
 
-checkIsRemoteRootExistsAndIsEmpty
-createAllowDeploymentFileInRemoteRoot
-checkIsRemoteRootPrepared
+checkRemoteRootExistsAndIsEmpty
 
 logSuccess "All checks successful! Proceeding ..."
 logLine

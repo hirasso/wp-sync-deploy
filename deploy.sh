@@ -45,14 +45,16 @@ case $DEPLOY_STRATEGY in
 
 risky)
   validateProductionBranch
+  checkRemoteRootExists
   ;;
 
 conservative)
   validateProductionBranch
+  checkRemoteRootExists
+  checkIsDeploymentAllowed
   checkCommandLinePHPVersions
   checkWebFacingPHPVersions
   checkDeployPaths
-  checkIsRemoteAllowed
   ;;
 
 esac
