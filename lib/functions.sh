@@ -168,6 +168,48 @@ function checkIsRemoteAllowed() {
 	fi
 }
 
+# Check if the remote root is empty
+function checkIsRemoteRootExistsAndIsEmpty() {
+	# Check if the remote root directory exists
+	EXISTS=$(ssh "$REMOTE_SSH" "[ -d \"$REMOTE_ROOT_DIR\" ] && echo \"yes\" || echo \"no\"")
+
+	if [[ $EXISTS == "no" ]]; then
+					logError "${RED}Remote root does not exist${NC}"
+					return 1
+	fi
+
+	# Run the `find` command on the remote server to check for contents
+	IS_EMPTY=$(ssh "$REMOTE_SSH" "find \"$REMOTE_ROOT_DIR\" -mindepth 1 -print -quit | grep -q . && echo \"no\" || echo \"yes\"")
+
+	if [[ $IS_EMPTY == "yes" ]]; then
+		logSuccess "${BLUE}Remote root is empty${NC}"
+	else
+		logError "Remote root ${RED}is not empty${NC} (contains files or directories)"
+	fi
+}
+
+# Create the `.allow-deployment` file in the remote root directory
+function createAllowDeploymentFileInRemoteRoot() {
+	ssh "$REMOTE_SSH" "touch \"$REMOTE_ROOT_DIR/.allow-deployment\"" &&
+		logSuccess "${BLUE}.allow-deployment${NC} file created in remote root" ||
+		logError "Failed to create ${RED}.allow-deployment${NC} file in remote root"
+}
+
+# Check if the remote root directory contains only `.allow-deployment`
+function checkIsRemoteRootPrepared() {
+	IS_FRESH=$(ssh "$REMOTE_SSH" "
+        shopt -s dotglob;
+        FILES=(\"$REMOTE_ROOT_DIR\"/*);
+        [[ \${#FILES[@]} -eq 1 && \"\${FILES[0]}\" == \"$REMOTE_ROOT_DIR/.allow-deployment\" ]] && echo \"yes\" || echo \"no\";
+    ")
+
+	if [[ $IS_FRESH == "yes" ]]; then
+		logSuccess "${BLUE}Remote root is fresh${NC} (contains only .allow-deployment)"
+	else
+		logError "Remote root ${RED}is not fresh${NC} (it must contain one file ${BLUE}.allow-deployment${NC}, but nothing else)"
+	fi
+}
+
 # Create a hash from a string
 function createHash() {
 	echo "$1" | sha256sum | head -c 10
@@ -330,7 +372,7 @@ function wpRemote() {
 	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
 
 	# @see ChatGPT
-	eval $SSH_COMMAND;
+	eval $SSH_COMMAND
 }
 
 # Runs the task file on the remote server
@@ -359,15 +401,15 @@ function pullDatabase() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
 	# Activate maintenance mode
-	wp maintenance-mode activate;
+	wp maintenance-mode activate
 
-		# Import the remote database into the local database
-		# Removes lines containing '999999' followed by 'enable the sandbox'
-		# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
-		wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wp db import -;
+	# Import the remote database into the local database
+	# Removes lines containing '999999' followed by 'enable the sandbox'
+	# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
+	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wp db import -
 
-		# Replace the remote URL with the local URL
-		wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
+	# Replace the remote URL with the local URL
+	wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
 
 	# Deactivate maintenance mode
 	wp maintenance-mode deactivate
@@ -383,9 +425,9 @@ function pullDatabase() {
 
 # Backup a remote database and store it locally
 function backupDatabase() {
-  local NAME="$REMOTE_HOST-$(date +"%Y-%m-%d_%H-%M-%S").sql"
-  wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' > "$NAME"
-  logLine && logSuccess "Database backup saved to ${GREEN}$NAME${NC}"
+	local NAME="$REMOTE_HOST-$(date +"%Y-%m-%d_%H-%M-%S").sql"
+	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' >"$NAME"
+	logLine && logSuccess "Database backup saved to ${GREEN}$NAME${NC}"
 }
 
 # Push the local database to the remote environment
