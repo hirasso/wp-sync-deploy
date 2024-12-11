@@ -45,8 +45,11 @@ checkRemoteRootExistsAndIsEmpty
 logSuccess "All checks successful! Proceeding ..."
 logLine
 
-# Confirm the deployment if the deploy strategy is conservative
-log "🚀 Would you really like to push to ${BLUE}$REMOTE_ROOT_DIR${NC} on $PRETTY_REMOTE_HOST" ?
+# Confirm the upload
+log "📦 Remote host: ${BLUE}$PRETTY_REMOTE_HOST${NC}"
+log "📦 Remote dir: ${BLUE}$REMOTE_ROOT_DIR${NC}"
+log "📦 Upload: ${BLUE}$(echo "$DEPLOY_PATHS" | sed 's/ /, /g')${NC}"
+log "📦 Proceed?"
 read -r -p "[y/n] " PROMPT_RESPONSE
 
 # Exit if not confirmed
@@ -59,7 +62,6 @@ log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Pushing to $PRETTY_REMOTE_ENV ..
   cd "$LOCAL_ROOT_DIR"
   rsync -avz --delete --relative \
     -e "ssh -p $REMOTE_SSH_PORT" \
-    --exclude-from="$DEPLOYIGNORE_FILE" \
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
 
