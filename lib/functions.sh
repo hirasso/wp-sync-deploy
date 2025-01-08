@@ -159,7 +159,7 @@ function validateProductionBranch() {
 function checkIsDeploymentAllowed() {
 	local FILE_PATH="$REMOTE_ROOT_DIR/.allow-deployment"
 
-	IS_ALLOWED=$(ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" test -e "$FILE_PATH" && echo "yes" || echo "no")
+	IS_ALLOWED=$($SSH_CONNECTION test -e "$FILE_PATH" && echo "yes" || echo "no")
 
 	if [[ $IS_ALLOWED != "yes" ]]; then
 		logError "Remote root ${RED}not allowed${NC} for deployment (missing file ${GREEN}.allow-deployment${NC})"
@@ -171,7 +171,7 @@ function checkIsDeploymentAllowed() {
 # Check if the remote root is exists
 function checkRemoteRootExists() {
 	# Check if the remote root directory exists
-	EXISTS=$(ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "[ -d \"$REMOTE_ROOT_DIR\" ] && echo \"yes\" || echo \"no\"")
+	EXISTS=$($SSH_CONNECTION "[ -d \"$REMOTE_ROOT_DIR\" ] && echo \"yes\" || echo \"no\"")
 
 	if [[ $EXISTS == "yes" ]]; then
 		logSuccess "${BLUE}Remote root exists${NC}"
@@ -186,7 +186,7 @@ function checkRemoteRootExistsAndIsEmpty() {
 	checkRemoteRootExists
 
 	# Run the `find` command on the remote server to check for contents
-	IS_EMPTY=$(ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "find \"$REMOTE_ROOT_DIR\" -mindepth 1 -print -quit | grep -q . && echo \"no\" || echo \"yes\"")
+	IS_EMPTY=$($SSH_CONNECTION "find \"$REMOTE_ROOT_DIR\" -mindepth 1 -print -quit | grep -q . && echo \"no\" || echo \"yes\"")
 
 	if [[ $IS_EMPTY == "yes" ]]; then
 		logSuccess "${BLUE}Remote root is empty${NC}"
@@ -216,7 +216,7 @@ function checkCommandLinePHPVersions() {
 	log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
   # The flag "-n" suppresses warnings
-	local REMOTE_OUTPUT=$(ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "$REMOTE_PHP_BINARY -n -r 'echo PHP_VERSION;'")
+	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -r 'echo PHP_VERSION;'")
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
@@ -268,13 +268,13 @@ function checkWebFacingPHPVersions() {
 	log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
 	# Create the test file on the remote server
-	ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
+	$SSH_CONNECTION "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
 
 	# Get the output of the test file
 	local REMOTE_OUTPUT=$(fetch "$REMOTE_URL/$FILE_NAME" "$REMOTE_HTTP_AUTH")
 
 	# Cleanup the test file
-	ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
+	$SSH_CONNECTION "cd $REMOTE_WEB_ROOT; rm ./$FILE_NAME"
 	# substring from position 0-3
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	# validate if the version looks legit
@@ -334,7 +334,7 @@ function installRemoteWpCli() {
 
 	log "🚀 Installing WP-CLI on the remote server ..."
 
-	RESULT=$(ssh -p "$REMOTE_SSH_PORT" "$REMOTE_SSH" "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
+	RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
 
 	[ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 

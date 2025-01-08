@@ -61,6 +61,9 @@ staging)
     ;;
 esac
 
+# Store the SSH connection with the port for usage
+SSH_CONNECTION="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH"
+
 # Prepare variables for printing
 PRETTY_LOCAL_ENV=$(printf "${BOLD}local${NORMAL}")
 PRETTY_LOCAL_HOST=$(printf "${BOLD}$LOCAL_HOST${NORMAL}")
