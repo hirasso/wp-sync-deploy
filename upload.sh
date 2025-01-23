@@ -62,6 +62,7 @@ log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Pushing to $PRETTY_REMOTE_ENV ..
   cd "$LOCAL_ROOT_DIR"
   rsync -avz --delete --relative \
     -e "ssh -p $REMOTE_SSH_PORT" \
+    --exclude-from="$DEPLOYIGNORE_FILE" \
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
 
