@@ -57,14 +57,11 @@ function loadEnvFile() {
 	source $ENV_FILE
 }
 
-# Normalize a path:
-#
-# Feed the provided path into `realpath` to make sure the path is correct.
-# (Prepends a leading slash to the provided path to prevent
-# realpath from automatically making the path absolute)
+# Normalize a path: Currently does nothing
 #
 function normalizePath() {
-	realpath -sm "/$1"
+  local path="$1"
+  echo "$path";
 }
 
 # Normalize a URL
