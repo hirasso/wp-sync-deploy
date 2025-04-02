@@ -58,9 +58,8 @@ function loadEnvFile() {
 }
 
 # Normalize a path: Currently does nothing
-#
 function normalizePath() {
-  local path="$1"
+  local path="${1:-}"
   echo "$path";
 }
 
@@ -74,10 +73,12 @@ function normalizeUrl() {
 
 # Trim all leading slashes from a string
 function relativePath() {
-	[[ "$1" == "/" || "$1" == "" ]] && echo "." && return
+  # make sure it's an empty string if none was provided
+  local path="${1:-}"
+	[[ "$path" == "/" || "$path" == "" ]] && echo "." && return
 	(
 		shopt -s extglob
-		echo "${1##*(/)}"
+		echo "${path##*(/)}"
 	)
 }
 
@@ -88,12 +89,6 @@ function trimTrailingSlashes() {
 		shopt -s extglob
 		echo "${@%%+(/)}"
 	)
-}
-
-# Trim slashes from both ends of a string
-function trimSlashes() {
-	[ "$1" == "/" ] && echo "$1" && return
-	echo $(relativePath $(trimTrailingSlashes "$1"))
 }
 
 # Trim whitespace from the beginning and end of a string
