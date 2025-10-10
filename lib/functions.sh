@@ -234,9 +234,9 @@ function fetch() {
 	local AUTH="${2:-}"
 
 	if [ -z "$AUTH" ]; then
-		curl --silent --fail --location "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
+		curl --silent --fail --location --insecure "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
 	else
-		curl --silent --fail --location --user "$AUTH" "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
+		curl --silent --fail --location --insecure --user "$AUTH" "$URL" || logError "couldn't fetch URL: ${RED}$URL${NC}"
 	fi
 }
 
