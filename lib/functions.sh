@@ -248,6 +248,7 @@ function checkWebFacingPHPVersions() {
 
 	# Create the test file on the local server
 	echo "<?= phpversion();" >"$LOCAL_WEB_ROOT/$FILE_NAME"
+	sleep 1
 	# Get the output of the test file
 	local LOCAL_OUTPUT=$(fetch "$LOCAL_URL/$FILE_NAME" "$LOCAL_HTTP_AUTH")
 	# Cleanup the test file
