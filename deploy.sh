@@ -75,6 +75,7 @@ dry)
   (
     cd "$LOCAL_ROOT_DIR"
     rsync --dry-run -avz --delete --relative \
+      --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
@@ -107,6 +108,7 @@ run)
   (
     cd "$LOCAL_ROOT_DIR"
     rsync -avz --delete --relative \
+      --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
