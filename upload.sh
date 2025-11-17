@@ -40,7 +40,7 @@ fi
 USAGE_MESSAGE="Usage:
     ./wp-sync-deploy/push.sh <production|staging> --paths='file1 folder1 folder2'"
 
-checkRemoteRootExistsAndIsEmpty
+checkIsDeploymentAllowed
 
 logSuccess "All checks successful! Proceeding ..."
 logLine
@@ -49,7 +49,7 @@ logLine
 log "📦 Remote host: ${BLUE}$PRETTY_REMOTE_HOST${NC}"
 log "📦 Remote dir: ${BLUE}$REMOTE_ROOT_DIR${NC}"
 log "📦 Upload: ${BLUE}$(echo "$DEPLOY_PATHS" | sed 's/ /, /g')${NC}"
-log "📦 Proceed?"
+log "📦 Proceed? Existing files & folders on the remote server will be skipped."
 read -r -p "[y/n] " PROMPT_RESPONSE
 
 # Exit if not confirmed
@@ -57,11 +57,18 @@ read -r -p "[y/n] " PROMPT_RESPONSE
 
 log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Pushing to $PRETTY_REMOTE_ENV ..."
 
+# Always include all files to upload
+for file in $DEPLOY_PATHS; do
+    INCLUDE_ARGS+="--include=$file "
+done
+
 # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
 (
   cd "$LOCAL_ROOT_DIR"
-  rsync -avz --delete --relative \
+  rsync -avz --ignore-existing --relative \
+    --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
     -e "ssh -p $REMOTE_SSH_PORT" \
+    $INCLUDE_ARGS \
     --exclude-from="$DEPLOYIGNORE_FILE" \
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
