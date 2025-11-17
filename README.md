@@ -88,7 +88,7 @@ wp-sync-deploy performs a few security checks before proceeding with a deploy:
 
 So when you are starting, you will need to
 
-- Perform the first deployment manually
+- Perform the first deployment manually (or via the command `upload.sh`)
 - Add an empty file `.allow-deployment` to your remote web root
 - Make sure that your local and remote server are set to use the same PHP version
 
@@ -129,6 +129,19 @@ So when you are starting, you will need to
 
 # deploy your files to your staging server (non-dry)
 ./wp-sync-deploy/deploy.sh staging run
+```
+
+### Simple Upload
+
+To make sure you are uploading to the correct directory, the remote directory needs to
+contain a file `.allow-delpoyment`
+
+```shell
+# Upload files to the remote root
+./wp-sync-deploy/uplad.sh <environment> --paths
+
+# For example:
+./wp-sync-deploy/uplad.sh staging --paths=".env wp-cli.yml config public vendor"
 ```
 
 ## Run automated tasks after each deploy / sync ✨
