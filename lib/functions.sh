@@ -365,7 +365,7 @@ function runRemoteTasks() {
 	# Upload the file to the remote web root
 	scp -P "$REMOTE_SSH_PORT" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT"
 
-	# Execute the file on the remote server
+	# Execute the file on the remote server, passing in the current $TASK ("deploy" or "sync")
 	wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
 }
 
