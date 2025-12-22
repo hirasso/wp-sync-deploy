@@ -38,32 +38,22 @@ function ask(string $question, string $options = 'y/n')
     return strtolower(trim(fgets(STDIN)));
 }
 
+/** Clear all transients */
+\WP_CLI::runcommand('transient delete --all');
+/** Clear the WP SuperCache cache if it exists */
+if (function_exists('wp_cache_clear_cache')) {
+    wp_cache_clear_cache();
+    \WP_CLI::success('Cleared WP Super Cache cache');
+}
+
 /**
- * Tasks on the target server when deploying
+ * Run tasks anytime you deploy
  */
 if ($task === 'deploy') {
     /** Activate all plugins */
     \WP_CLI::runcommand('plugin activate --all');
     /** Update the database */
     \WP_CLI::runcommand('core update-db');
-}
-
-/**
- * Clear the cache on this install
- */
-if (ask("Do you want to clear the cache on '$host'?") === 'y') {
-    // delete all transients
-    \WP_CLI::runcommand('transient delete --all');
-    // delete the Super Cache files if the function exists
-    if (function_exists('wp_cache_clear_cache')) {
-        wp_cache_clear_cache();
-        \WP_CLI::success('Cleared the cache');
-    }
-}
-
-/**
- * Flush the rewrite rules
- */
-if ($task === 'deploy' && ask("Do you want to flush the rewrite rules on '$host'?") === 'y') {
+    /** Flush the rewrite rules */
     \WP_CLI::runcommand('rewrite flush');
 }
