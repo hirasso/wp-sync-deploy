@@ -39,9 +39,17 @@ function dd() {
 }
 
 # Load the env file for wp-sync-deploy
+# - if --config was provided, use that file
 # - first, look for .env.wp-sync-deploy file
 # - second, fall back to the deprecated wp-sync-deploy.env file
 function loadEnvFile() {
+	# Use explicitly provided config file if set via --config
+	if [[ -n "${WP_SYNC_DEPLOY_CONFIG_FILE:-}" ]]; then
+		[ ! -e "$WP_SYNC_DEPLOY_CONFIG_FILE" ] && logError "Config file not found: ${RED}$WP_SYNC_DEPLOY_CONFIG_FILE${NC}"
+		source "$WP_SYNC_DEPLOY_CONFIG_FILE"
+		return
+	fi
+
 	# Find the closest wp-sync-deploy.env file
 	ENV_FILE=$(findUp ".env.wp-sync-deploy" $SCRIPT_DIR)
 

@@ -154,6 +154,19 @@ Default tasks defined in the file are:
 - Optionally delete your static cache
 - When deploying: Optionally update the rewrite rules
 
+## Custom config file
+
+By default, wp-sync-deploy looks for a `.env.wp-sync-deploy` file. You can override this with the `--config` option:
+
+```shell
+./wp-sync-deploy/sync.sh production --config=.env.my-custom-config
+./wp-sync-deploy/deploy.sh production run --config=.env.my-custom-config
+./wp-sync-deploy/upload.sh staging --paths="..." --config=.env.my-custom-config
+```
+
+> [!NOTE]
+> `--config` must come after the required positional arguments.
+
 ## Other notes
 
 wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, you can do so by modifying the file [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore).

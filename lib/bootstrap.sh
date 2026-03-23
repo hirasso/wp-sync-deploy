@@ -8,6 +8,14 @@ set -o pipefail
 # Required positional arguments
 REMOTE_ENV="$1"
 
+# Parse --config option
+WP_SYNC_DEPLOY_CONFIG_FILE=""
+for arg in "$@"; do
+    case $arg in
+        --config=*) WP_SYNC_DEPLOY_CONFIG_FILE="${arg#*=}" ;;
+    esac
+done
+
 # Load the environment file
 loadEnvFile
 
