@@ -371,7 +371,7 @@ function runRemoteTasks() {
 	log "Running ${BLUE}wp eval-file wp-sync-deploy.tasks.php $TASK${NC} on $PRETTY_REMOTE_ENV server ... \n"
 
 	# Upload the file to the remote web root
-	scp -P "$REMOTE_SSH_PORT" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT"
+	rsync -e "ssh -p $REMOTE_SSH_PORT" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT/"
 
 	# Execute the file on the remote server, passing in the current $TASK ("deploy" or "sync")
 	wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
