@@ -211,12 +211,12 @@ function validateUrlIsAvailable() {
 
 # Check the PHP versions on the command line between two environments
 function checkCommandLinePHPVersions() {
-	local LOCAL_OUTPUT=$(php -r 'echo PHP_VERSION;')
+	local LOCAL_OUTPUT=$(php -v | head -n1 | awk '{print $2}')
 	local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
 	log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
-  # The flag "-n" suppresses warnings
-	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -r 'echo PHP_VERSION;'")
+	# The flag "-n" suppresses warnings
+	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -v | head -n1 | awk '{print \$2}'")
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
