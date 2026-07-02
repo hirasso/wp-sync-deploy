@@ -65,10 +65,10 @@ function loadEnvFile() {
 	source $ENV_FILE
 }
 
-# Normalize a path: Currently does nothing
+# Normalize a path: trim trailing slashes
 function normalizePath() {
   local path="${1:-}"
-  echo "$path";
+  trimTrailingSlashes "$path"
 }
 
 # Normalize a URL
