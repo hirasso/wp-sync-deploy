@@ -36,8 +36,13 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PAT
 # Add $ADDITIONAL_DIRS to the end if defined
 [ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_PATHS="$DEPLOY_PATHS $ADDITIONAL_DIRS"
 
-# Default to dry mode
-DEPLOY_MODE="${2:-dry}"
+# Default to dry mode — parse from args, skipping flags (e.g. --config=...)
+DEPLOY_MODE="dry"
+for arg in "${@:2}"; do
+    [[ "$arg" == --* ]] && continue
+    DEPLOY_MODE="$arg"
+    break
+done
 
 
 # Perform checks before proceeding
