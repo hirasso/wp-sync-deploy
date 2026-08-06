@@ -55,7 +55,7 @@ read -r -p "[y/n] " PROMPT_RESPONSE
 # Exit if not confirmed
 [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
-log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Pushing to $PRETTY_REMOTE_ENV ..."
+log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Uploading to $PRETTY_REMOTE_ENV ..."
 
 # Always include all files to upload
 for file in $DEPLOY_PATHS; do
@@ -74,4 +74,4 @@ done
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
 
-log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Push to $PRETTY_REMOTE_ENV completed"
+log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Upload to $PRETTY_REMOTE_ENV completed"
