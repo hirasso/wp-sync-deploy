@@ -450,3 +450,91 @@ function pushDatabase() {
 
 	logLine && logSuccess "Pushed the database from ${GREEN}$LOCAL_URL${NC} to ${GREEN}$REMOTE_URL${NC}"
 }
+
+# Resolve the rsync binary to use.
+#
+# macOS 26 replaced GNU rsync in /usr/bin/rsync with openrsync, whose --delete
+# semantics are unsafe here — see requireGnuRsync() for the details.
+#
+# Honours $RSYNC_BIN if set, otherwise prefers a Homebrew GNU rsync.
+function resolveRsyncBin() {
+	local bin="${RSYNC_BIN:-}"
+
+	if [[ -z "$bin" ]]; then
+		for candidate in /opt/homebrew/bin/rsync /usr/local/bin/rsync rsync; do
+			if command -v "$candidate" >/dev/null 2>&1; then
+				bin=$(command -v "$candidate")
+				break
+			fi
+		done
+	fi
+
+	[[ -z "$bin" ]] && logError "No rsync binary found. Please install rsync."
+	command -v "$bin" >/dev/null 2>&1 || logError "rsync binary not found: ${RED}$bin${NC}"
+
+	echo "$bin"
+}
+
+# Abort if the resolved rsync is openrsync.
+#
+# openrsync's --delete is inverted relative to GNU rsync and cannot be made
+# safe with filter rules. Verified against openrsync (protocol 29) on macOS 26:
+#
+#   - it DOES delete inside the implied parent directories of --relative paths
+#     (so $PUBLIC_DIR/wp-config.php, $PUBLIC_DIR/index.php, $PUBLIC_DIR/.htaccess
+#     and $WP_CONTENT_DIR/uploads all get wiped)
+#   - it does NOT delete stale files inside the directories actually being
+#     transferred (so removed plugins/themes linger forever)
+#
+# Both behaviours persist regardless of any `P` protect rules, so there is no
+# safe invocation. Refuse to run instead.
+function requireGnuRsync() {
+	local bin="$1"
+
+	# Avoid a pipeline here: `set -o pipefail` would surface the SIGPIPE from
+	# `--version` once grep/head exit early and mask the match.
+	local version
+	version=$("$bin" --version 2>&1 || true)
+	[[ "$version" == *openrsync* || "$version" == *OpenRSYNC* ]] || return 0
+
+	log "🚨${BOLD}${RED} Error: openrsync detected${NC} at ${BLUE}$bin${NC}"
+	log ""
+	log "   macOS 26 replaced GNU rsync in /usr/bin/rsync with openrsync, whose"
+	log "   ${BOLD}--delete${NORMAL} behaviour is unsafe for deployments: it deletes undeployed"
+	log "   files such as ${BLUE}$PUBLIC_DIR/wp-config.php${NC} and ${BLUE}$PUBLIC_DIR/index.php${NC},"
+	log "   while leaving stale plugins and themes in place."
+	log ""
+	log "   Install GNU rsync:  ${BLUE}brew install rsync${NC}"
+	log "   Or point wp-sync-deploy at one:  ${BLUE}export RSYNC_BIN=/path/to/gnu/rsync${NC}"
+	logLine
+	exit 1
+}
+
+# Build `protect` filter rules for the implied parent directories of the given
+# deploy paths, so that files we never deploy can't be deleted by --delete.
+#
+# For a deploy path of `public/content/plugins` this emits:
+#   P /public/content/*
+#   P /public/*
+#
+# `P /dir/*` protects the direct children of /dir only — files *inside* the
+# deployed directories themselves are still deleted when they go stale.
+function buildProtectFilters() {
+	local paths="$1"
+	local -a rules=()
+	local path parent rule seen=""
+
+	for path in $paths; do
+		parent=$(dirname "$path")
+		while [[ "$parent" != "." && "$parent" != "/" && "$parent" != "" ]]; do
+			rule="P /$parent/*"
+			if [[ "$seen" != *"[$rule]"* ]]; then
+				seen="$seen[$rule]"
+				rules+=("--filter=$rule")
+			fi
+			parent=$(dirname "$parent")
+		done
+	done
+
+	printf '%s\n' "${rules[@]}"
+}

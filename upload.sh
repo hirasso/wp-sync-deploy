@@ -65,7 +65,7 @@ done
 # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
 (
   cd "$LOCAL_ROOT_DIR"
-  rsync -avz --ignore-existing --relative \
+  "$RSYNC_BIN" -avz --ignore-existing --relative \
     --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
     -e "ssh -p $REMOTE_SSH_PORT" \
     $INCLUDE_ARGS \

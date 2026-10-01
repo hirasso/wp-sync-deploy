@@ -71,6 +71,13 @@ logLine
 # Doing that after `checkDeployPaths` as it doesn't require an existence check.
 test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR/favicon.ico"
 
+# Protect the direct children of every implied parent directory from --delete,
+# so undeployed files like $PUBLIC_DIR/wp-config.php, $PUBLIC_DIR/index.php or
+# $WP_CONTENT_DIR/uploads can never be removed. Required for openrsync, and a
+# sane safety net for GNU rsync too.
+# @see buildProtectFilters() in lib/functions.sh
+IFS=$'\n' read -r -d '' -a PROTECT_FILTERS < <(buildProtectFilters "$DEPLOY_PATHS" && printf '\0')
+
 case $DEPLOY_MODE in
 
 dry)
@@ -79,9 +86,10 @@ dry)
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
-    rsync --dry-run -avz --delete --relative \
+    "$RSYNC_BIN" --dry-run -avz --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
+      "${PROTECT_FILTERS[@]}" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
@@ -112,9 +120,10 @@ run)
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
-    rsync -avz --delete --relative \
+    "$RSYNC_BIN" -avz --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
+      "${PROTECT_FILTERS[@]}" \
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )

@@ -98,6 +98,10 @@ WP_CORE_DIR=$(relativePath $(normalizePath "$WP_CORE_DIR"))
 LOCAL_URL=$(normalizeUrl "${LOCAL_PROTOCOL}://${LOCAL_HOST}")
 REMOTE_URL=$(normalizeUrl "${REMOTE_PROTOCOL}://${REMOTE_HOST}")
 
+# Resolve the rsync binary and refuse to run on openrsync
+RSYNC_BIN=$(resolveRsyncBin)
+requireGnuRsync "$RSYNC_BIN"
+
 # Validate the DEPLOY_STRATEGY
 if ! [[ "$DEPLOY_STRATEGY" =~ ^(conservative|risky)$ ]]; then
     logError "\$${REMOTE_ENV_PREFIX}DEPLOY_STRATEGY must either be 'conservative' or 'risky'. (provided value: '$DEPLOY_STRATEGY')"
