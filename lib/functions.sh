@@ -327,8 +327,9 @@ function installRemoteWpCli() {
 	# Get the hashed filename of the wp-cli.phar
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
-	# Don't install twice
+	# Don't install twice, but keep an existing install up to date
 	if [ $(checkRemoteFile "$REMOTE_WEB_ROOT/$WP_CLI_PHAR") == 1 ]; then
+		updateRemoteWpCli
 		logSuccess "WP-CLI available on the remote server."
 		return
 	fi
@@ -340,6 +341,26 @@ function installRemoteWpCli() {
 	[ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
 
 	logSuccess "WP-CLI installed on the remote server\n"
+}
+
+# Update an existing WP-CLI on the remote server, once per script run.
+# A stale phar can emit deprecation notices under newer PHP versions.
+# A marker file is used instead of a variable, as wpRemote often runs in a
+# subshell when its output is piped. $$ stays the same in those subshells.
+WP_CLI_UPDATE_MARKER="${TMPDIR:-/tmp}/wp-sync-deploy-wp-cli-updated-$$"
+function updateRemoteWpCli() {
+	[ -e "$WP_CLI_UPDATE_MARKER" ] && return
+	touch "$WP_CLI_UPDATE_MARKER"
+
+	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
+	local RESULT
+
+	if ! RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR cli update --yes 2>&1"); then
+		log "⚠️  Failed to update WP-CLI on the remote server:\n\r$RESULT"
+		return
+	fi
+
+	log "$RESULT"
 }
 
 # Run wp cli on a remote server, forwarding all arguments

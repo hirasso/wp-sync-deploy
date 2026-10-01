@@ -16,6 +16,9 @@ for arg in "$@"; do
     esac
 done
 
+# Clean up the WP-CLI update marker (see updateRemoteWpCli)
+trap 'rm -f "$WP_CLI_UPDATE_MARKER"' EXIT
+
 # Load the environment file
 loadEnvFile
 
