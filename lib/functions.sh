@@ -453,8 +453,8 @@ function pushDatabase() {
 
 # Resolve the rsync binary to use.
 #
-# macOS 26 replaced GNU rsync in /usr/bin/rsync with openrsync, whose --delete
-# semantics are unsafe here — see requireGnuRsync() for the details.
+# Recent macOS releases ship openrsync as /usr/bin/rsync instead of GNU rsync,
+# and its --delete semantics are unsafe here — see requireGnuRsync() for details.
 #
 # Honours $RSYNC_BIN if set, otherwise prefers a Homebrew GNU rsync.
 function resolveRsyncBin() {
@@ -478,7 +478,8 @@ function resolveRsyncBin() {
 # Abort if the resolved rsync is openrsync.
 #
 # openrsync's --delete is inverted relative to GNU rsync and cannot be made
-# safe with filter rules. Verified against openrsync (protocol 29) on macOS 26:
+# safe with filter rules. Verified against openrsync (protocol 29, reporting
+# itself as "rsync version 2.6.9 compatible") on macOS 27:
 #
 #   - it DOES delete inside the implied parent directories of --relative paths
 #     (so $PUBLIC_DIR/wp-config.php, $PUBLIC_DIR/index.php, $PUBLIC_DIR/.htaccess
@@ -499,10 +500,13 @@ function requireGnuRsync() {
 
 	log "🚨${BOLD}${RED} Error: openrsync detected${NC} at ${BLUE}$bin${NC}"
 	log ""
-	log "   macOS 26 replaced GNU rsync in /usr/bin/rsync with openrsync, whose"
-	log "   ${BOLD}--delete${NORMAL} behaviour is unsafe for deployments: it deletes undeployed"
+	log "   Recent macOS releases ship openrsync as /usr/bin/rsync instead of GNU"
+	log "   rsync. Its ${BOLD}--delete${NORMAL} is unsafe for deployments: it deletes undeployed"
 	log "   files such as ${BLUE}$PUBLIC_DIR/wp-config.php${NC} and ${BLUE}$PUBLIC_DIR/index.php${NC},"
 	log "   while leaving stale plugins and themes in place."
+	log ""
+	log "   Note openrsync reports ${BLUE}rsync version 2.6.9 compatible${NC}, so a version"
+	log "   check won't catch it — this guard greps for ${BLUE}openrsync${NC} instead."
 	log ""
 	log "   Install GNU rsync:  ${BLUE}brew install rsync${NC}"
 	log "   Or point wp-sync-deploy at one:  ${BLUE}export RSYNC_BIN=/path/to/gnu/rsync${NC}"
