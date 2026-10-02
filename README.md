@@ -35,31 +35,6 @@ A bash script that helps you
 ## Installation
 
 ```shell
-# CD into your project's root folder
-cd /path/to/your/root
-
-# Clone this repo
-git clone git@github.com:hirasso/wp-sync-deploy.git
-
-# Make sure the scripts are exectutable
-chmod +x ./wp-sync-deploy/*.sh
-```
-
-Alternatively, you can install this script as submodule:
-
-```shell
-git submodule add git@github.com:hirasso/wp-sync-deploy.git
-```
-
-If you want to clone your main repo and already have wp-sync-deploy as a submodule, use this command:
-
-```shell
-git clone --recurse-submodules git@github.com:yourname/your-repo.git
-```
-
-### Installation via composer
-
-```shell
 composer require --dev hirasso/wp-sync-deploy
 ```
 
@@ -67,9 +42,6 @@ All scripts are then available through a single binary:
 
 ```shell
 vendor/bin/wp-sync-deploy <setup|sync|deploy|upload> [args]
-
-# For example:
-vendor/bin/wp-sync-deploy deploy production run
 ```
 
 Optionally, add script aliases to your project's `composer.json`:
@@ -89,12 +61,9 @@ Optionally, add script aliases to your project's `composer.json`:
 
 ### Setup
 
-Run this script:
+Run this command:
 
 ```shell
-./wp-sync-deploy/setup.sh
-
-# or, if installed via composer:
 vendor/bin/wp-sync-deploy setup
 ```
 
@@ -131,16 +100,16 @@ So when you are starting, you will need to
 
 ```shell
 # sync the database from your production server
-./wp-sync-deploy/sync.sh production
+vendor/bin/wp-sync-deploy sync production
 
 # sync the database from your staging server
-./wp-sync-deploy/sync.sh staging
+vendor/bin/wp-sync-deploy sync staging
 
 # push your local database to your staging server
-./wp-sync-deploy/sync.sh staging push
+vendor/bin/wp-sync-deploy sync staging push
 
 # Backup the remote database and store it locally
-./wp-sync-deploy/sync.sh <production|staging> backup
+vendor/bin/wp-sync-deploy sync <production|staging> backup
 ```
 
 > [!NOTE]
@@ -152,16 +121,16 @@ So when you are starting, you will need to
 
 ```shell
 # deploy your files to your production server (dry)
-./wp-sync-deploy/deploy.sh production
+vendor/bin/wp-sync-deploy deploy production
 
 # deploy your files to your staging server (dry)
-./wp-sync-deploy/deploy.sh staging
+vendor/bin/wp-sync-deploy deploy staging
 
 # deploy your files to your production server (non-dry)
-./wp-sync-deploy/deploy.sh production run
+vendor/bin/wp-sync-deploy deploy production run
 
 # deploy your files to your staging server (non-dry)
-./wp-sync-deploy/deploy.sh staging run
+vendor/bin/wp-sync-deploy deploy staging run
 ```
 
 ### Simple Upload
@@ -171,10 +140,10 @@ contain a file `.allow-delpoyment`
 
 ```shell
 # Upload files to the remote root
-./wp-sync-deploy/uplad.sh <environment> --paths
+vendor/bin/wp-sync-deploy upload <environment> --paths
 
 # For example:
-./wp-sync-deploy/uplad.sh staging --paths=".env wp-cli.yml config public vendor"
+vendor/bin/wp-sync-deploy upload staging --paths=".env wp-cli.yml config public vendor"
 ```
 
 ## Run automated tasks after each deploy / sync ✨
@@ -192,9 +161,9 @@ Default tasks defined in the file are:
 By default, wp-sync-deploy looks for a `.env.wp-sync-deploy` file. You can override this with the `--config` option:
 
 ```shell
-./wp-sync-deploy/sync.sh production --config=.env.my-custom-config
-./wp-sync-deploy/deploy.sh production run --config=.env.my-custom-config
-./wp-sync-deploy/upload.sh staging --paths="..." --config=.env.my-custom-config
+vendor/bin/wp-sync-deploy sync production --config=.env.my-custom-config
+vendor/bin/wp-sync-deploy deploy production run --config=.env.my-custom-config
+vendor/bin/wp-sync-deploy upload staging --paths="..." --config=.env.my-custom-config
 ```
 
 > [!NOTE]
