@@ -1,6 +1,6 @@
 # WordPress Sync & Deploy
 
-A bash script that helps you
+A CLI tool that helps you
 
 - sync your WordPress database from production or staging to your local dev environment
 - deploy your local core, plugins, mu-plugins and theme to production or staging
@@ -38,7 +38,7 @@ A bash script that helps you
 composer require --dev hirasso/wp-sync-deploy
 ```
 
-All scripts are then available through a single binary:
+All commands are then available through a single binary:
 
 ```shell
 vendor/bin/wp-sync-deploy <setup|sync|deploy|upload> [args]
@@ -90,7 +90,7 @@ wp-sync-deploy performs a few security checks before proceeding with a deploy:
 
 So when you are starting, you will need to
 
-- Perform the first deployment manually (or via the command `upload.sh`)
+- Perform the first deployment manually (or via the [upload](#simple-upload) command)
 - Add an empty file `.allow-deployment` to your remote web root
 - Make sure that your local and remote server are set to use the same PHP version
 
@@ -136,7 +136,7 @@ vendor/bin/wp-sync-deploy deploy staging run
 ### Simple Upload
 
 To make sure you are uploading to the correct directory, the remote directory needs to
-contain a file `.allow-delpoyment`
+contain a file `.allow-deployment`
 
 ```shell
 # Upload files to the remote root
@@ -148,7 +148,7 @@ vendor/bin/wp-sync-deploy upload staging --paths=".env wp-cli.yml config public 
 
 ## Run automated tasks after each deploy / sync ✨
 
-wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup script](#setup), to customize which tasks should be executed.
+wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup command](#setup), to customize which tasks should be executed.
 
 Default tasks defined in the file are:
 
