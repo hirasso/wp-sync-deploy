@@ -168,6 +168,28 @@ function checkIsDeploymentAllowed() {
 	fi
 }
 
+# Warn if the installed version is below the minimum version on main
+function checkMinimumSelfVersion() {
+	local installed_json="$SCRIPT_DIR/../../composer/installed.json"
+	[ -f "$installed_json" ] || return 0
+
+	local installed
+	installed=$(grep -A1 '"name": "hirasso/wp-sync-deploy"' "$installed_json" | sed -n 's/.*"version": "\(.*\)".*/\1/p')
+	[[ "$installed" =~ ^[0-9]+(\.[0-9]+)*$ ]] || return 0
+
+	local minimum
+	minimum=$(curl -fsSL --max-time 2 "https://raw.githubusercontent.com/hirasso/wp-sync-deploy/main/.minimum-version") || return 0
+	minimum=$(trimWhitespace "$minimum")
+
+	[ "$(printf '%s\n' "$minimum" "$installed" | sort -V | head -1)" = "$minimum" ] && return 0
+
+	log "⚠️ ${BOLD}${RED}Important update:${NC} wp-sync-deploy $installed is outdated, please update to $minimum or later"
+	log "   ${BLUE}composer update hirasso/wp-sync-deploy${NC}"
+	log "   https://github.com/hirasso/wp-sync-deploy/releases"
+	read -r -p "Continue anyway? [y/n] " PROMPT_RESPONSE
+	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+}
+
 # Check if the remote root is exists
 function checkRemoteRootExists() {
 	# Check if the remote root directory exists

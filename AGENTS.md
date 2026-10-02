@@ -24,3 +24,7 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 - always delete the merged branch afterwards, without asking
 
 Currently I'm working only on the main branch locally, without PRs etc.
+
+## Releasing
+
+- for important releases (e.g. preventing data loss), bump `.minimum-version` to the new version

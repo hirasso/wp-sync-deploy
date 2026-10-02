@@ -22,6 +22,8 @@ trap 'rm -f "$WP_CLI_UPDATE_MARKER"' EXIT
 # Load the environment file
 loadEnvFile
 
+checkMinimumSelfVersion
+
 # Use the project's .deployignore, fall back to the default one
 DEPLOYIGNORE_FILE="$PWD/.deployignore"
 [ -e "$DEPLOYIGNORE_FILE" ] || DEPLOYIGNORE_FILE="$SCRIPT_DIR/.deployignore"
