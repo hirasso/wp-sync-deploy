@@ -1,6 +1,6 @@
 # WordPress Sync & Deploy
 
-A CLI tool that helps you
+Sync and deploy your WordPress website between environments 🔀
 
 - sync your WordPress database from production or staging to your local dev environment
 - deploy your local core, plugins, mu-plugins and theme to production or staging
