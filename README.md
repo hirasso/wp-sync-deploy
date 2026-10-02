@@ -59,6 +59,13 @@ Optionally, add script aliases to your project's `composer.json`:
 
 …so that you can run `composer deploy production run`. The `process-timeout` prevents composer from aborting long-running syncs and deploys.
 
+> [!WARNING]
+> Composer silently drops options like `--config` or `--paths` that are passed to script aliases. Separate them with `--`:
+>
+> ```shell
+> composer deploy -- production run --config=.env.my-custom-config
+> ```
+
 ### Setup
 
 Run this command:
