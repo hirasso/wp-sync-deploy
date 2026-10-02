@@ -1,0 +1,7 @@
+{
+    "name": "hirasso/wp-sync-deploy",
+    "description": "Bash scripts to sync and deploy WordPress sites",
+    "type": "library",
+    "license": "MIT",
+    "bin": ["bin/wp-sync-deploy"]
+}

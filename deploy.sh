@@ -13,7 +13,7 @@
 # `./wp-sync-deploy/deploy.sh <production|staging> run`
 
 # The directory relative to the script
-SCRIPT_DIR=$(realpath $(dirname $0))
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Source files
 source "$SCRIPT_DIR/lib/functions.sh"

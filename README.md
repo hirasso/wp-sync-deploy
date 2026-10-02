@@ -57,12 +57,45 @@ If you want to clone your main repo and already have wp-sync-deploy as a submodu
 git clone --recurse-submodules git@github.com:yourname/your-repo.git
 ```
 
+### Installation via composer
+
+```shell
+composer require --dev hirasso/wp-sync-deploy
+```
+
+All scripts are then available through a single binary:
+
+```shell
+vendor/bin/wp-sync-deploy <setup|sync|deploy|upload> [args]
+
+# For example:
+vendor/bin/wp-sync-deploy deploy production run
+```
+
+Optionally, add script aliases to your project's `composer.json`:
+
+```json
+"scripts": {
+  "sync": "wp-sync-deploy sync",
+  "deploy": "wp-sync-deploy deploy",
+  "upload": "wp-sync-deploy upload"
+},
+"config": {
+  "process-timeout": 0
+}
+```
+
+…so that you can run `composer deploy production run`. The `process-timeout` prevents composer from aborting long-running syncs and deploys.
+
 ### Setup
 
 Run this script:
 
 ```shell
 ./wp-sync-deploy/setup.sh
+
+# or, if installed via composer:
+vendor/bin/wp-sync-deploy setup
 ```
 
 This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:

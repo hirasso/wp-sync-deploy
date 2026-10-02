@@ -59,7 +59,7 @@ function loadEnvFile() {
 	fi
 
 	# Throw an error if no env file could be found
-	[ -z "$ENV_FILE" ] && logError "No .env.wp-sync-deploy file found. Please run ${BLUE}./wp-sync-deploy/setup.sh${NC} and adjust your env file afterwards"
+	[ -z "$ENV_FILE" ] && logError "No .env.wp-sync-deploy file found. Please run the ${BLUE}setup${NC} command and adjust your env file afterwards"
 
 	# Load the environment variables
 	source $ENV_FILE
