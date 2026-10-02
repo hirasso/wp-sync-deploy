@@ -22,8 +22,9 @@ trap 'rm -f "$WP_CLI_UPDATE_MARKER"' EXIT
 # Load the environment file
 loadEnvFile
 
-# Find the deployignore file
-DEPLOYIGNORE_FILE=$(findUp ".deployignore" $SCRIPT_DIR)
+# Use the project's .deployignore, fall back to the default one
+DEPLOYIGNORE_FILE="$PWD/.deployignore"
+[ -e "$DEPLOYIGNORE_FILE" ] || DEPLOYIGNORE_FILE="$SCRIPT_DIR/.deployignore"
 
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)

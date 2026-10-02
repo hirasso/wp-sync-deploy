@@ -171,4 +171,4 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=.env.my-custom-c
 
 ## Other notes
 
-wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, you can do so by modifying the file [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore).
+wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, copy the default [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore) to your project root and adjust it there. It will then be used instead of the default one.

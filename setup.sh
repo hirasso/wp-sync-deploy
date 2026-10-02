@@ -4,7 +4,7 @@
 #
 # COMMAND:
 #
-# `./wp-sync-deploy/setup.sh`
+# `vendor/bin/wp-sync-deploy setup`
 #
 
 # The directory relative to the script

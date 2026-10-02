@@ -9,13 +9,22 @@
 # COMMANDS:
 #
 # Upload to production or staging
-# `./wp-sync-deploy/upload.sh <production|staging> --paths="file1 folder1 folder2"`
+# `vendor/bin/wp-sync-deploy upload <production|staging> --paths="file1 folder1 folder2"`
 
 # The directory relative to the script
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Source files
 source "$SCRIPT_DIR/lib/functions.sh"
+
+# Will be displayed if no arguments are being provided
+USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#simple-upload
+
+vendor/bin/wp-sync-deploy upload <production|staging> --paths='file1 folder1 folder2'"
+
+# Exit early if we received no arguments
+[ $# -eq 0 ] && logError "$USAGE_MESSAGE"
+
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
 # Default value for DEPLOY_PATHS
@@ -33,12 +42,8 @@ done
 
 # Check if DEPLOY_PATHS is empty
 if [[ -z "$DEPLOY_PATHS" ]]; then
-    logError "The --paths option was not provided or is empty."
+    logError "The --paths option was not provided or is empty.\n\n$USAGE_MESSAGE"
 fi
-
-# Will be displayed if no arguments are being provided
-USAGE_MESSAGE="Usage:
-    ./wp-sync-deploy/push.sh <production|staging> --paths='file1 folder1 folder2'"
 
 checkIsDeploymentAllowed
 

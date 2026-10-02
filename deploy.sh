@@ -7,25 +7,26 @@
 # COMMANDS:
 #
 # Deploy to production or staging (dry run)
-# `./wp-sync-deploy/deploy.sh <production|staging>`
+# `vendor/bin/wp-sync-deploy deploy <production|staging>`
 #
 # Deploy to production or staging (RUN!)
-# `./wp-sync-deploy/deploy.sh <production|staging> run`
+# `vendor/bin/wp-sync-deploy deploy <production|staging> run`
 
 # The directory relative to the script
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
 # Source files
 source "$SCRIPT_DIR/lib/functions.sh"
-source "$SCRIPT_DIR/lib/bootstrap.sh"
 
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-local-files-to-remote-environments
 
-./wp-sync-deploy/deploy.sh <production|staging> [run] "
+vendor/bin/wp-sync-deploy deploy <production|staging> [run] "
 
 # Exit early if we received no arguments
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
+
+source "$SCRIPT_DIR/lib/bootstrap.sh"
 
 # Construct the directories to deploy from the provided env variables
 DEPLOY_PATHS="$WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes"
