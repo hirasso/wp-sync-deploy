@@ -535,31 +535,56 @@ function requireGnuRsync() {
 	exit 1
 }
 
+# Check if a path equals or is nested inside one of the given deploy paths
+function isInsideDeployPaths() {
+	local path="$1" deployPath
+	for deployPath in $2; do
+		[[ "$path" == "$deployPath" || "$path" == "$deployPath/"* ]] && return 0
+	done
+	return 1
+}
+
 # Build `protect` filter rules for the implied parent directories of the given
 # deploy paths, so that files we never deploy can't be deleted by --delete.
 #
 # For a deploy path of `public/content/plugins` this emits:
+#   R /public/content/plugins
+#   R /public/content
+#   R /public
 #   P /public/content/*
 #   P /public/*
 #
 # `P /dir/*` protects the direct children of /dir only — files *inside* the
 # deployed directories themselves are still deleted when they go stale.
+# The leading `R` rules exempt the deployed paths and their parents (first match
+# wins), as older receivers (e.g. rsync 3.1.3) abort on file-list names matching a `P`.
 function buildProtectFilters() {
 	local paths="$1"
-	local -a rules=()
+	local -a risks=() protects=()
 	local path parent rule seen=""
 
 	for path in $paths; do
+		parent="$path"
+		while [[ "$parent" != "." && "$parent" != "/" && "$parent" != "" ]]; do
+			rule="R /$parent"
+			if [[ "$seen" != *"[$rule]"* ]]; then
+				seen="$seen[$rule]"
+				risks+=("--filter=$rule")
+			fi
+			parent=$(dirname "$parent")
+		done
+
 		parent=$(dirname "$path")
 		while [[ "$parent" != "." && "$parent" != "/" && "$parent" != "" ]]; do
 			rule="P /$parent/*"
-			if [[ "$seen" != *"[$rule]"* ]]; then
+			# Skip parents that are deployed themselves, so --delete stays effective there
+			if ! isInsideDeployPaths "$parent" "$paths" && [[ "$seen" != *"[$rule]"* ]]; then
 				seen="$seen[$rule]"
-				rules+=("--filter=$rule")
+				protects+=("--filter=$rule")
 			fi
 			parent=$(dirname "$parent")
 		done
 	done
 
-	printf '%s\n' "${rules[@]}"
+	printf '%s\n' "${risks[@]}" "${protects[@]}"
 }
