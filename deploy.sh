@@ -72,6 +72,9 @@ logLine
 # Doing that after `checkDeployPaths` as it doesn't require an existence check.
 test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR/favicon.ico"
 
+checkWPVersions
+logLine
+
 # Protect the direct children of every implied parent directory from --delete,
 # so undeployed files like $PUBLIC_DIR/wp-config.php, $PUBLIC_DIR/index.php or
 # $WP_CONTENT_DIR/uploads can never be removed. Required for openrsync, and a

@@ -610,3 +610,39 @@ function buildProtectFilters() {
 
 	printf '%s\n' "${risks[@]}" "${protects[@]}"
 }
+
+# Read the WordPress version from a version.php file passed via stdin
+function readWPVersion() {
+	sed -n "s/^\$wp_version = '\(.*\)';.*/\1/p"
+}
+
+# Abort if the remote WordPress version is newer than the local one
+# (e.g. a security update applied on the server), as the deploy would downgrade it.
+function checkWPVersions() {
+	local VERSION_FILE="$WP_CORE_DIR/wp-includes/version.php"
+	local LOCAL_VERSION=$(readWPVersion <"$LOCAL_ROOT_DIR/$VERSION_FILE")
+	local REMOTE_VERSION=$($SSH_CONNECTION "cat \"$REMOTE_ROOT_DIR/$VERSION_FILE\" 2>/dev/null" | readWPVersion)
+
+	[[ -z "$LOCAL_VERSION" ]] && logError "Couldn't detect the local WordPress version"
+	# Nothing to compare on a fresh remote
+	[[ -z "$REMOTE_VERSION" ]] && return 0
+
+	log "- WordPress version at $PRETTY_LOCAL_ENV: ${BLUE}$LOCAL_VERSION${NC}"
+	log "- WordPress version at $PRETTY_REMOTE_ENV: ${BLUE}$REMOTE_VERSION${NC}"
+
+	local LOWEST=$(printf '%s\n%s\n' "$LOCAL_VERSION" "$REMOTE_VERSION" | sort -V | head -n1)
+	if [[ "$LOCAL_VERSION" == "$REMOTE_VERSION" || "$LOWEST" == "$REMOTE_VERSION" ]]; then
+		logSuccess "Local WordPress version is up to date"
+		return 0
+	fi
+
+	log "🚨 ${BOLD}${RED}WordPress at $PRETTY_REMOTE_ENV is newer than locally${NC}${NORMAL}"
+	log "   The deploy would downgrade it from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
+
+	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
+
+	log "Deploy anyway?"
+	read -r -p "[y/n] " PROMPT_RESPONSE
+	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+	return 0
+}

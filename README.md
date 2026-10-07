@@ -140,6 +140,8 @@ vendor/bin/wp-sync-deploy deploy production run
 vendor/bin/wp-sync-deploy deploy staging run
 ```
 
+Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server).
+
 ### Simple Upload
 
 To make sure you are uploading to the correct directory, the remote directory needs to
