@@ -138,6 +138,9 @@ vendor/bin/wp-sync-deploy deploy production run
 
 # deploy your files to your staging server (non-dry)
 vendor/bin/wp-sync-deploy deploy staging run
+
+# deploy without the confirmation prompt
+vendor/bin/wp-sync-deploy deploy production run --yes
 ```
 
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server).

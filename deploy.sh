@@ -21,7 +21,7 @@ source "$SCRIPT_DIR/lib/functions.sh"
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-local-files-to-remote-environments
 
-vendor/bin/wp-sync-deploy deploy <production|staging> [run] "
+vendor/bin/wp-sync-deploy deploy <production|staging> [run] [--yes]"
 
 # Exit early if we received no arguments
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
@@ -45,6 +45,11 @@ for arg in "${@:2}"; do
     break
 done
 
+# Skip the deploy confirmation if --yes was provided
+SKIP_CONFIRM=false
+for arg in "${@:2}"; do
+    [[ "$arg" == "--yes" ]] && SKIP_CONFIRM=true
+done
 
 # Perform checks before proceeding
 case $DEPLOY_STRATEGY in
@@ -110,11 +115,13 @@ run)
 
   conservative)
     # Confirm the deployment if the deploy strategy is conservative
-    log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST" ?
-    read -r -p "[y/n] " PROMPT_RESPONSE
+    if [[ "$SKIP_CONFIRM" != true ]]; then
+      log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST" ?
+      read -r -p "[y/n] " PROMPT_RESPONSE
 
-    # Exit if not confirmed
-    [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+      # Exit if not confirmed
+      [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+    fi
     ;;
 
   esac
