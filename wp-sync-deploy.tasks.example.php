@@ -50,8 +50,6 @@ if (function_exists('wp_cache_clear_cache')) {
  * Run tasks anytime you deploy
  */
 if ($task === 'deploy') {
-    /** Activate all plugins */
-    \WP_CLI::runcommand('plugin activate --all');
     /** Update the database */
     \WP_CLI::runcommand('core update-db');
     /** Flush the rewrite rules */
