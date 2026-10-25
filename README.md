@@ -143,7 +143,7 @@ vendor/bin/wp-sync-deploy deploy staging run
 vendor/bin/wp-sync-deploy deploy production run --yes
 ```
 
-Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server).
+Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
 ### Simple Upload
 

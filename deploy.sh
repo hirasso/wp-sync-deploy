@@ -78,6 +78,7 @@ logLine
 test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR/favicon.ico"
 
 checkWPVersions
+checkExtensionVersions
 logLine
 
 # Protect the direct children of every implied parent directory from --delete,

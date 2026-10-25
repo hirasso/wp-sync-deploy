@@ -646,3 +646,67 @@ function checkWPVersions() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 	return 0
 }
+
+# List all plugins and themes in a content dir as "<key>\t<version>"
+# Runs both locally and remotely (via `declare -f`), so keep it self-contained
+function listExtensionVersions() {
+	cd "$1" 2>/dev/null || return 0
+	for file in plugins/*.php plugins/*/*.php themes/*/style.css; do
+		[ -f "$file" ] || continue
+		key="${file%/*}"
+		[ "$key" = "plugins" ] && key="$file"
+		head -c 8192 "$file" | awk -v key="$key" '
+			tolower($0) ~ /^[ \t\/*#@]*(plugin|theme) name:/ { named = 1 }
+			tolower($0) ~ /^[ \t\/*#@]*version:/ && version == "" {
+				version = $0
+				sub(/^[^:]*:[ \t]*/, "", version)
+				sub(/[ \t\r]*$/, "", version)
+			}
+			END { if (named) print key "\t" version }'
+	done | sort -u -t "$(printf '\t')" -k1,1
+}
+
+# Ask for confirmation if plugins or themes at the remote are missing locally
+# or newer than locally (e.g. updated via wp-admin), as the deploy would remove or downgrade them.
+function checkExtensionVersions() {
+	local LOCAL_LIST=$(listExtensionVersions "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR")
+	local REMOTE_LIST=$({
+		declare -f listExtensionVersions
+		echo "listExtensionVersions \"$REMOTE_ROOT_DIR/$WP_CONTENT_DIR\""
+	} | $SSH_CONNECTION bash -s)
+
+	# Nothing to compare on a fresh remote
+	[[ -z "$REMOTE_LIST" ]] && return 0
+
+	local PROBLEMS=""
+	local KEY REMOTE_VERSION LOCAL_ENTRY LOCAL_VERSION LOWEST
+	while IFS=$'\t' read -r KEY REMOTE_VERSION; do
+		LOCAL_ENTRY=$(printf '%s\n' "$LOCAL_LIST" | awk -F'\t' -v key="$KEY" '$1 == key { print "found\t" $2; exit }')
+
+		if [[ -z "$LOCAL_ENTRY" ]]; then
+			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} ($REMOTE_VERSION) is missing locally"
+			continue
+		fi
+
+		LOCAL_VERSION="${LOCAL_ENTRY#found$'\t'}"
+		[[ -z "$LOCAL_VERSION" || -z "$REMOTE_VERSION" || "$LOCAL_VERSION" == "$REMOTE_VERSION" ]] && continue
+
+		LOWEST=$(printf '%s\n%s\n' "$LOCAL_VERSION" "$REMOTE_VERSION" | sort -V | head -n1)
+		[[ "$LOWEST" == "$LOCAL_VERSION" ]] &&
+			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} would be downgraded from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
+	done <<<"$REMOTE_LIST"
+
+	if [[ -z "$PROBLEMS" ]]; then
+		logSuccess "Local plugins and themes are up to date"
+		return 0
+	fi
+
+	log "🚨 ${BOLD}${RED}Plugins or themes at $PRETTY_REMOTE_ENV differ from local${NC}${NORMAL}$PROBLEMS"
+
+	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
+
+	log "Deploy anyway?"
+	read -r -p "[y/n] " PROMPT_RESPONSE
+	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+	return 0
+}
