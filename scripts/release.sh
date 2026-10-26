@@ -138,6 +138,7 @@ git push --quiet --atomic origin main "$VERSION"
 
 PRERELEASE_FLAG=""
 [[ "$IS_RC" == true ]] && PRERELEASE_FLAG="--prerelease"
-gh release create "$VERSION" --verify-tag --title "$VERSION" --notes-file "$NOTES_FILE" $PRERELEASE_FLAG
+# Piped, so gh doesn't query the terminal (leaks escape sequences when run through composer)
+gh release create "$VERSION" --verify-tag --title "$VERSION" --notes-file "$NOTES_FILE" $PRERELEASE_FLAG | cat
 
 logSuccess "Released $VERSION"
