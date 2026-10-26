@@ -73,6 +73,7 @@ esac
 
 checkWPVersions
 checkExtensionVersions
+checkVendorDevPackages
 
 logSuccess "All checks successful! Proceeding ..."
 logLine
@@ -91,6 +92,8 @@ IFS=$'\n' read -r -d '' -a PROTECT_FILTERS < <(buildProtectFilters "$DEPLOY_PATH
 # Build the vendor dir without dev dependencies if composer is configured
 if [ -n "${COMPOSER_DIR+x}" ]; then
   buildVendor
+  # Don't deploy the local vendor dir as part of another deploy path
+  isInsideDeployPaths "$VENDOR_DIR" "$DEPLOY_PATHS" && PROTECT_FILTERS+=("--exclude=/$VENDOR_DIR/")
   logLine
 fi
 

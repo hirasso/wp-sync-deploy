@@ -779,3 +779,22 @@ function deployVendor() {
 		--exclude-from="$DEPLOYIGNORE_FILE" \
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
+
+# Warn about deployed composer vendor dirs that contain dev packages
+function checkVendorDevPackages() {
+	local FILE VENDOR DIR COUNT
+	while IFS= read -r FILE; do
+		VENDOR=$(dirname "$(dirname "$FILE")")
+		DIR=$(dirname "$VENDOR")
+		# Deployed without dev packages through new Composer()
+		[[ -n "${COMPOSER_DIR+x}" && "$DIR" == "$(relativePath "$(normalizePath "$COMPOSER_DIR")")" ]] && continue
+
+		COUNT=$(php -r 'echo count(json_decode(file_get_contents($argv[1]), true)["dev-package-names"] ?? []);' "$LOCAL_ROOT_DIR/$FILE")
+		[[ "$COUNT" == "0" ]] && continue
+
+		local SUGGESTION="new Composer()"
+		[[ "$DIR" != "." ]] && SUGGESTION="new Composer(dir: '$DIR')"
+		log "ℹ️  ${BLUE}$VENDOR${NC} contains ${RED}$COUNT${NC} dev package(s). Use ${BLUE}composer: $SUGGESTION${NC} to deploy it without them"
+	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS -name node_modules -prune -o -path '*/vendor/composer/installed.json' -print 2>/dev/null)
+	return 0
+}
