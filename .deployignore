@@ -34,6 +34,7 @@ node_modules
 
 # Files from this tool
 wp-sync-deploy
+wp-sync-deploy.config.php
 wp-sync-deploy.tasks.php
 
 # DB dumps
