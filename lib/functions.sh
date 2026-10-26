@@ -418,7 +418,7 @@ function wpRemote() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
 	# Construct the remote command
-	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR $ARGS'"
+	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR --url=$REMOTE_URL $ARGS'"
 
 	# @see ChatGPT
 	eval $SSH_COMMAND
