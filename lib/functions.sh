@@ -151,18 +151,29 @@ function validateProductionBranch() {
 
 }
 
-# Ask for confirmation if the git working tree has uncommitted changes
-function checkWorkingTreeClean() {
+# Ask for confirmation if the git repo has uncommitted changes or unpushed commits
+function checkGitState() {
 	[[ -z "${GIT_DIR+x}" || "${REMOTE_ENV}" != "production" ]] && return
 
-	local CHANGES=$(git -C "$(normalizePath "${LOCAL_ROOT_DIR}/${GIT_DIR}")" status --porcelain | wc -l | tr -d ' ')
+	local DIR=$(normalizePath "${LOCAL_ROOT_DIR}/${GIT_DIR}")
+	local CHANGES=$(git -C "$DIR" status --porcelain | wc -l | tr -d ' ')
+	local PROBLEMS=""
 
-	if [[ "$CHANGES" == "0" ]]; then
-		logSuccess "Working tree is clean"
+	[[ "$CHANGES" != "0" ]] && PROBLEMS="$PROBLEMS\n\r   - ${RED}$CHANGES${NC} uncommitted change(s)"
+
+	if git -C "$DIR" rev-parse --verify --quiet "@{upstream}" >/dev/null; then
+		local UNPUSHED=$(git -C "$DIR" rev-list --count "@{upstream}..HEAD")
+		[[ "$UNPUSHED" != "0" ]] && PROBLEMS="$PROBLEMS\n\r   - ${RED}$UNPUSHED${NC} unpushed commit(s)"
+	else
+		PROBLEMS="$PROBLEMS\n\r   - the branch has ${RED}not been pushed${NC} yet"
+	fi
+
+	if [[ -z "$PROBLEMS" ]]; then
+		logSuccess "Git repo is clean and pushed"
 		return
 	fi
 
-	log "🚨 Your working tree has ${RED}$CHANGES${NC} uncommitted change(s)"
+	log "🚨 ${BOLD}${RED}Your git repo differs from the remote repo${NC}${NORMAL}$PROBLEMS"
 
 	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
 
@@ -173,6 +184,7 @@ function checkWorkingTreeClean() {
 		exit
 	fi
 }
+
 
 # Check if there is a file `.allow-deployment` present at the remote root
 function checkIsDeploymentAllowed() {

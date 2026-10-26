@@ -55,13 +55,13 @@ case $DEPLOY_STRATEGY in
 
 risky)
   validateProductionBranch
-  checkWorkingTreeClean
+  checkGitState
   checkRemoteRootExists
   ;;
 
 conservative)
   validateProductionBranch
-  checkWorkingTreeClean
+  checkGitState
   checkRemoteRootExists
   checkIsDeploymentAllowed
   checkCommandLinePHPVersions
