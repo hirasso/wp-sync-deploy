@@ -27,5 +27,11 @@ Currently I'm working only on the main branch locally, without PRs etc.
 
 ## Releasing
 
-- releases are created by the user with `composer release [patch|minor|major|rc]` (`scripts/release.sh`) (changelog, tag, GitHub release)
-- for important releases (e.g. preventing data loss), bump `.minimum-version` to the new version (`--minimum`)
+- releases are created by the user with `composer release [patch|minor|major|rc]` (`scripts/release.sh`). Never run it yourself (interactive, publishes a release)
+- no type: interactive menu with the computed versions. Options need `--`: `composer release -- major --minimum`, `--dry-run` releases nothing
+- `rc`: next release candidate of the next major version (e.g. `4.0.0-rc.4`). `major` promotes existing RCs to stable
+- only from `main`, clean working tree, `main` not behind `origin/main`, version newer than the latest stable tag
+- release notes are generated from commit subjects since the previous tag (stable: previous stable tag) and opened in `$VISUAL`/`$EDITOR`. So keep commit subjects readable
+- stable: prepends the notes to `CHANGELOG.md` and commits `Release x.y.z`. RCs only get a GitHub pre-release
+- then tags, pushes `main` and the tag atomically and creates the GitHub release
+- for important releases (e.g. preventing data loss), bump `.minimum-version` to the new version (`--minimum`, or answer the prompt). Otherwise leave it, so upgrades stay optional
