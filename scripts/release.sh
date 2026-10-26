@@ -91,7 +91,10 @@ trap 'rm -f "$NOTES_FILE"' EXIT
     echo ""
     git log --no-merges --format='- %s' "$PREVIOUS_TAG..HEAD"
 } >"$NOTES_FILE"
-eval "$(git var GIT_EDITOR) \"\$NOTES_FILE\""
+NOTES_EDITOR="${VISUAL:-${EDITOR:-$(git var GIT_EDITOR)}}"
+# GUI editors like VS Code return immediately without --wait
+[[ "$NOTES_EDITOR" =~ ^(code|cursor|subl|zed)$ ]] && NOTES_EDITOR="$NOTES_EDITOR --wait"
+eval "$NOTES_EDITOR \"\$NOTES_FILE\""
 NOTES=$(grep -v '^<!--' "$NOTES_FILE" | sed -e '/./,$!d')
 [ -z "$NOTES" ] && logError "Release notes are empty, aborting"
 printf '%s\n' "$NOTES" >"$NOTES_FILE"
