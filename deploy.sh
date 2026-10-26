@@ -104,7 +104,8 @@ case $DEPLOY_MODE in
 dry)
   log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
-  echo
+  # stderr, like log(), so it stays in order when stdout and stderr are read separately (e.g. by composer)
+  echo >&2
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
@@ -117,6 +118,7 @@ dry)
   ) 2>&1 | tee "$RSYNC_LOG"
   logLine
   if [ -n "${COMPOSER_DIR+x}" ]; then
+    echo >&2
     deployVendor --dry-run 2>&1 | tee "$VENDOR_RSYNC_LOG"
     logLine
   fi
@@ -147,7 +149,8 @@ run)
 
   log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
-  echo
+  # stderr, like log(), so it stays in order when stdout and stderr are read separately (e.g. by composer)
+  echo >&2
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
@@ -160,7 +163,7 @@ run)
   ) 2>&1 | tee "$RSYNC_LOG"
 
   if [ -n "${COMPOSER_DIR+x}" ]; then
-    echo
+    echo >&2
     deployVendor 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi
 
