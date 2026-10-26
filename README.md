@@ -13,7 +13,7 @@ Sync and deploy your WordPress website between environments 🔀
 ## Prerequesites
 
 - [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy takes care of installing WP-CLI automatically.
-- PHP >= 8.1 on your **local machine**
+- PHP >= 8.2 on your **local machine**
 - A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 
 ```shell
@@ -168,7 +168,7 @@ Default tasks defined in the file are:
 
 ## Configuration
 
-wp-sync-deploy is configured through a `wp-sync-deploy.config.php` file returning a typed `WPSyncDeploy\Config` object. Your IDE will autocomplete and document all options. Have a look at the [example file](wp-sync-deploy.config.example.php).
+wp-sync-deploy is configured through a `wp-sync-deploy.config.php` file returning a typed `Hirasso\WPSyncDeploy\Config` object. Your IDE will autocomplete and document all options. Have a look at the [example file](wp-sync-deploy.config.example.php).
 
 The file is meant to be **committed**. For secrets like HTTP auth credentials, use environment variables exported in your shell:
 
@@ -198,7 +198,7 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 
 - **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
 - **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** Run the [setup command](#setup), move your settings over and delete the old file
-- **PHP >= 8.1** is required on your local machine
+- **PHP >= 8.2** is required on your local machine
 
 | `.env.wp-sync-deploy`                           | `wp-sync-deploy.config.php`         |
 | ----------------------------------------------- | ----------------------------------- |

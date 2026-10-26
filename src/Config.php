@@ -1,6 +1,6 @@
 <?php
 
-namespace WPSyncDeploy;
+namespace Hirasso\WPSyncDeploy;
 
 use InvalidArgumentException;
 
@@ -8,7 +8,7 @@ use InvalidArgumentException;
  * The wp-sync-deploy configuration
  * @see https://github.com/hirasso/wp-sync-deploy#configuration
  */
-final class Config
+final readonly class Config
 {
     /**
      * @param Local $local The local environment
@@ -18,11 +18,11 @@ final class Config
      * @param Git|null $git Validate the git branch before deploying to production (optional)
      */
     public function __construct(
-        public readonly Local $local,
-        public readonly Paths $paths,
-        public readonly Remote $production,
-        public readonly ?Remote $staging = null,
-        public readonly ?Git $git = null,
+        public Local $local,
+        public Paths $paths,
+        public Remote $production,
+        public ?Remote $staging = null,
+        public ?Git $git = null,
     ) {}
 
     /** Export as shell variables, to be eval'd by bash */
@@ -78,7 +78,7 @@ final class Config
 /**
  * The local environment
  */
-final class Local
+final readonly class Local
 {
     use HasUrl;
 
@@ -88,9 +88,9 @@ final class Local
      * @param string|null $httpAuth HTTP authentication, e.g. 'username:password' (optional)
      */
     public function __construct(
-        public readonly string $url,
-        public readonly string $rootDir,
-        public readonly ?string $httpAuth = null,
+        public string $url,
+        public string $rootDir,
+        public ?string $httpAuth = null,
     ) {
         $this->validateUrl($url);
         validateAbsolutePath($rootDir, 'rootDir');
@@ -100,7 +100,7 @@ final class Local
 /**
  * A remote environment (production or staging)
  */
-final class Remote
+final readonly class Remote
 {
     use HasUrl;
 
@@ -114,13 +114,13 @@ final class Remote
      * @param string|null $httpAuth HTTP authentication, e.g. 'username:password' (optional)
      */
     public function __construct(
-        public readonly string $url,
-        public readonly string $ssh,
-        public readonly string $rootDir,
-        public readonly int $sshPort = 22,
-        public readonly string $phpBinary = 'php',
-        public readonly DeployStrategy $deployStrategy = DeployStrategy::Conservative,
-        public readonly ?string $httpAuth = null,
+        public string $url,
+        public string $ssh,
+        public string $rootDir,
+        public int $sshPort = 22,
+        public string $phpBinary = 'php',
+        public DeployStrategy $deployStrategy = DeployStrategy::Conservative,
+        public ?string $httpAuth = null,
     ) {
         $this->validateUrl($url);
         validateAbsolutePath($rootDir, 'rootDir');
@@ -131,7 +131,7 @@ final class Remote
 /**
  * Directories, relative to the root dir
  */
-final class Paths
+final readonly class Paths
 {
     /**
      * @param string $wpContent The WordPress content directory, e.g. 'web/app'
@@ -140,10 +140,10 @@ final class Paths
      * @param string[] $additional Additional directories to deploy, e.g. ['vendor', 'config'] (optional)
      */
     public function __construct(
-        public readonly string $wpContent,
-        public readonly string $wpCore,
-        public readonly string $public = '',
-        public readonly array $additional = [],
+        public string $wpContent,
+        public string $wpCore,
+        public string $public = '',
+        public array $additional = [],
     ) {
         validateNotEmpty($wpContent, 'wpContent');
         validateNotEmpty($wpCore, 'wpCore');
@@ -153,15 +153,15 @@ final class Paths
 /**
  * Validate the git branch before deploying to production
  */
-final class Git
+final readonly class Git
 {
     /**
      * @param string $dir The git repo, relative to the root dir
      * @param string $productionBranch Regex of branch(es) allowed to deploy to production
      */
     public function __construct(
-        public readonly string $dir = '',
-        public readonly string $productionBranch = 'master|main',
+        public string $dir = '',
+        public string $productionBranch = 'master|main',
     ) {}
 }
 

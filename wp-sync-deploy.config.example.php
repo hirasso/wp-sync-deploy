@@ -8,12 +8,12 @@
  * @see https://github.com/hirasso/wp-sync-deploy#configuration
  */
 
-use WPSyncDeploy\Config;
-use WPSyncDeploy\DeployStrategy;
-use WPSyncDeploy\Git;
-use WPSyncDeploy\Local;
-use WPSyncDeploy\Paths;
-use WPSyncDeploy\Remote;
+use Hirasso\WPSyncDeploy\Config;
+use Hirasso\WPSyncDeploy\DeployStrategy;
+use Hirasso\WPSyncDeploy\Git;
+use Hirasso\WPSyncDeploy\Local;
+use Hirasso\WPSyncDeploy\Paths;
+use Hirasso\WPSyncDeploy\Remote;
 
 return new Config(
     local: new Local(

@@ -10,7 +10,7 @@ Source of truth for options: `vendor/hirasso/wp-sync-deploy/README.md`, `wp-sync
 ## 1. Install
 
 - Always a dev dependency: `composer require --dev hirasso/wp-sync-deploy` (pre-release: `:^4.0@rc`). Already in `require` → `composer remove --no-update` it first, then require with `--dev`.
-- Local `wp` (WP-CLI), PHP ≥ 8.1 and GNU `rsync` (not macOS openrsync) must exist.
+- Local `wp` (WP-CLI), PHP ≥ 8.2 and GNU `rsync` (not macOS openrsync) must exist.
 
 ## 2. Setup
 
@@ -24,7 +24,7 @@ Creates `wp-sync-deploy.config.php` and `wp-sync-deploy.tasks.php` (keeps existi
 
 ## 3. Configure `wp-sync-deploy.config.php`
 
-Returns a typed `WPSyncDeploy\Config`. Keep the example's docblock and imports; drop unused imports.
+Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and imports; drop unused imports.
 
 - `local`: `url` from `WP_HOME`/`WP_HOME_DEV` in `wp-config.php` (or `ddev describe`). `rootDir` = WP root, relative to the config file via `__DIR__` / `dirname(__DIR__, n)`, never a hardcoded absolute path.
 - `paths`: `wpContent`/`wpCore`/`public` relative to `rootDir` (verify with `ls`); omit `public` if empty.

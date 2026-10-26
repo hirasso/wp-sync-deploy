@@ -14,8 +14,8 @@ try {
     exit(1);
 }
 
-if (!$config instanceof WPSyncDeploy\Config) {
-    fwrite(STDERR, 'The config file must return an instance of WPSyncDeploy\Config' . PHP_EOL);
+if (!$config instanceof Hirasso\WPSyncDeploy\Config) {
+    fwrite(STDERR, 'The config file must return an instance of Hirasso\WPSyncDeploy\Config' . PHP_EOL);
     exit(1);
 }
 
