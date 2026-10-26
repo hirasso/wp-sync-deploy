@@ -118,6 +118,28 @@ function findUp() {
 	findUp "$file" "$(dirname "$dir")"
 }
 
+# Ask for confirmation to continue the deploy.
+# On dry runs, remember the reason for the summary instead (see logDryRunSummary)
+function confirmDeploy() {
+	local REASON="$1"
+	if [[ "$DEPLOY_MODE" == "dry" ]]; then
+		DRY_RUN_CONFIRMATIONS="${DRY_RUN_CONFIRMATIONS:-}\n\r   - $REASON"
+		return 0
+	fi
+
+	read -r -p "Deploy anyway? [y/n] " PROMPT_RESPONSE
+	if [[ "$PROMPT_RESPONSE" != "y" ]]; then
+		log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
+		exit 1
+	fi
+}
+
+# List everything a live deploy will ask for confirmation
+function logDryRunSummary() {
+	[[ -z "${DRY_RUN_CONFIRMATIONS:-}" ]] && return 0
+	log "🚨 ${BOLD}${RED}A live deploy will ask for confirmation:${NC}${NORMAL}$DRY_RUN_CONFIRMATIONS"
+}
+
 # Check the git branch from the theme
 function validateProductionBranch() {
 
@@ -137,14 +159,8 @@ function validateProductionBranch() {
 
 	# Validate the branch
 	if [[ "${REMOTE_ENV}" == "production" && ! $CURRENT_BRANCH =~ $PRODUCTION_BRANCH ]]; then
-		log "🚨 You are on the branch ${RED}${CURRENT_BRANCH}${NC}. Proceed deploy to ${BOLD}production${NORMAL}?"
-		read -r -p "[y/n] " PROMPT_RESPONSE
-
-		# Exit early if not confirmed
-		if [[ "$PROMPT_RESPONSE" != "y" ]]; then
-			log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
-			exit
-		fi
+		log "🚨 You are on the branch ${RED}${CURRENT_BRANCH}${NC}"
+		confirmDeploy "You are on the branch ${RED}${CURRENT_BRANCH}${NC}"
 	else
 		logSuccess "Branch ${BLUE}${CURRENT_BRANCH}${NC} allowed in ${BLUE}${REMOTE_ENV}${NC}"
 	fi
@@ -174,15 +190,7 @@ function checkGitState() {
 	fi
 
 	log "🚨 ${BOLD}${RED}Your git repo differs from the remote repo${NC}${NORMAL}$PROBLEMS"
-
-	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
-
-	log "Proceed deploy to ${BOLD}production${NORMAL}?"
-	read -r -p "[y/n] " PROMPT_RESPONSE
-	if [[ "$PROMPT_RESPONSE" != "y" ]]; then
-		log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
-		exit
-	fi
+	confirmDeploy "Your git repo differs from the remote repo"
 }
 
 
@@ -274,14 +282,8 @@ function checkCommandLinePHPVersions() {
 	log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
 	if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
-		log "🚨 Command line PHP version mismatch detected. Proceed anyways?"
-		read -r -p "[y/n] " PROMPT_RESPONSE
-
-		# Exit early if not confirmed
-		if [[ "$PROMPT_RESPONSE" != "y" ]]; then
-			log "🚨 Deploy to $PRETTY_REMOTE_ENV canceled ..."
-			exit
-		fi
+		log "🚨 Command line PHP version mismatch detected"
+		confirmDeploy "Command line PHP version mismatch"
 	else
 		logSuccess "Command line PHP versions match between $PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
 	fi
@@ -680,13 +682,7 @@ function checkWPVersions() {
 
 	log "🚨 ${BOLD}${RED}WordPress at $PRETTY_REMOTE_ENV is newer than locally${NC}${NORMAL}"
 	log "   The deploy will downgrade it from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
-
-	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
-
-	log "Deploy anyway?"
-	read -r -p "[y/n] " PROMPT_RESPONSE
-	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
-	return 0
+	confirmDeploy "WordPress at $PRETTY_REMOTE_ENV is newer than locally"
 }
 
 # List all plugins and themes in a content dir as "<key>\t<version>"
@@ -744,12 +740,7 @@ function checkExtensionVersions() {
 	fi
 
 	log "🚨 ${BOLD}${RED}Plugins or themes at $PRETTY_REMOTE_ENV differ from local${NC}${NORMAL}$PROBLEMS"
-
-	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
-
-	log "Deploy anyway?"
-	read -r -p "[y/n] " PROMPT_RESPONSE
-	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+	confirmDeploy "Plugins or themes at $PRETTY_REMOTE_ENV differ from local"
 	return 0
 }
 
@@ -817,13 +808,7 @@ function checkVendorDevPackages() {
 	[[ -z "$PROBLEMS" ]] && return 0
 
 	log "🚨 ${BOLD}${RED}Composer dev dependencies will be deployed${NC}${NORMAL}$PROBLEMS"
-
-	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
-
-	log "Deploy anyway?"
-	read -r -p "[y/n] " PROMPT_RESPONSE
-	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
-	return 0
+	confirmDeploy "Composer dev dependencies will be deployed"
 }
 
 

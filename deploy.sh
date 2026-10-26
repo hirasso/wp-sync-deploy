@@ -123,6 +123,7 @@ dry)
 
   logLine
   log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
+  logDryRunSummary
   ;;
 
 run)

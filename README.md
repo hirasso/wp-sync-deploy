@@ -142,6 +142,8 @@ vendor/bin/wp-sync-deploy deploy production --yes
 > [!WARNING]
 > Since 4.0.0, deploys are live by default. Use `--dry-run` for a preview.
 
+A `--dry-run` never asks for confirmation. Instead, it lists everything a live deploy will ask about at the end.
+
 ### Composer dependencies
 
 With `composer: new Composer()` in your config, wp-sync-deploy builds your `vendor` directory **without dev dependencies** in a temporary directory (`composer install --no-dev --optimize-autoloader`) and deploys that one. Your local `vendor` directory stays untouched. Don't add `vendor` to `additional` in this case.
