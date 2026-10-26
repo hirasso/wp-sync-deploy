@@ -477,6 +477,8 @@ function pullDatabase() {
 
 	# Replace the remote URL with the local URL
 	wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
+	# Multisite: replace the bare domains in the network tables
+	wp search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain
 
 	# Deactivate maintenance mode
 	wp maintenance-mode deactivate
@@ -517,7 +519,10 @@ function pushDatabase() {
 		wp db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
 		# Replace the local URL with the remote URL
-		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix
+		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix &&
+
+		# Multisite: replace the bare domains in the network tables
+		wpRemote search-replace "$LOCAL_HOST" "$REMOTE_HOST" --all-tables-with-prefix --include-columns=domain
 
 	# Deactivate maintenance mode on the remote server
 	wpRemote maintenance-mode deactivate
