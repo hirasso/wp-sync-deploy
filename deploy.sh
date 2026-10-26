@@ -6,11 +6,11 @@
 #
 # COMMANDS:
 #
-# Deploy to production or staging (dry run)
+# Deploy to production or staging
 # `vendor/bin/wp-sync-deploy deploy <production|staging>`
 #
-# Deploy to production or staging (RUN!)
-# `vendor/bin/wp-sync-deploy deploy <production|staging> run`
+# Preview the deploy (dry run)
+# `vendor/bin/wp-sync-deploy deploy <production|staging> --dry-run`
 
 # The directory relative to the script
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
@@ -21,7 +21,7 @@ source "$SCRIPT_DIR/lib/functions.sh"
 # Will be displayed if no arguments are being provided
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#deploy-your-local-files-to-remote-environments
 
-vendor/bin/wp-sync-deploy deploy <production|staging> [run] [--yes]"
+vendor/bin/wp-sync-deploy deploy <production|staging> [--dry-run] [--yes]"
 
 # Exit early if we received no arguments
 [ $# -eq 0 ] && logError "$USAGE_MESSAGE"
@@ -37,18 +37,17 @@ test -d "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR/languages" && DEPLOY_PATHS="$DEPLOY_PAT
 # Add $ADDITIONAL_DIRS to the end if defined
 [ ! -z "${ADDITIONAL_DIRS+x}" ] && DEPLOY_PATHS="$DEPLOY_PATHS $ADDITIONAL_DIRS"
 
-# Default to dry mode — parse from args, skipping flags (e.g. --config=...)
-DEPLOY_MODE="dry"
-for arg in "${@:2}"; do
-    [[ "$arg" == --* ]] && continue
-    DEPLOY_MODE="$arg"
-    break
-done
-
-# Skip the deploy confirmation if --yes was provided
+# Parse flags
+DEPLOY_MODE="run"
 SKIP_CONFIRM=false
 for arg in "${@:2}"; do
-    [[ "$arg" == "--yes" ]] && SKIP_CONFIRM=true
+    case $arg in
+    --dry-run) DEPLOY_MODE="dry" ;;
+    --yes) SKIP_CONFIRM=true ;;
+    --*) ;;
+    run) logError "The ${RED}run${NC} argument has been removed. Deploys are live by default, use ${GREEN}--dry-run${NC} for a preview" ;;
+    *) logError "$USAGE_MESSAGE" ;;
+    esac
 done
 
 # Perform checks before proceeding

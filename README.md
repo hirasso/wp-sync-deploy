@@ -57,13 +57,13 @@ Optionally, add script aliases to your project's `composer.json`:
 }
 ```
 
-…so that you can run `composer deploy production run`. The `process-timeout` prevents composer from aborting long-running syncs and deploys.
+…so that you can run `composer deploy production`. The `process-timeout` prevents composer from aborting long-running syncs and deploys.
 
 > [!WARNING]
 > Composer silently drops options like `--config` or `--paths` that are passed to script aliases. Separate them with `--`:
 >
 > ```shell
-> composer deploy -- production run --config=.env.my-custom-config
+> composer deploy -- production --config=.env.my-custom-config
 > ```
 
 ### Setup
@@ -127,20 +127,17 @@ vendor/bin/wp-sync-deploy sync <production|staging> backup
 ### Deploy your local files to remote environments
 
 ```shell
-# deploy your files to your production server (dry)
+# preview the deploy to your production server (dry run)
+vendor/bin/wp-sync-deploy deploy production --dry-run
+
+# deploy your files to your production server
 vendor/bin/wp-sync-deploy deploy production
 
-# deploy your files to your staging server (dry)
+# deploy your files to your staging server
 vendor/bin/wp-sync-deploy deploy staging
 
-# deploy your files to your production server (non-dry)
-vendor/bin/wp-sync-deploy deploy production run
-
-# deploy your files to your staging server (non-dry)
-vendor/bin/wp-sync-deploy deploy staging run
-
 # deploy without the confirmation prompt
-vendor/bin/wp-sync-deploy deploy production run --yes
+vendor/bin/wp-sync-deploy deploy production --yes
 ```
 
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
@@ -174,7 +171,7 @@ By default, wp-sync-deploy looks for a `.env.wp-sync-deploy` file. You can overr
 
 ```shell
 vendor/bin/wp-sync-deploy sync production --config=.env.my-custom-config
-vendor/bin/wp-sync-deploy deploy production run --config=.env.my-custom-config
+vendor/bin/wp-sync-deploy deploy production --config=.env.my-custom-config
 vendor/bin/wp-sync-deploy upload staging --paths="..." --config=.env.my-custom-config
 ```
 
