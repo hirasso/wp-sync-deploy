@@ -13,7 +13,8 @@ Sync and deploy your WordPress website between environments 🔀
 ## Prerequesites
 
 - [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy takes care of installing WP-CLI automatically.
-- A WordPress directory structure similar to this (adjustable through a `.env.wp-sync-deploy` file):
+- PHP >= 8.1 on your **local machine**
+- A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 
 ```shell
 .
@@ -63,7 +64,7 @@ Optionally, add script aliases to your project's `composer.json`:
 > Composer silently drops options like `--config` or `--paths` that are passed to script aliases. Separate them with `--`:
 >
 > ```shell
-> composer deploy -- production --config=.env.my-custom-config
+> composer deploy -- production --config=my-custom.config.php
 > ```
 
 ### Setup
@@ -76,11 +77,9 @@ vendor/bin/wp-sync-deploy setup
 
 This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
 
-### `.env.wp-sync-deploy`
+### `wp-sync-deploy.config.php`
 
-This file holds all information about your various environments (local, staging, production). Make sure you **add `.env.wp-sync-deploy` to your `.gitignore` file**! Otherwise, it's possible that sensitive information makes it into your repo.
-
-VSCode can [syntax highlight](https://fredriccliver.medium.com/give-highlight-and-formatting-on-your-env-file-in-vscode-8e60934efce0) the env file for you.
+This file holds all information about your environments (local, staging, production). See [Configuration](#configuration).
 
 ### `wp-sync-deploy.tasks.php`
 
@@ -165,14 +164,27 @@ Default tasks defined in the file are:
 - Optionally delete your static cache
 - When deploying: Optionally update the rewrite rules
 
-## Custom config file
+## Configuration
 
-By default, wp-sync-deploy looks for a `.env.wp-sync-deploy` file. You can override this with the `--config` option:
+wp-sync-deploy is configured through a `wp-sync-deploy.config.php` file returning a typed `WPSyncDeploy\Config` object. Your IDE will autocomplete and document all options. Have a look at the [example file](wp-sync-deploy.config.example.php).
+
+The file is meant to be **committed**. For secrets like HTTP auth credentials, use environment variables:
+
+```php
+httpAuth: getenv('STAGING_HTTP_AUTH') ?: null,
+```
+
+> [!IMPORTANT]
+> Since 4.0.0, `.env.wp-sync-deploy` is not supported anymore. Run the [setup command](#setup) and migrate your settings to the generated `wp-sync-deploy.config.php`, then delete the old file.
+
+### Custom config file
+
+By default, wp-sync-deploy looks for the closest `wp-sync-deploy.config.php` file. You can override this with the `--config` option:
 
 ```shell
-vendor/bin/wp-sync-deploy sync production --config=.env.my-custom-config
-vendor/bin/wp-sync-deploy deploy production --config=.env.my-custom-config
-vendor/bin/wp-sync-deploy upload staging --paths="..." --config=.env.my-custom-config
+vendor/bin/wp-sync-deploy sync production --config=my-custom.config.php
+vendor/bin/wp-sync-deploy deploy production --config=my-custom.config.php
+vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config.php
 ```
 
 > [!NOTE]

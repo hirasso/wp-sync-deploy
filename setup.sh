@@ -13,8 +13,8 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 # Source functions for logging
 source "$SCRIPT_DIR/lib/functions.sh"
 
-ENV_EXAMPLE_FILE="$SCRIPT_DIR/.env.wp-sync-deploy.example"
-ENV_FILE=".env.wp-sync-deploy"
+CONFIG_EXAMPLE_FILE="$SCRIPT_DIR/wp-sync-deploy.config.example.php"
+CONFIG_FILE="wp-sync-deploy.config.php"
 
 TASKS_EXAMPLE_FILE="$SCRIPT_DIR/wp-sync-deploy.tasks.example.php"
 TASKS_FILE="wp-sync-deploy.tasks.php"
@@ -30,12 +30,12 @@ read -r -p "[y/n] " PROMPT_RESPONSE
 
 log "🚀 Installing ${GREEN}wp-sync-deploy${NC} ... \n"
 
-# Copy and rename the wp-sync-deploy.example.env to the working directory
-if [ ! -e $ENV_FILE ]; then
-    cp "$ENV_EXAMPLE_FILE" $ENV_FILE
-    logSuccess "File ${GREEN}$ENV_FILE${NC} created! "
+# Copy and rename the wp-sync-deploy.config.example.php to the working directory
+if [ ! -e $CONFIG_FILE ]; then
+    cp "$CONFIG_EXAMPLE_FILE" $CONFIG_FILE
+    logSuccess "File ${GREEN}$CONFIG_FILE${NC} created! "
 else
-    logSuccess "File ${GREEN}$ENV_FILE${NC} already exists. "
+    logSuccess "File ${GREEN}$CONFIG_FILE${NC} already exists. "
 fi
 
 # Copy and rename the wp-sync-deploy.tasks.example.php to the working directory

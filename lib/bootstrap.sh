@@ -19,8 +19,8 @@ done
 # Clean up the WP-CLI update marker (see updateRemoteWpCli)
 trap 'rm -f "$WP_CLI_UPDATE_MARKER"' EXIT
 
-# Load the environment file
-loadEnvFile
+# Load the config file
+loadConfigFile
 
 checkMinimumSelfVersion
 
@@ -59,6 +59,7 @@ production)
     ;;
 
 staging)
+    [ -z "${STAG_HOST+x}" ] && logError "No staging environment defined in ${BLUE}$CONFIG_FILE${NC}"
     REMOTE_HOST=$(trimWhitespace "$STAG_HOST")
     REMOTE_PROTOCOL=$(trimWhitespace "$STAG_PROTOCOL")
     REMOTE_HTTP_AUTH=$(trimWhitespace "${STAG_HTTP_AUTH:-}")

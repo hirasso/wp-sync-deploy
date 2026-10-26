@@ -3,5 +3,11 @@
     "description": "Sync and deploy your WordPress website between environments 🔀",
     "type": "library",
     "license": "MIT",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "classmap": ["src/"]
+    },
     "bin": ["bin/wp-sync-deploy"]
 }

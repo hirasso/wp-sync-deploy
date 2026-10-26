@@ -2,7 +2,7 @@
 
 # Upload arbitrary files and folders to the remote root
 #
-# Please have a look at ./wp-sync-deploy.example.env to see all required variables.
+# Please have a look at ./wp-sync-deploy.config.example.php to see all required options.
 #
 # The remote folder must exist and be empty, otherwise this script will fail.
 #

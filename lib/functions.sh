@@ -38,31 +38,27 @@ function dd() {
 	exit 1
 }
 
-# Load the env file for wp-sync-deploy
+# Load the wp-sync-deploy.config.php file
 # - if --config was provided, use that file
-# - first, look for .env.wp-sync-deploy file
-# - second, fall back to the deprecated wp-sync-deploy.env file
-function loadEnvFile() {
-	# Use explicitly provided config file if set via --config
-	if [[ -n "${WP_SYNC_DEPLOY_CONFIG_FILE:-}" ]]; then
-		[ ! -e "$WP_SYNC_DEPLOY_CONFIG_FILE" ] && logError "Config file not found: ${RED}$WP_SYNC_DEPLOY_CONFIG_FILE${NC}"
-		source "$WP_SYNC_DEPLOY_CONFIG_FILE"
-		return
+# - otherwise, find the closest wp-sync-deploy.config.php
+function loadConfigFile() {
+	# Hard cut: the .env config was removed in 4.0.0
+	local LEGACY_FILE
+	for LEGACY_FILE in ".env.wp-sync-deploy" "wp-sync-deploy.env"; do
+		[ -n "$(findUp "$LEGACY_FILE" $SCRIPT_DIR)" ] && logError "${RED}$LEGACY_FILE${NC} is not supported anymore. Please migrate it to ${GREEN}wp-sync-deploy.config.php${NC}.\n   @see https://github.com/hirasso/wp-sync-deploy#configuration"
+	done
+
+	CONFIG_FILE="${WP_SYNC_DEPLOY_CONFIG_FILE:-}"
+	if [[ -n "$CONFIG_FILE" ]]; then
+		[ ! -e "$CONFIG_FILE" ] && logError "Config file not found: ${RED}$CONFIG_FILE${NC}"
+	else
+		CONFIG_FILE=$(findUp "wp-sync-deploy.config.php" $SCRIPT_DIR)
+		[ -z "$CONFIG_FILE" ] && logError "No wp-sync-deploy.config.php file found. Please run the ${BLUE}setup${NC} command and adjust your config file afterwards"
 	fi
 
-	# Find the closest wp-sync-deploy.env file
-	ENV_FILE=$(findUp ".env.wp-sync-deploy" $SCRIPT_DIR)
-
-	if [[ -z "$ENV_FILE" ]]; then
-		ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
-		[ -e "$ENV_FILE" ] && log "💡 Using ${RED}wp-sync-deploy.env${NC}. \n\r   Consider renaming the file to ${GREEN}.env.wp-sync-deploy${NC} instead\n\n\r"
-	fi
-
-	# Throw an error if no env file could be found
-	[ -z "$ENV_FILE" ] && logError "No .env.wp-sync-deploy file found. Please run the ${BLUE}setup${NC} command and adjust your env file afterwards"
-
-	# Load the environment variables
-	source $ENV_FILE
+	local VARS
+	VARS=$(php -d display_errors=stderr "$SCRIPT_DIR/lib/config.php" "$CONFIG_FILE") || logError "Invalid config file ${RED}$CONFIG_FILE${NC}"
+	eval "$VARS"
 }
 
 # Normalize a path: trim trailing slashes
