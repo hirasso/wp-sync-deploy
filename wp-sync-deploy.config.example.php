@@ -8,6 +8,7 @@
  * @see https://github.com/hirasso/wp-sync-deploy#configuration
  */
 
+use Hirasso\WPSyncDeploy\Composer;
 use Hirasso\WPSyncDeploy\Config;
 use Hirasso\WPSyncDeploy\DeployStrategy;
 use Hirasso\WPSyncDeploy\Git;
@@ -24,7 +25,7 @@ return new Config(
         wpContent: 'web/app',
         wpCore: 'web/wp',
         public: 'web',
-        additional: ['vendor', 'config'],
+        additional: ['config'],
     ),
     production: new Remote(
         url: 'https://example.com',
@@ -41,4 +42,5 @@ return new Config(
     git: new Git(
         productionBranch: 'master|main',
     ),
+    composer: new Composer(),
 );

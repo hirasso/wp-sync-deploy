@@ -706,3 +706,47 @@ function checkExtensionVersions() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 	return 0
 }
+
+# Build the composer vendor dir without dev dependencies in a temp dir
+# Sets $VENDOR_DIR (relative to the root dir), $COMPOSER_VENDOR_DIR (relative to composer.json) and $VENDOR_BUILD_DIR
+function buildVendor() {
+	local COMPOSER_ROOT=$(normalizePath "$LOCAL_ROOT_DIR/$COMPOSER_DIR")
+
+	command -v composer >/dev/null || logError "${BLUE}composer${NC} not found"
+	[ -f "$COMPOSER_ROOT/composer.json" ] || logError "No composer.json found in ${RED}$COMPOSER_ROOT${NC}"
+	[ -f "$COMPOSER_ROOT/composer.lock" ] || logError "No composer.lock found in ${RED}$COMPOSER_ROOT${NC}"
+
+	# Relative path repositories would break in the temp dir
+	php -r '$c = json_decode(file_get_contents($argv[1]), true); foreach ($c["repositories"] ?? [] as $r) { if (($r["type"] ?? "") === "path" && !str_starts_with($r["url"] ?? "", "/")) exit(1); }' "$COMPOSER_ROOT/composer.json" ||
+		logError "Relative ${BLUE}path${NC} repositories in composer.json are not supported"
+
+	COMPOSER_VENDOR_DIR=$(composer config vendor-dir --working-dir="$COMPOSER_ROOT")
+	[[ "$COMPOSER_VENDOR_DIR" == /* ]] && logError "Absolute composer vendor-dir is not supported: ${RED}$COMPOSER_VENDOR_DIR${NC}"
+	VENDOR_DIR=$(relativePath $(normalizePath "$COMPOSER_DIR/$COMPOSER_VENDOR_DIR"))
+
+	# Prevent deploying the vendor dir twice
+	for DIR in ${ADDITIONAL_DIRS:-}; do
+		[[ "$(relativePath $(normalizePath "$DIR"))" == "$VENDOR_DIR" ]] &&
+			logError "Remove ${RED}$DIR${NC} from additional paths, it is deployed through ${BLUE}composer${NC}"
+	done
+
+	VENDOR_BUILD_DIR=$(mktemp -d)
+	cp "$COMPOSER_ROOT/composer.json" "$COMPOSER_ROOT/composer.lock" "$VENDOR_BUILD_DIR/"
+	[ -f "$COMPOSER_ROOT/auth.json" ] && cp "$COMPOSER_ROOT/auth.json" "$VENDOR_BUILD_DIR/"
+
+	log "📦 Building ${BLUE}$VENDOR_DIR${NC} without dev dependencies ..."
+	composer install --working-dir="$VENDOR_BUILD_DIR" \
+		--no-dev --no-scripts --no-interaction --no-progress --optimize-autoloader --quiet ||
+		logError "composer install failed"
+	logSuccess "Built ${BLUE}$VENDOR_DIR${NC}"
+}
+
+# Deploy the vendor dir built by buildVendor
+# Usage: deployVendor [--dry-run]
+function deployVendor() {
+	"$RSYNC_BIN" "$@" -avz --delete \
+		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
+		-e "ssh -p $REMOTE_SSH_PORT" \
+		--exclude-from="$DEPLOYIGNORE_FILE" \
+		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
+}

@@ -87,6 +87,12 @@ logLine
 # @see buildProtectFilters() in lib/functions.sh
 IFS=$'\n' read -r -d '' -a PROTECT_FILTERS < <(buildProtectFilters "$DEPLOY_PATHS" && printf '\0')
 
+# Build the vendor dir without dev dependencies if composer is configured
+if [ -n "${COMPOSER_DIR+x}" ]; then
+  buildVendor
+  logLine
+fi
+
 case $DEPLOY_MODE in
 
 dry)
@@ -103,6 +109,10 @@ dry)
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
   logLine
+  if [ -n "${COMPOSER_DIR+x}" ]; then
+    deployVendor --dry-run
+    logLine
+  fi
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
   logLine
@@ -138,6 +148,10 @@ run)
       --exclude-from="$DEPLOYIGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
+
+  if [ -n "${COMPOSER_DIR+x}" ]; then
+    deployVendor
+  fi
 
   log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
 

@@ -16,8 +16,8 @@ for arg in "$@"; do
     esac
 done
 
-# Clean up the WP-CLI update marker (see updateRemoteWpCli)
-trap 'rm -f "$WP_CLI_UPDATE_MARKER"' EXIT
+# Clean up the WP-CLI update marker (see updateRemoteWpCli) and the vendor build (see buildVendor)
+trap 'rm -f "$WP_CLI_UPDATE_MARKER"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
 
 # Load the config file
 loadConfigFile

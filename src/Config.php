@@ -16,6 +16,7 @@ final readonly class Config
      * @param Remote $production The production environment
      * @param Remote|null $staging The staging environment (optional)
      * @param Git|null $git Validate the git branch before deploying to production (optional)
+     * @param Composer|null $composer Deploy the composer vendor dir without dev dependencies (optional)
      */
     public function __construct(
         public Local $local,
@@ -23,6 +24,7 @@ final readonly class Config
         public Remote $production,
         public ?Remote $staging = null,
         public ?Git $git = null,
+        public ?Composer $composer = null,
     ) {}
 
     /** Export as shell variables, to be eval'd by bash */
@@ -50,6 +52,10 @@ final readonly class Config
         if ($this->git) {
             $vars['GIT_DIR'] = $this->git->dir;
             $vars['PRODUCTION_BRANCH'] = $this->git->productionBranch;
+        }
+
+        if ($this->composer) {
+            $vars['COMPOSER_DIR'] = $this->composer->dir;
         }
 
         $lines = [];
@@ -162,6 +168,19 @@ final readonly class Git
     public function __construct(
         public string $dir = '',
         public string $productionBranch = 'master|main',
+    ) {}
+}
+
+/**
+ * Deploy the composer vendor dir without dev dependencies
+ */
+final readonly class Composer
+{
+    /**
+     * @param string $dir The directory containing composer.json, relative to the root dir
+     */
+    public function __construct(
+        public string $dir = '',
     ) {}
 }
 

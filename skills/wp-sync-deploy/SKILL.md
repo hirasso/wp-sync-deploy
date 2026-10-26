@@ -29,6 +29,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 - `local`: `url` from `WP_HOME`/`WP_HOME_DEV` in `wp-config.php` (or `ddev describe`). `rootDir` = WP root, relative to the config file via `__DIR__` / `dirname(__DIR__, n)`, never a hardcoded absolute path.
 - `paths`: `wpContent`/`wpCore`/`public` relative to `rootDir` (verify with `ls`); omit `public` if empty.
 - `git`: `dir` = repo path relative to `rootDir` (omit if the repo is the root).
+- `composer`: add `new Composer()` if the project deploys composer packages (`dir` = location of `composer.json` relative to `rootDir`, omit if it is the root). Never put `vendor` in `additional` then.
 - Remotes: ask the user for SSH (`user@host`, port), absolute web root, PHP binary, and whether staging exists. No staging → omit `staging`. Omit arguments that equal the defaults.
 - Secrets (http auth) → `getenv('…') ?: null`, never literal.
 - Commit the file. Never gitignore it.
@@ -37,6 +38,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 ## Upgrading from 3.x
 
 - Map `.env.wp-sync-deploy` to the config file using the README's "Upgrading from 3.x" table; validate (above) and compare against the old values.
+- `vendor` in `ADDITIONAL_DIRS` becomes `composer: new Composer()` (dev dependencies are no longer deployed).
 - `git rm` `.env.wp-sync-deploy`; remove any `!.env.wp-sync-deploy` from `.gitignore`.
 - `run` is gone, deploys are live by default: drop `run` from scripts; dry run is `--dry-run`.
 - Update mentions in `AGENTS.md`.

@@ -141,6 +141,12 @@ vendor/bin/wp-sync-deploy deploy production --yes
 
 > [!WARNING]
 > Since 4.0.0, deploys are live by default. Use `--dry-run` for a preview.
+
+### Composer dependencies
+
+With `composer: new Composer()` in your config, wp-sync-deploy builds your `vendor` directory **without dev dependencies** in a temporary directory (`composer install --no-dev --optimize-autoloader`) and deploys that one. Your local `vendor` directory stays untouched. Don't add `vendor` to `additional` in this case.
+
+If your `composer.json` is not in the root dir, pass its location: `new Composer(dir: 'site')`.
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
 ### Simple Upload
@@ -199,6 +205,7 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 - **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
 - **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** Run the [setup command](#setup), move your settings over and delete the old file
 - **PHP >= 8.2** is required on your local machine
+- **`vendor` is deployed without dev dependencies** if you add `composer: new Composer()` and remove `vendor` from `additional`
 
 | `.env.wp-sync-deploy`                           | `wp-sync-deploy.config.php`         |
 | ----------------------------------------------- | ----------------------------------- |
@@ -209,6 +216,7 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 | `WP_CONTENT_DIR`                                | `paths: new Paths(wpContent: …)`    |
 | `WP_CORE_DIR`                                   | `paths: new Paths(wpCore: …)`       |
 | `ADDITIONAL_DIRS`                               | `paths: new Paths(additional: […])` |
+| `vendor` in `ADDITIONAL_DIRS`                  | `composer: new Composer()`          |
 | `GIT_DIR`                                       | `git: new Git(dir: …)`              |
 | `PRODUCTION_BRANCH`                             | `git: new Git(productionBranch: …)` |
 | `PROD_PROTOCOL` + `PROD_HOST`                   | `production: new Remote(url: …)`    |
