@@ -69,7 +69,7 @@ IS_RC=false
 [[ "$VERSION" == *-rc.* ]] && IS_RC=true
 
 BRANCH=$(git branch --show-current)
-[[ "$IS_RC" == false && "$BRANCH" != "main" ]] && logError "Stable releases must be created from ${BLUE}main${NC} (current: ${RED}$BRANCH${NC})"
+[[ "$BRANCH" != "main" ]] && logError "Releases must be created from ${BLUE}main${NC} (current: ${RED}$BRANCH${NC})"
 [ -n "$(git status --porcelain)" ] && logError "Working tree is not clean"
 [[ "$DRY_RUN" == false ]] && ! gh auth status >/dev/null 2>&1 && logError "Not logged in to ${BLUE}gh${NC}"
 
@@ -129,7 +129,7 @@ if [[ "$IS_RC" == false ]]; then
 fi
 
 git tag "$VERSION"
-git push --quiet origin "$BRANCH" "$VERSION"
+git push --quiet --atomic origin main "$VERSION"
 
 PRERELEASE_FLAG=""
 [[ "$IS_RC" == true ]] && PRERELEASE_FLAG="--prerelease"
