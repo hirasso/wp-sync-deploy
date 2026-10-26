@@ -89,6 +89,8 @@ test -f "$LOCAL_WEB_ROOT/favicon.ico" && DEPLOY_PATHS="$DEPLOY_PATHS $PUBLIC_DIR
 # @see buildProtectFilters() in lib/functions.sh
 IFS=$'\n' read -r -d '' -a PROTECT_FILTERS < <(buildProtectFilters "$DEPLOY_PATHS" && printf '\0')
 
+addGitattributesIgnores
+
 # Build the vendor dir without dev dependencies if composer is configured
 if [ -n "${COMPOSER_DIR+x}" ]; then
   buildVendor
@@ -109,7 +111,7 @@ dry)
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
       "${PROTECT_FILTERS[@]}" \
-      --exclude-from="$DEPLOYIGNORE_FILE" \
+      --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
   logLine
@@ -149,7 +151,7 @@ run)
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "ssh -p $REMOTE_SSH_PORT" \
       "${PROTECT_FILTERS[@]}" \
-      --exclude-from="$DEPLOYIGNORE_FILE" \
+      --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   )
 

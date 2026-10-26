@@ -200,6 +200,29 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 > [!NOTE]
 > `--config` must come after the required positional arguments.
 
+## Ignored files
+
+wp-sync-deploy ignores common dev files during a deploy (`node_modules`, dotfiles, `package.json`, `*.sql`, ...). See `Ignore::DEFAULTS` in [src/Config.php](src/Config.php) for the full list.
+
+On top of that, files marked as `export-ignore` in `.gitattributes` files inside your themes and plugins are not deployed:
+
+```gitattributes
+/tests export-ignore
+*.md export-ignore
+```
+
+Customize this in your config:
+
+```php
+ignore: new Ignore(
+    patterns: ['*.zip', 'content/themes/my-theme/build.mjs'], // added to the defaults
+    gitattributes: true, // respect export-ignore (default)
+    defaults: true,      // use the built-in list (default)
+),
+```
+
+Ignored files are never deleted on the remote.
+
 ## Upgrading from 3.x
 
 4.0.0 contains breaking changes:
@@ -208,6 +231,7 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 - **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** Run the [setup command](#setup), move your settings over and delete the old file
 - **PHP >= 8.2** is required on your local machine
 - **`vendor` is deployed without dev dependencies** if you add `composer: new Composer()` and remove `vendor` from `additional`
+- **`.deployignore` has been replaced** by [`ignore: new Ignore()`](#ignored-files). Its `-p` rules (e.g. `package.json`, `composer.json`, `*.config.js`, `README.md`) never worked before and are now applied
 
 | `.env.wp-sync-deploy`                           | `wp-sync-deploy.config.php`         |
 | ----------------------------------------------- | ----------------------------------- |
@@ -229,7 +253,7 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 | `PROD_DEPLOY_STRATEGY`                          | `deployStrategy: DeployStrategy::…` |
 | `STAG_*`                                        | `staging: new Remote(…)`            |
 
-If you have a custom `.deployignore`, add `wp-sync-deploy.config.php` to it.
+If you have a custom `.deployignore`, move your rules to `ignore: new Ignore(patterns: [...])` (see [Ignored files](#ignored-files)) and delete the file.
 
 ## AI agents
 
@@ -240,7 +264,5 @@ npx skills add hirasso/wp-sync-deploy
 ```
 
 ## Other notes
-
-wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, copy the default [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore) to your project root and adjust it there. It will then be used instead of the default one.
 
 Before each run, wp-sync-deploy checks if an important update is available and asks for confirmation before proceeding with an outdated version.

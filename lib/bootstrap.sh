@@ -16,17 +16,20 @@ for arg in "$@"; do
     esac
 done
 
-# Clean up the WP-CLI update marker (see updateRemoteWpCli) and the vendor build (see buildVendor)
-trap 'rm -f "$WP_CLI_UPDATE_MARKER"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
+# Clean up the WP-CLI update marker (see updateRemoteWpCli), the ignore file and the vendor build (see buildVendor)
+trap 'rm -f "$WP_CLI_UPDATE_MARKER" "${IGNORE_FILE:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
 
 # Load the config file
 loadConfigFile
 
 checkMinimumSelfVersion
 
-# Use the project's .deployignore, fall back to the default one
-DEPLOYIGNORE_FILE="$PWD/.deployignore"
-[ -e "$DEPLOYIGNORE_FILE" ] || DEPLOYIGNORE_FILE="$SCRIPT_DIR/.deployignore"
+# Hard cut: .deployignore was replaced by `ignore: new Ignore()` in 4.0.0
+[ -e "$PWD/.deployignore" ] && logError "${RED}.deployignore${NC} is not supported anymore. Move your rules to ${GREEN}ignore: new Ignore(patterns: [...])${NC} in your config.\n   @see https://github.com/hirasso/wp-sync-deploy#ignored-files"
+
+# Write the ignore rules to a file for rsync
+IGNORE_FILE=$(mktemp)
+printf '%s\n' "$IGNORE_RULES" >"$IGNORE_FILE"
 
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)

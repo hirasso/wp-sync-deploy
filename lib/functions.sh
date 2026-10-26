@@ -793,7 +793,7 @@ function deployVendor() {
 	"$RSYNC_BIN" "$@" -avz --delete \
 		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
 		-e "ssh -p $REMOTE_SSH_PORT" \
-		--exclude-from="$DEPLOYIGNORE_FILE" \
+		--filter="merge $IGNORE_FILE" \
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
 
@@ -814,4 +814,31 @@ function checkVendorDevPackages() {
 		log "ℹ️  ${BLUE}$VENDOR${NC} contains ${RED}$COUNT${NC} dev package(s). Use ${BLUE}composer: $SUGGESTION${NC} to deploy it without them"
 	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS -name node_modules -prune -o -path '*/vendor/composer/installed.json' -print 2>/dev/null)
 	return 0
+}
+
+# Append rules for `export-ignore` in .gitattributes files inside the deploy paths to $IGNORE_FILE
+function addGitattributesIgnores() {
+	[[ "$IGNORE_GITATTRIBUTES" != "1" ]] && return 0
+
+	local FILE DIR PATTERN ATTRS RULES=""
+	while IFS= read -r FILE; do
+		DIR=$(dirname "$FILE")
+		while read -r PATTERN ATTRS || [[ -n "$PATTERN" ]]; do
+			[[ -z "$PATTERN" || "$PATTERN" == \#* ]] && continue
+			[[ " $ATTRS " == *" export-ignore "* ]] || continue
+			PATTERN="${PATTERN%/}"
+			if [[ "$PATTERN" == /* ]]; then
+				RULES="$RULES- /$DIR$PATTERN\n"
+			elif [[ "$PATTERN" == */* ]]; then
+				RULES="$RULES- /$DIR/$PATTERN\n"
+			else
+				# Patterns without a slash match at any depth
+				RULES="$RULES- /$DIR/$PATTERN\n- /$DIR/**/$PATTERN\n"
+			fi
+		done <"$LOCAL_ROOT_DIR/$FILE"
+	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS \( -name node_modules -o -name vendor \) -prune -o -name .gitattributes -print 2>/dev/null)
+
+	[[ -z "$RULES" ]] && return 0
+	printf '%b' "$RULES" >>"$IGNORE_FILE"
+	log "ℹ️  Ignoring files marked as ${BLUE}export-ignore${NC} in .gitattributes"
 }

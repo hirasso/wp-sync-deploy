@@ -75,7 +75,7 @@ done
     -e "ssh -p $REMOTE_SSH_PORT" \
     $INCLUDE_ARGS \
     --include=.htaccess \
-    --exclude-from="$DEPLOYIGNORE_FILE" \
+    --filter="merge $IGNORE_FILE" \
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
 

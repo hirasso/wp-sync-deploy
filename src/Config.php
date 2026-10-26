@@ -17,6 +17,7 @@ final readonly class Config
      * @param Remote|null $staging The staging environment (optional)
      * @param Git|null $git Validate the git branch before deploying to production (optional)
      * @param Composer|null $composer Deploy the composer vendor dir without dev dependencies (optional)
+     * @param Ignore $ignore Files and directories that won't be deployed
      */
     public function __construct(
         public Local $local,
@@ -25,6 +26,7 @@ final readonly class Config
         public ?Remote $staging = null,
         public ?Git $git = null,
         public ?Composer $composer = null,
+        public Ignore $ignore = new Ignore(),
     ) {}
 
     /** Export as shell variables, to be eval'd by bash */
@@ -39,6 +41,8 @@ final readonly class Config
             'WP_CONTENT_DIR' => $this->paths->wpContent,
             'WP_CORE_DIR' => $this->paths->wpCore,
             ...$this->remoteVars('PROD_', $this->production),
+            'IGNORE_RULES' => implode("\n", $this->ignore->rules()),
+            'IGNORE_GITATTRIBUTES' => $this->ignore->gitattributes ? '1' : '',
         ];
 
         if ($this->staging) {
@@ -169,6 +173,67 @@ final readonly class Git
         public string $dir = '',
         public string $productionBranch = 'master|main',
     ) {}
+}
+
+/**
+ * Files and directories that won't be deployed
+ */
+final readonly class Ignore
+{
+    /**
+     * Built-in rules, in rsync filter syntax (`-p`: also ignored when deleting directories)
+     */
+    public const DEFAULTS = [
+        // wp-sync-deploy isn't built to deal with the default WordPress folder structure
+        'wp-content',
+        // Dotfiles, env files
+        '.*',
+        '*.env',
+        // Package managers
+        'node_modules',
+        '-p package.json',
+        '-p package-lock.json',
+        '-p pnpm-*.yaml',
+        '-p composer.json',
+        '-p composer.lock',
+        // Build configs
+        '-p *.config.js',
+        '-p *.config.mjs',
+        '-p *.config.ts',
+        '-p *.config.mts',
+        '-p tsconfig.json',
+        // Files from this tool
+        'wp-sync-deploy',
+        'wp-sync-deploy.config.php',
+        'wp-sync-deploy.tasks.php',
+        // Logs, DB dumps, docs, todos
+        '*.log',
+        '*.sql',
+        '-p README.md',
+        '-p readme.md',
+        'TODO',
+        '*.todo',
+    ];
+
+    /**
+     * @param string[] $patterns Additional rsync exclude patterns, e.g. ['*.zip', 'content/themes/my-theme/build.mjs']
+     * @param bool $gitattributes Respect `export-ignore` in .gitattributes files inside the deploy paths
+     * @param bool $defaults Use the built-in rules (Ignore::DEFAULTS)
+     */
+    public function __construct(
+        public array $patterns = [],
+        public bool $gitattributes = true,
+        public bool $defaults = true,
+    ) {}
+
+    /** @return string[] */
+    public function rules(): array
+    {
+        $rules = [...($this->defaults ? self::DEFAULTS : []), ...$this->patterns];
+
+        // Plain patterns become exclude rules
+        return array_map(fn ($rule) => preg_match('/^[-+][a-z]* /', $rule) ? $rule : "- $rule", $rules);
+    }
 }
 
 /**
