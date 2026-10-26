@@ -339,6 +339,9 @@ function checkRemoteFile() {
 
 # Validate that the required directories exist locally and remotely
 function checkDeployPaths() {
+	# Missing essentials indicate a wrong remote root. Other paths will be created by rsync
+	local REQUIRED_PATHS=" $WP_CORE_DIR $WP_CONTENT_DIR/plugins $WP_CONTENT_DIR/themes "
+
 	for DEPLOY_DIR in $DEPLOY_PATHS; do
 		local LOCAL_PATH="${LOCAL_ROOT_DIR}/${DEPLOY_DIR}"
 		local REMOTE_PATH="${REMOTE_ROOT_DIR}/${DEPLOY_DIR}"
@@ -348,10 +351,13 @@ function checkDeployPaths() {
 			logError "The directory ${RED}$LOCAL_PATH${NC} does not exist locally"
 		fi
 		# check on remote machine
-		if [[ $(checkRemoteFile "$REMOTE_PATH") != 1 ]]; then
-			logError "The directory ${RED}$REMOTE_PATH${RED} does not exist on the remote server"
+		if [[ $(checkRemoteFile "$REMOTE_PATH") == 1 ]]; then
+			logSuccess "Folder exists at ${PRETTY_REMOTE_ENV}: ${BLUE}$DEPLOY_DIR${NC}"
+		elif [[ "$REQUIRED_PATHS" == *" $DEPLOY_DIR "* ]]; then
+			logError "The directory ${RED}$REMOTE_PATH${NC} does not exist on the remote server"
+		else
+			log "ℹ️  Folder will be created at ${PRETTY_REMOTE_ENV}: ${BLUE}$DEPLOY_DIR${NC}"
 		fi
-		logSuccess "Folder exists at ${PRETTY_REMOTE_ENV}: ${BLUE}$DEPLOY_DIR${NC}"
 	done
 }
 

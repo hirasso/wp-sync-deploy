@@ -89,7 +89,7 @@ This file is being used to run [automated tasks](https://github.com/hirasso/wp-s
 
 wp-sync-deploy performs a few security checks before proceeding with a deploy:
 
-- [x] Do all directories marked for deployment actually exist in both environments (locally and remotely)?
+- [x] Do all directories marked for deployment exist locally? Do the WordPress core, plugins and themes directories exist remotely? (other directories like `mu-plugins` are created if missing)
 - [x] Does a hidden file `.allow-deployment` exist on the remote environment's web root?
 - [x] Does the local _command-line_ PHP version match the one on the remote environment?
 - [x] Does the local _web-facing_ PHP version match the one on the remote environment?
