@@ -139,6 +139,8 @@ vendor/bin/wp-sync-deploy deploy staging
 vendor/bin/wp-sync-deploy deploy production --yes
 ```
 
+> [!WARNING]
+> Since 4.0.0, deploys are live by default. Use `--dry-run` for a preview.
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
 ### Simple Upload
@@ -168,14 +170,14 @@ Default tasks defined in the file are:
 
 wp-sync-deploy is configured through a `wp-sync-deploy.config.php` file returning a typed `WPSyncDeploy\Config` object. Your IDE will autocomplete and document all options. Have a look at the [example file](wp-sync-deploy.config.example.php).
 
-The file is meant to be **committed**. For secrets like HTTP auth credentials, use environment variables:
+The file is meant to be **committed**. For secrets like HTTP auth credentials, use environment variables exported in your shell:
 
 ```php
 httpAuth: getenv('STAGING_HTTP_AUTH') ?: null,
 ```
 
 > [!IMPORTANT]
-> Since 4.0.0, `.env.wp-sync-deploy` is not supported anymore. Run the [setup command](#setup) and migrate your settings to the generated `wp-sync-deploy.config.php`, then delete the old file.
+> Since 4.0.0, `.env.wp-sync-deploy` is not supported anymore. See [Upgrading from 3.x](#upgrading-from-3x).
 
 ### Custom config file
 
@@ -189,6 +191,33 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 
 > [!NOTE]
 > `--config` must come after the required positional arguments.
+
+## Upgrading from 3.x
+
+4.0.0 contains breaking changes:
+
+- **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
+- **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** Run the [setup command](#setup), move your settings over and delete the old file
+- **PHP >= 8.1** is required on your local machine
+
+| `.env.wp-sync-deploy`                           | `wp-sync-deploy.config.php`         |
+| ----------------------------------------------- | ----------------------------------- |
+| `LOCAL_PROTOCOL` + `LOCAL_HOST`                 | `local: new Local(url: …)`          |
+| `LOCAL_HTTP_AUTH`                               | `local: new Local(httpAuth: …)`     |
+| `LOCAL_ROOT_DIR`                                | `local: new Local(rootDir: …)`      |
+| `PUBLIC_DIR`                                    | `paths: new Paths(public: …)`       |
+| `WP_CONTENT_DIR`                                | `paths: new Paths(wpContent: …)`    |
+| `WP_CORE_DIR`                                   | `paths: new Paths(wpCore: …)`       |
+| `ADDITIONAL_DIRS`                               | `paths: new Paths(additional: […])` |
+| `GIT_DIR`                                       | `git: new Git(dir: …)`              |
+| `PRODUCTION_BRANCH`                             | `git: new Git(productionBranch: …)` |
+| `PROD_PROTOCOL` + `PROD_HOST`                   | `production: new Remote(url: …)`    |
+| `PROD_SSH`, `PROD_SSH_PORT`                     | `ssh: …`, `sshPort: …`              |
+| `PROD_ROOT_DIR`                                 | `rootDir: …`                        |
+| `PROD_PHP_BINARY`                               | `phpBinary: …`                      |
+| `PROD_HTTP_AUTH`                                | `httpAuth: …`                       |
+| `PROD_DEPLOY_STRATEGY`                          | `deployStrategy: DeployStrategy::…` |
+| `STAG_*`                                        | `staging: new Remote(…)`            |
 
 ## Other notes
 
