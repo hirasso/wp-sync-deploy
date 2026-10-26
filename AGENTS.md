@@ -27,5 +27,5 @@ Currently I'm working only on the main branch locally, without PRs etc.
 
 ## Releasing
 
-- releases are created by the user with `scripts/release.sh [patch|minor|major|rc]` (changelog, tag, GitHub release)
+- releases are created by the user with `composer release [patch|minor|major|rc]` (`scripts/release.sh`) (changelog, tag, GitHub release)
 - for important releases (e.g. preventing data loss), bump `.minimum-version` to the new version (`--minimum`)

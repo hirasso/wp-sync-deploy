@@ -9,5 +9,11 @@
     "autoload": {
         "classmap": ["src/"]
     },
-    "bin": ["bin/wp-sync-deploy"]
+    "bin": ["bin/wp-sync-deploy"],
+    "scripts": {
+        "release": [
+            "Composer\\Config::disableProcessTimeout",
+            "scripts/release.sh"
+        ]
+    }
 }
