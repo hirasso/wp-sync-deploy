@@ -206,21 +206,28 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 
 wp-sync-deploy ignores common dev files during a deploy (`node_modules`, dotfiles, `package.json`, `*.sql`, ...). See `Ignore::DEFAULTS` in [src/Config.php](src/Config.php) for the full list.
 
-On top of that, files marked as `export-ignore` in `.gitattributes` files inside your themes and plugins are not deployed:
+Add your own rules in your config:
+
+```php
+$theme = 'content/themes/my-theme';
+
+return new Config(
+    // ...
+    ignore: new Ignore(
+        patterns: ["$theme/assets-src", "$theme/build.mjs", "$theme/*.md"], // added to the defaults
+        gitattributes: true, // respect export-ignore (default)
+        defaults: true,      // use the built-in list (default)
+    ),
+);
+```
+
+Patterns are relative to your root dir and unanchored. `*` doesn't cross `/`, so `$theme/*.md` only matches Markdown files in the theme root.
+
+Files marked as `export-ignore` in `.gitattributes` files inside your themes and plugins are not deployed either. That's handy for themes and plugins you also distribute as an archive (zip, `git archive`, wp.org), where "not in the zip" and "not deployed" mean the same. Otherwise, prefer `patterns`, so all deploy rules live in one place.
 
 ```gitattributes
 /tests export-ignore
 *.md export-ignore
-```
-
-Customize this in your config:
-
-```php
-ignore: new Ignore(
-    patterns: ['*.zip', 'content/themes/my-theme/build.mjs'], // added to the defaults
-    gitattributes: true, // respect export-ignore (default)
-    defaults: true,      // use the built-in list (default)
-),
 ```
 
 Ignored files are never deleted on the remote.

@@ -31,7 +31,11 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 - `git`: `dir` = repo path relative to `rootDir` (omit if the repo is the root).
 - `composer`: add `new Composer()` if the deployed code loads composer packages (root `vendor`, or a theme/plugin requiring its own `vendor/autoload.php`). `dir` = location of `composer.json` relative to `rootDir` (omit if it is the root). The vendor dir is then built and deployed without dev dependencies. Never put `vendor` in `additional` then. Deploys ask for confirmation if other deployed vendor dirs contain dev packages.
 - Remotes: ask the user for SSH (`user@host`, port), absolute web root, PHP binary, and whether staging exists. No staging → omit `staging`. Omit arguments that equal the defaults.
-- `ignore`: omit unless the project needs extra rules. Dev files inside a theme/plugin are better marked `export-ignore` in its `.gitattributes`.
+- `ignore`: extra deploy ignores go into `ignore: new Ignore(patterns: [...])`: explicit, one place for everything deploy-related. `export-ignore` in `.gitattributes` changes deploys silently as a side effect of an archive setting; use it only for themes/plugins that are also distributed as an archive (zip, `git archive`, wp.org), where "not in the zip" and "not deployed" mean the same.
+  - Patterns are relative to `rootDir` and unanchored; `*` doesn't cross `/`, so `content/themes/x/*.md` only matches the theme root.
+  - Repeated paths: define e.g. `$theme = 'content/themes/my-theme';` above `return new Config(...)` and reuse it in `git`, `composer` and the patterns.
+  - Typical candidates in build-tool projects: source dirs (`assets-src`), build scripts (`build.mjs`, not covered by the `*.config.mjs` default), vendored tarballs, agent/dev docs (`AGENTS.md`, `CONTEXT.md`).
+  - Check the `IGNORE_RULES` in the validation output (below).
 - Secrets (http auth) → `getenv('…') ?: null`, never literal.
 - Commit the file. Never gitignore it.
 - Validate: `php -d display_errors=stderr vendor/hirasso/wp-sync-deploy/lib/config.php wp-sync-deploy.config.php` prints the resolved values.
