@@ -118,6 +118,7 @@ dry)
   ) 2>&1 | tee "$RSYNC_LOG"
   logLine
   if [ -n "${COMPOSER_DIR+x}" ]; then
+    log "📦 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying $VENDOR_DIR ..."
     echo >&2
     deployVendor --dry-run 2>&1 | tee "$VENDOR_RSYNC_LOG"
     logLine
@@ -163,6 +164,7 @@ run)
   ) 2>&1 | tee "$RSYNC_LOG"
 
   if [ -n "${COMPOSER_DIR+x}" ]; then
+    log "📦 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying $VENDOR_DIR ..."
     echo >&2
     deployVendor 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi

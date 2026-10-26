@@ -275,12 +275,12 @@ function validateUrlIsAvailable() {
 function checkCommandLinePHPVersions() {
 	local LOCAL_OUTPUT=$(php -v | head -n1 | awk '{print $2}')
 	local LOCAL_VERSION=${LOCAL_OUTPUT:0:3}
-	log "- Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
+	log "   - Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
 	# The flag "-n" suppresses warnings
 	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -v | head -n1 | awk '{print \$2}'")
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
-	log "- Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
+	log "   - Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
 	if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
 		log "🚨 Command line PHP version mismatch detected"
@@ -322,7 +322,7 @@ function checkWebFacingPHPVersions() {
 	# validate if the version looks legit
 	[[ ! $LOCAL_VERSION =~ ^[0-9]\. ]] && logError "Invalid local web-facing PHP version number: $LOCAL_VERSION"
 	# Log the detected PHP version
-	log "- Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
+	log "   - Web-facing PHP version at $PRETTY_LOCAL_HOST: ${BLUE}$LOCAL_VERSION${NC}"
 
 	# Create the test file on the remote server
 	$SSH_CONNECTION "cd $REMOTE_WEB_ROOT; echo '<?= phpversion();' > ./$FILE_NAME"
@@ -337,7 +337,7 @@ function checkWebFacingPHPVersions() {
 	# validate if the version looks legit
 	[[ ! $REMOTE_VERSION =~ ^[0-9]\. ]] && logError "Invalid remote web-facing PHP version number: $REMOTE_VERSION"
 	# Log the detected PHP version
-	log "- Web-facing PHP version at $PRETTY_REMOTE_HOST: ${BLUE}$REMOTE_VERSION${NC}"
+	log "   - Web-facing PHP version at $PRETTY_REMOTE_HOST: ${BLUE}$REMOTE_VERSION${NC}"
 
 	# Error out if the two PHP versions aren't a match
 	if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
@@ -672,8 +672,8 @@ function checkWPVersions() {
 	# Nothing to compare on a fresh remote
 	[[ -z "$REMOTE_VERSION" ]] && return 0
 
-	log "- WordPress version at $PRETTY_LOCAL_ENV: ${BLUE}$LOCAL_VERSION${NC}"
-	log "- WordPress version at $PRETTY_REMOTE_ENV: ${BLUE}$REMOTE_VERSION${NC}"
+	log "   - WordPress version at $PRETTY_LOCAL_ENV: ${BLUE}$LOCAL_VERSION${NC}"
+	log "   - WordPress version at $PRETTY_REMOTE_ENV: ${BLUE}$REMOTE_VERSION${NC}"
 
 	local LOWEST=$(printf '%s\n%s\n' "$LOCAL_VERSION" "$REMOTE_VERSION" | sort -V | head -n1)
 	if [[ "$LOCAL_VERSION" == "$REMOTE_VERSION" || "$LOWEST" == "$REMOTE_VERSION" ]]; then
