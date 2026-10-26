@@ -38,8 +38,17 @@ function ask(string $question, string $options = 'y/n')
     return strtolower(trim(fgets(STDIN)));
 }
 
+/**
+ * Run a WP-CLI command in this process. Inherits the PHP settings of wp-sync-deploy
+ * (e.g. hidden deprecation notices) and is faster than launching a new process
+ */
+function run(string $command)
+{
+    \WP_CLI::runcommand($command, ['launch' => false]);
+}
+
 /** Clear all transients */
-\WP_CLI::runcommand('transient delete --all');
+run('transient delete --all');
 /** Clear the WP SuperCache cache if it exists */
 if (function_exists('wp_cache_clear_cache')) {
     wp_cache_clear_cache();
@@ -51,7 +60,7 @@ if (function_exists('wp_cache_clear_cache')) {
  */
 if ($task === 'deploy') {
     /** Update the database */
-    \WP_CLI::runcommand('core update-db');
+    run('core update-db');
     /** Flush the rewrite rules */
-    \WP_CLI::runcommand('rewrite flush');
+    run('rewrite flush');
 }

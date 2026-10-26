@@ -262,6 +262,8 @@ Ignored files are never deleted on the remote, with one exception: when you remo
 | `PROD_DEPLOY_STRATEGY`                          | `deployStrategy: DeployStrategy::…` |
 | `STAG_*`                                        | `staging: new Remote(…)`            |
 
+In your `wp-sync-deploy.tasks.php`, run commands with `\WP_CLI::runcommand('…', ['launch' => false])` (see the `run()` helper in the [example file](wp-sync-deploy.tasks.example.php)). Otherwise, PHP 8.5 deprecation notices from WP-CLI show up for each command.
+
 If you have a custom `.deployignore`, move your rules to `ignore: new Ignore(patterns: [...])` (see [Ignored files](#ignored-files)) and delete the file.
 
 ## AI agents

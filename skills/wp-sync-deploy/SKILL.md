@@ -54,6 +54,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 - `vendor` in `ADDITIONAL_DIRS` becomes `composer: new Composer()` (dev dependencies are no longer deployed).
 - `git rm` `.env.wp-sync-deploy`; remove any `!.env.wp-sync-deploy` from `.gitignore`.
 - `run` is gone, deploys are live by default: drop `run` from scripts; dry run is `--dry-run`. Replace old per-env composer scripts with step 4.
+- Existing `wp-sync-deploy.tasks.php`: switch `\WP_CLI::runcommand('…')` calls to the example's `run()` helper (`['launch' => false]`), which avoids PHP 8.5 deprecation noise from WP-CLI child processes.
 - Project has its own `.deployignore` → move rules that aren't in `Ignore::DEFAULTS` to `ignore: new Ignore(patterns: [...])`, then `git rm` the file.
 - Update mentions in `AGENTS.md`.
 
