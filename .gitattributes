@@ -2,3 +2,4 @@
 /.gitignore export-ignore
 /AGENTS.md export-ignore
 /.minimum-version export-ignore
+/skills export-ignore

@@ -219,6 +219,16 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 | `PROD_DEPLOY_STRATEGY`                          | `deployStrategy: DeployStrategy::…` |
 | `STAG_*`                                        | `staging: new Remote(…)`            |
 
+If you have a custom `.deployignore`, add `wp-sync-deploy.config.php` to it.
+
+## AI agents
+
+This repo ships an [agent skill](skills/wp-sync-deploy/SKILL.md) that sets up or upgrades wp-sync-deploy in your project:
+
+```shell
+npx skills add hirasso/wp-sync-deploy
+```
+
 ## Other notes
 
 wp-sync-deploy has a default list of files and directories that will be ignored during a deploy. If you wish to customize this list, copy the default [.deployignore](https://github.com/hirasso/wp-sync-deploy/blob/main/.deployignore) to your project root and adjust it there. It will then be used instead of the default one.
