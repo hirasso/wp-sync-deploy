@@ -16,8 +16,8 @@ for arg in "$@"; do
     esac
 done
 
-# Clean up the WP-CLI update marker (see updateRemoteWpCli), the ignore file and the vendor build (see buildVendor)
-trap 'rm -f "$WP_CLI_UPDATE_MARKER" "${IGNORE_FILE:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
+# Clean up the WP-CLI update marker (see updateRemoteWpCli), the ignore file, the rsync logs (see logLeftovers) and the vendor build (see buildVendor)
+trap 'rm -f "$WP_CLI_UPDATE_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
 
 # Load the config file
 loadConfigFile
@@ -30,6 +30,10 @@ checkMinimumSelfVersion
 # Write the ignore rules to a file for rsync
 IGNORE_FILE=$(mktemp)
 printf '%s\n' "$IGNORE_RULES" >"$IGNORE_FILE"
+
+# rsync output, to list remote folders it couldn't delete
+RSYNC_LOG=$(mktemp)
+VENDOR_RSYNC_LOG=$(mktemp)
 
 # Find the tasks file wp-sync-deploy.tasks.php
 TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)

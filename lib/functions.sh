@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-# Font Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-BLUE="\033[0;36m"
-NC='\033[0m' # No Color
-
-# Font styles
-BOLD=$(tput bold)
-NORMAL=$(tput sgr0)
+# Font colors and styles, only in a terminal (log writes to stderr) and without NO_COLOR
+RED='' GREEN='' BLUE='' NC='' BOLD='' NORMAL=''
+if [ -t 2 ] && [ -z "${NO_COLOR:-}" ]; then
+	RED='\033[0;31m'
+	GREEN='\033[0;32m'
+	BLUE="\033[0;36m"
+	NC='\033[0m' # No Color
+	BOLD=$(tput bold)
+	NORMAL=$(tput sgr0)
+fi
 
 # Log a string and redirect to stderr to prevent function return pollution
 # @see https://unix.stackexchange.com/a/331620/504158
@@ -824,12 +825,12 @@ function addGitattributesIgnores() {
 			[[ " $ATTRS " == *" export-ignore "* ]] || continue
 			PATTERN="${PATTERN%/}"
 			if [[ "$PATTERN" == /* ]]; then
-				RULES="$RULES- /$DIR$PATTERN\n"
+				RULES="$RULES-p /$DIR$PATTERN\n"
 			elif [[ "$PATTERN" == */* ]]; then
-				RULES="$RULES- /$DIR/$PATTERN\n"
+				RULES="$RULES-p /$DIR/$PATTERN\n"
 			else
 				# Patterns without a slash match at any depth
-				RULES="$RULES- /$DIR/$PATTERN\n- /$DIR/**/$PATTERN\n"
+				RULES="$RULES-p /$DIR/$PATTERN\n-p /$DIR/**/$PATTERN\n"
 			fi
 		done <"$LOCAL_ROOT_DIR/$FILE"
 	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS \( -name node_modules -o -name vendor \) -prune -o -name .gitattributes -print 2>/dev/null)
@@ -837,4 +838,15 @@ function addGitattributesIgnores() {
 	[[ -z "$RULES" ]] && return 0
 	printf '%b' "$RULES" >>"$IGNORE_FILE"
 	log "ℹ️  Ignoring files marked as ${BLUE}export-ignore${NC} in .gitattributes"
+}
+
+# List remote folders rsync couldn't delete because of ignored files inside
+function logLeftovers() {
+	local LEFTOVERS
+	LEFTOVERS=$({
+		sed -n 's/^cannot delete non-empty directory: //p' "$RSYNC_LOG"
+		sed -n "s|^cannot delete non-empty directory: |${VENDOR_DIR:-vendor}/|p" "$VENDOR_RSYNC_LOG"
+	} | sort -u | sed 's/^/   - /')
+	[[ -z "$LEFTOVERS" ]] && return 0
+	log "🧹 ${BOLD}Can't be deleted at $PRETTY_REMOTE_ENV because of ignored files inside, clean up manually:${NORMAL}\n\r$LEFTOVERS"
 }

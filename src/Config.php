@@ -181,7 +181,8 @@ final readonly class Git
 final readonly class Ignore
 {
     /**
-     * Built-in rules, in rsync filter syntax (`-p`: also ignored when deleting directories)
+     * Built-in patterns. Applied as perishable rules (`-p`), so they never keep
+     * a remote folder alive that was removed locally
      */
     public const DEFAULTS = [
         // wp-sync-deploy isn't built to deal with the default WordPress folder structure
@@ -191,17 +192,17 @@ final readonly class Ignore
         '*.env',
         // Package managers
         'node_modules',
-        '-p package.json',
-        '-p package-lock.json',
-        '-p pnpm-*.yaml',
-        '-p composer.json',
-        '-p composer.lock',
+        'package.json',
+        'package-lock.json',
+        'pnpm-*.yaml',
+        'composer.json',
+        'composer.lock',
         // Build configs
-        '-p *.config.js',
-        '-p *.config.mjs',
-        '-p *.config.ts',
-        '-p *.config.mts',
-        '-p tsconfig.json',
+        '*.config.js',
+        '*.config.mjs',
+        '*.config.ts',
+        '*.config.mts',
+        'tsconfig.json',
         // Files from this tool
         'wp-sync-deploy',
         'wp-sync-deploy.config.php',
@@ -209,8 +210,8 @@ final readonly class Ignore
         // Logs, DB dumps, docs, todos
         '*.log',
         '*.sql',
-        '-p README.md',
-        '-p readme.md',
+        'README.md',
+        'readme.md',
         'TODO',
         '*.todo',
     ];
@@ -229,10 +230,12 @@ final readonly class Ignore
     /** @return string[] */
     public function rules(): array
     {
-        $rules = [...($this->defaults ? self::DEFAULTS : []), ...$this->patterns];
+        $defaults = $this->defaults ? array_map(fn ($pattern) => "-p $pattern", self::DEFAULTS) : [];
 
-        // Plain patterns become exclude rules
-        return array_map(fn ($rule) => preg_match('/^[-+][a-z]* /', $rule) ? $rule : "- $rule", $rules);
+        // Plain patterns become exclude rules, which also protect remote folders from being removed
+        $patterns = array_map(fn ($rule) => preg_match('/^[-+][a-z]* /', $rule) ? $rule : "- $rule", $this->patterns);
+
+        return [...$defaults, ...$patterns];
     }
 }
 

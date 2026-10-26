@@ -230,7 +230,7 @@ Files marked as `export-ignore` in `.gitattributes` files inside your themes and
 *.md export-ignore
 ```
 
-Ignored files are never deleted on the remote.
+Ignored files are never deleted on the remote, with one exception: when you remove a folder locally, its remote copy is deleted together with any files matched by the defaults or `export-ignore` (e.g. a leftover `.htaccess` or `node_modules`). Files matched by your own `patterns` are never touched, so they keep such a folder alive. Don't add catch-alls like `.*` there. Folders that can't be deleted are listed at the end of each deploy.
 
 ## Upgrading from 3.x
 
@@ -290,5 +290,7 @@ Optionally, let Claude Code suggest the upgrade when you open a project using an
 Adjust the path if the skill is installed elsewhere. Requires `jq` and `curl`.
 
 ## Other notes
+
+Set `NO_COLOR=1` to disable colored output. Colors are also off when the output isn't a terminal.
 
 Before each run, wp-sync-deploy checks if an important update is available and asks for confirmation before proceeding with an outdated version.

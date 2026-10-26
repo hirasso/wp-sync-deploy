@@ -104,6 +104,7 @@ case $DEPLOY_MODE in
 dry)
   log "🚀 ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
+  echo
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
@@ -113,16 +114,17 @@ dry)
       "${PROTECT_FILTERS[@]}" \
       --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
-  )
+  ) 2>&1 | tee "$RSYNC_LOG"
   logLine
   if [ -n "${COMPOSER_DIR+x}" ]; then
-    deployVendor --dry-run
+    deployVendor --dry-run 2>&1 | tee "$VENDOR_RSYNC_LOG"
     logLine
   fi
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
   logLine
   log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
+  logLeftovers
   logDryRunSummary
   ;;
 
@@ -145,6 +147,7 @@ run)
 
   log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
+  echo
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
@@ -154,13 +157,15 @@ run)
       "${PROTECT_FILTERS[@]}" \
       --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
-  )
+  ) 2>&1 | tee "$RSYNC_LOG"
 
   if [ -n "${COMPOSER_DIR+x}" ]; then
-    deployVendor
+    echo
+    deployVendor 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi
 
   log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
+  logLeftovers
 
   logLine
 
