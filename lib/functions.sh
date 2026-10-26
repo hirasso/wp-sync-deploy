@@ -373,7 +373,7 @@ function updateRemoteWpCli() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 	local RESULT
 
-	if ! RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR cli update --yes 2>&1"); then
+	if ! RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR cli update --yes 2>&1"); then
 		log "⚠️  Failed to update WP-CLI on the remote server:\n\r$RESULT"
 		return
 	fi
@@ -395,7 +395,7 @@ function wpRemote() {
 	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
 
 	# Construct the remote command
-	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY $WP_CLI_PHAR $ARGS'"
+	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR $ARGS'"
 
 	# @see ChatGPT
 	eval $SSH_COMMAND
@@ -633,7 +633,7 @@ function checkWPVersions() {
 	fi
 
 	log "🚨 ${BOLD}${RED}WordPress at $PRETTY_REMOTE_ENV is newer than locally${NC}${NORMAL}"
-	log "   The deploy would downgrade it from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
+	log "   The deploy will downgrade it from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
 
 	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
 
@@ -680,7 +680,7 @@ function checkExtensionVersions() {
 		LOCAL_ENTRY=$(printf '%s\n' "$LOCAL_LIST" | awk -F'\t' -v key="$KEY" '$1 == key { print "found\t" $2; exit }')
 
 		if [[ -z "$LOCAL_ENTRY" ]]; then
-			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} ($REMOTE_VERSION) is missing locally"
+			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} ($REMOTE_VERSION) is missing locally and will be deleted"
 			continue
 		fi
 
@@ -689,7 +689,7 @@ function checkExtensionVersions() {
 
 		LOWEST=$(printf '%s\n%s\n' "$LOCAL_VERSION" "$REMOTE_VERSION" | sort -V | head -n1)
 		[[ "$LOWEST" == "$LOCAL_VERSION" ]] &&
-			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} would be downgraded from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
+			PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$KEY${NC} will be downgraded from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
 	done <<<"$REMOTE_LIST"
 
 	if [[ -z "$PROBLEMS" ]]; then
