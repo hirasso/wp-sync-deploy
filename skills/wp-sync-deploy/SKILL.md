@@ -1,6 +1,6 @@
 ---
 name: wp-sync-deploy
-description: Set up hirasso/wp-sync-deploy (database sync + rsync deploy for WordPress) in a project, or upgrade it from 3.x to 4.x. Use when the user wants to install, set up, configure or upgrade wp-sync-deploy, or adds `hirasso/wp-sync-deploy` to composer.json.
+description: Set up hirasso/wp-sync-deploy (database sync + rsync deploy for WordPress) in a project, or upgrade it from 2.x/3.x to 4.x. Use when the user wants to install, set up, configure or upgrade wp-sync-deploy, adds `hirasso/wp-sync-deploy` to composer.json, or a SessionStart hook reports an outdated version.
 ---
 
 # wp-sync-deploy setup (4.x)
@@ -39,6 +39,14 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 - Secrets (http auth) → `getenv('…') ?: null`, never literal.
 - Commit the file. Never gitignore it.
 - Validate: `php -d display_errors=stderr vendor/hirasso/wp-sync-deploy/lib/config.php wp-sync-deploy.config.php` prints the resolved values.
+
+## Upgrading from 2.x
+
+2.x was cloned into the project (`wp-sync-deploy/` folder, sometimes a git submodule) instead of installed via composer:
+
+- Submodule (listed in `.gitmodules`) → `git submodule deinit -f wp-sync-deploy && git rm -f wp-sync-deploy`. Otherwise delete the folder and its `.gitignore` entry.
+- Replace calls like `./wp-sync-deploy/deploy.sh` in scripts and docs with step 4.
+- Then install (step 1) and continue with "Upgrading from 3.x".
 
 ## Upgrading from 3.x
 
@@ -87,3 +95,7 @@ Review `wp-sync-deploy.tasks.php` against the site (e.g. caching plugin present?
 A dry run is safe to run (`npm run production:deploy -- --dry-run`). If SSH isn't available to you, ask the user to run it. Never run a live deploy or a `push` sync without explicit request.
 
 Report what's configured and what the user must still do. Commit only when asked.
+
+## Upgrade hint
+
+`scripts/detect.sh` is a SessionStart hook that reports projects using an older major version. If the user declines the upgrade, run `bash <skill dir>/scripts/detect.sh snooze` in the project (quiet for 30 days).

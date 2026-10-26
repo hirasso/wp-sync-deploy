@@ -272,6 +272,23 @@ This repo ships an [agent skill](skills/wp-sync-deploy/SKILL.md) that sets up or
 npx skills add hirasso/wp-sync-deploy
 ```
 
+Optionally, let Claude Code suggest the upgrade when you open a project using an older major version, with a `SessionStart` hook in `~/.claude/settings.json`:
+
+```json
+"hooks": {
+  "SessionStart": [
+    {
+      "matcher": "startup",
+      "hooks": [
+        { "type": "command", "command": "bash ~/.claude/skills/wp-sync-deploy/scripts/detect.sh 2>/dev/null || true", "timeout": 10 }
+      ]
+    }
+  ]
+}
+```
+
+Adjust the path if the skill is installed elsewhere. Requires `jq` and `curl`.
+
 ## Other notes
 
 Before each run, wp-sync-deploy checks if an important update is available and asks for confirmation before proceeding with an outdated version.
