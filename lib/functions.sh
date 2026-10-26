@@ -797,9 +797,9 @@ function deployVendor() {
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
 
-# Warn about deployed composer vendor dirs that contain dev packages
+# Ask for confirmation if deployed composer vendor dirs contain dev packages
 function checkVendorDevPackages() {
-	local FILE VENDOR DIR COUNT
+	local FILE VENDOR DIR COUNT SUGGESTION PROBLEMS=""
 	while IFS= read -r FILE; do
 		VENDOR=$(dirname "$(dirname "$FILE")")
 		DIR=$(dirname "$VENDOR")
@@ -809,12 +809,23 @@ function checkVendorDevPackages() {
 		COUNT=$(php -r 'echo count(json_decode(file_get_contents($argv[1]), true)["dev-package-names"] ?? []);' "$LOCAL_ROOT_DIR/$FILE")
 		[[ "$COUNT" == "0" ]] && continue
 
-		local SUGGESTION="new Composer()"
+		SUGGESTION="new Composer()"
 		[[ "$DIR" != "." ]] && SUGGESTION="new Composer(dir: '$DIR')"
-		log "ℹ️  ${BLUE}$VENDOR${NC} contains ${RED}$COUNT${NC} dev package(s). Use ${BLUE}composer: $SUGGESTION${NC} to deploy it without them"
+		PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$VENDOR${NC} contains ${RED}$COUNT${NC} dev package(s). Use ${BLUE}composer: $SUGGESTION${NC} to deploy it without them"
 	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS -name node_modules -prune -o -path '*/vendor/composer/installed.json' -print 2>/dev/null)
+
+	[[ -z "$PROBLEMS" ]] && return 0
+
+	log "🚨 ${BOLD}${RED}Composer dev dependencies will be deployed${NC}${NORMAL}$PROBLEMS"
+
+	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
+
+	log "Deploy anyway?"
+	read -r -p "[y/n] " PROMPT_RESPONSE
+	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 	return 0
 }
+
 
 # Append rules for `export-ignore` in .gitattributes files inside the deploy paths to $IGNORE_FILE
 function addGitattributesIgnores() {

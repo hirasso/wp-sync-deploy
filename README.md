@@ -148,7 +148,7 @@ With `composer: new Composer()` in your config, wp-sync-deploy builds your `vend
 
 If your `composer.json` is not in the root dir (e.g. inside your theme), pass its location: `new Composer(dir: 'content/themes/my-theme')`.
 
-wp-sync-deploy warns if a deployed `vendor` directory contains dev dependencies and suggests the matching `new Composer()` config.
+wp-sync-deploy asks for confirmation if a deployed `vendor` directory contains dev dependencies, and suggests the matching `new Composer()` config.
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
 ### Simple Upload
