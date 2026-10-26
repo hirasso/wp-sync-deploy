@@ -151,6 +151,29 @@ function validateProductionBranch() {
 
 }
 
+# Ask for confirmation if the git working tree has uncommitted changes
+function checkWorkingTreeClean() {
+	[[ -z "${GIT_DIR+x}" || "${REMOTE_ENV}" != "production" ]] && return
+
+	local CHANGES=$(git -C "$(normalizePath "${LOCAL_ROOT_DIR}/${GIT_DIR}")" status --porcelain | wc -l | tr -d ' ')
+
+	if [[ "$CHANGES" == "0" ]]; then
+		logSuccess "Working tree is clean"
+		return
+	fi
+
+	log "🚨 Your working tree has ${RED}$CHANGES${NC} uncommitted change(s)"
+
+	[[ "$DEPLOY_MODE" == "dry" ]] && return 0
+
+	log "Proceed deploy to ${BOLD}production${NORMAL}?"
+	read -r -p "[y/n] " PROMPT_RESPONSE
+	if [[ "$PROMPT_RESPONSE" != "y" ]]; then
+		log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
+		exit
+	fi
+}
+
 # Check if there is a file `.allow-deployment` present at the remote root
 function checkIsDeploymentAllowed() {
 	local FILE_PATH="$REMOTE_ROOT_DIR/.allow-deployment"
