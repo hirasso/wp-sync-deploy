@@ -90,14 +90,14 @@ This file is being used to run [automated tasks](https://github.com/hirasso/wp-s
 wp-sync-deploy performs a few security checks before proceeding with a deploy:
 
 - [x] Do all directories marked for deployment exist locally? Do the WordPress core, plugins and themes directories exist remotely? (other directories like `mu-plugins` are created if missing)
-- [x] Does a hidden file `.allow-deployment` exist on the remote environment's web root?
+- [x] Does a hidden file `.allow-deployment` exist in the remote environment's root dir (`rootDir`)?
 - [x] Does the local _command-line_ PHP version match the one on the remote environment?
 - [x] Does the local _web-facing_ PHP version match the one on the remote environment?
 
 So when you are starting, you will need to
 
 - Perform the first deployment manually (or via the [upload](#simple-upload) command)
-- Add an empty file `.allow-deployment` to your remote web root
+- Add an empty file `.allow-deployment` to your remote root dir (`rootDir`)
 - Make sure that your local and remote server are set to use the same PHP version
 
 ## Usage

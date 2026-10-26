@@ -7,6 +7,12 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 - do not add comments if not really required
 - only use languages I know. No python please
 
+## Docs
+
+- every user-facing change (config options, CLI flags, checks and prompts, upgrade steps) updates `README.md` **and** `skills/wp-sync-deploy/SKILL.md` in the same commit
+- keep the skill lean: it describes the setup/upgrade procedure and points to `README.md` and `src/Config.php` for details. Don't duplicate option lists or defaults there
+- `composer release` asks for confirmation if code changed since the last tag but README and skill didn't
+
 ## Before making changes
 
 - if the change is big, always first propose what you are planning, even if not in plan mode

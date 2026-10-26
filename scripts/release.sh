@@ -82,6 +82,15 @@ git merge-base --is-ancestor origin/main HEAD || logError "Local ${BLUE}main${NC
 PREVIOUS_TAG="$STABLE_TAG"
 [[ "$IS_RC" == true && -n "$RC_TAG" ]] && PREVIOUS_TAG="$RC_TAG"
 
+# Remind about the docs if code changed without them
+if [[ -n "$(git diff --name-only "$PREVIOUS_TAG" HEAD -- src lib '*.sh' ':!scripts')" ]]; then
+    for DOC in README.md skills/wp-sync-deploy/SKILL.md; do
+        [[ -n "$(git diff --name-only "$PREVIOUS_TAG" HEAD -- "$DOC")" ]] && continue
+        read -r -p "Code changed since $PREVIOUS_TAG, but $DOC didn't. Continue? [y/n] " PROMPT_RESPONSE
+        [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+    done
+fi
+
 if [[ "$IS_RC" == false && -z "$BUMP_MINIMUM" ]]; then
     read -r -p "Bump .minimum-version to $VERSION? [y/N] " PROMPT_RESPONSE
     [[ "$PROMPT_RESPONSE" == "y" ]] && BUMP_MINIMUM=true
