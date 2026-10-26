@@ -64,6 +64,9 @@ VERSION=$(versionFor "$TYPE")
 
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$ ]] || logError "Invalid version: ${RED}$VERSION${NC}"
 git rev-parse --quiet --verify "refs/tags/$VERSION" >/dev/null && logError "Tag ${RED}$VERSION${NC} already exists"
+BASE_VERSION="${VERSION%-rc.*}"
+[[ "$BASE_VERSION" == "$STABLE_TAG" || "$(printf '%s\n' "$STABLE_TAG" "$BASE_VERSION" | sort -V | tail -1)" != "$BASE_VERSION" ]] &&
+    logError "${RED}$VERSION${NC} must be newer than ${BLUE}$STABLE_TAG${NC}"
 
 IS_RC=false
 [[ "$VERSION" == *-rc.* ]] && IS_RC=true
@@ -71,6 +74,8 @@ IS_RC=false
 BRANCH=$(git branch --show-current)
 [[ "$BRANCH" != "main" ]] && logError "Releases must be created from ${BLUE}main${NC} (current: ${RED}$BRANCH${NC})"
 [ -n "$(git status --porcelain)" ] && logError "Working tree is not clean"
+git fetch --quiet origin main
+git merge-base --is-ancestor origin/main HEAD || logError "Local ${BLUE}main${NC} is behind ${BLUE}origin/main${NC}, pull first"
 [[ "$DRY_RUN" == false ]] && ! gh auth status >/dev/null 2>&1 && logError "Not logged in to ${BLUE}gh${NC}"
 
 # Release candidates log changes since the previous release candidate, stable releases since the previous stable release
