@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.2.0 - 2026-10-27
+
+- Add `config init`, a setup wizard that detects your local WordPress setup and migrates 3.x setups
+(`.env.wp-sync-deploy`, `.deployignore`, tasks file). It only asks for values you didn't set yourself
+- Add `config validate` to check your config locally and on all remotes (`--local` skips the remote checks)
+- Make the log output more coherent: green `✔` for successes, `⚠️ ` for warnings, `🚨` for errors, also for WP-CLI output
+- Clean up the database sync output
+- Require typing `push` to confirm `sync staging push`
+- Fix `--config` being read as the sync mode in `sync`
+- Hide PHP deprecation notices from WP-CLI
+- Always deactivate maintenance mode, even if a sync fails or is canceled
+
 ## 4.1.0 - 2026-10-27
 
 - Upload the tasks file to ~/.wp-sync-deploy and delete it after each run
