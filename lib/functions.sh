@@ -841,12 +841,15 @@ function listDeployedFiles() {
 	rmdir "$DEST"
 }
 
-# Ask for confirmation if deployed composer vendor dirs contain dev packages
+# Ask for confirmation if the project's deployed vendor dirs (root or git repo) contain dev packages.
+# Third-party plugins often ship their own, which isn't ours to fix
 function checkVendorDevPackages() {
 	local FILE VENDOR DIR COUNT SUGGESTION PROBLEMS=""
+	local GIT_PATH=$(relativePath "$(normalizePath "${GIT_DIR:-}")")
 	while IFS= read -r FILE; do
 		VENDOR=$(dirname "$(dirname "$FILE")")
 		DIR=$(dirname "$VENDOR")
+		[[ "$DIR" == "." || ( -n "${GIT_DIR+x}" && "$DIR" == "$GIT_PATH" ) ]] || continue
 		# Deployed without dev packages through new Composer()
 		[[ -n "${COMPOSER_DIR+x}" && "$DIR" == "$(relativePath "$(normalizePath "$COMPOSER_DIR")")" ]] && continue
 

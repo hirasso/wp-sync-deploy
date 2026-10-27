@@ -165,7 +165,7 @@ With `composer: new Composer()` in your config, wp-sync-deploy deploys your `ven
 
 If your `composer.json` is not in the root dir (e.g. inside your theme), pass its location: `new Composer(dir: 'content/themes/my-theme')`.
 
-wp-sync-deploy asks for confirmation if a deployed `vendor` directory contains dev dependencies, and suggests the matching `new Composer()` config.
+wp-sync-deploy asks for confirmation if the `vendor` directory in your root dir or git repo contains dev dependencies, and suggests the matching `new Composer()` config. The `vendor` directories that third-party plugins ship are not checked.
 
 ### Simple Upload
 
