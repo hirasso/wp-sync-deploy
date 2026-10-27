@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.2.1 - 2026-10-27
+
+- Only check the project's own vendor dirs for dev packages
+
 ## 4.2.0 - 2026-10-27
 
 - Add `config init`, a setup wizard that detects your local WordPress setup and migrates 3.x setups
