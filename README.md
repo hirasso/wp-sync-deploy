@@ -168,7 +168,7 @@ vendor/bin/wp-sync-deploy upload staging --paths=".env wp-cli.yml config public 
 
 ## Run automated tasks after each deploy / sync ✨
 
-wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup command](#setup), to customize which tasks should be executed.
+wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup command](#setup), to customize which tasks should be executed. The file is uploaded to `~/.wp-sync-deploy/` on the remote server for each run (outside of the web root) and deleted afterwards.
 
 Default tasks defined in the file are:
 

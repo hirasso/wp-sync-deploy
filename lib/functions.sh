@@ -376,10 +376,10 @@ function checkDeployPaths() {
 	done
 }
 
-# WP-CLI is downloaded locally and uploaded to the remote home dir, outside of the web root.
-# This makes it possible to easily run wp-cli with a custom command line PHP version
+# WP-CLI and the tasks file are uploaded to the remote home dir, outside of the web root.
+# Running our own WP-CLI makes it possible to use a custom command line PHP version
 WP_CLI_LOCAL_PHAR="${XDG_CACHE_HOME:-$HOME/.cache}/wp-sync-deploy/wp-cli.phar"
-WP_CLI_REMOTE_DIR=".wp-sync-deploy"
+REMOTE_FILES_DIR=".wp-sync-deploy"
 
 # Download WP-CLI to the local cache, or update it if older than a week.
 # A stale phar can emit deprecation notices under newer PHP versions.
@@ -412,12 +412,12 @@ function installRemoteWpCli() {
 
 	local RESULT
 	# rsync only transfers the phar if it changed. </dev/null keeps rsync and ssh from reading wpRemote's piped stdin
-	RESULT=$("$RSYNC_BIN" -t -e "$SSH_COMMAND" --rsync-path="mkdir -p $WP_CLI_REMOTE_DIR && rsync" \
-		"$WP_CLI_LOCAL_PHAR" "$REMOTE_SSH:$WP_CLI_REMOTE_DIR/wp-cli.phar" </dev/null 2>&1) ||
-		logError "Failed to upload WP-CLI to ${BLUE}~/$WP_CLI_REMOTE_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
+	RESULT=$("$RSYNC_BIN" -t -e "$SSH_COMMAND" --rsync-path="mkdir -p $REMOTE_FILES_DIR && rsync" \
+		"$WP_CLI_LOCAL_PHAR" "$REMOTE_SSH:$REMOTE_FILES_DIR/wp-cli.phar" </dev/null 2>&1) ||
+		logError "Failed to upload WP-CLI to ${BLUE}~/$REMOTE_FILES_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
 
-	# Legacy: remove the hashed phar from the web root, installed by wp-sync-deploy < 4.1
-	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT/wp-cli-$(createHash $REMOTE_WEB_ROOT).phar'" </dev/null
+	# Legacy: remove the hashed phar and the tasks file from the web root, uploaded by wp-sync-deploy < 4.1
+	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT/wp-cli-$(createHash $REMOTE_WEB_ROOT).phar' '$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php'" </dev/null
 
 	logSuccess "WP-CLI available on the remote server."
 }
@@ -439,7 +439,7 @@ function wpRemote() {
 	logLine
 
 	# Construct the remote command
-	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$WP_CLI_REMOTE_DIR/wp-cli.phar --url=$REMOTE_URL $ARGS'"
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --url=$REMOTE_URL $ARGS'"
 
 	# @see ChatGPT
 	eval $REMOTE_COMMAND
@@ -453,11 +453,18 @@ function runRemoteTasks() {
 
 	log "Running ${BLUE}wp eval-file wp-sync-deploy.tasks.php $TASK${NC} on $PRETTY_REMOTE_ENV server ... \n"
 
-	# Upload the file to the remote web root
-	rsync -e "$SSH_COMMAND" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT/"
+	# Upload the file next to WP-CLI, which also creates the remote dir
+	installRemoteWpCli
+	rsync -e "$SSH_COMMAND" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_FILES_DIR/"
 
 	# Execute the file on the remote server, passing in the current $TASK ("deploy" or "sync")
-	wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
+	local STATUS=0
+	wpRemote eval-file "~/$REMOTE_FILES_DIR/wp-sync-deploy.tasks.php" "$TASK" || STATUS=$?
+
+	# Delete the file from the remote server, even if a task failed
+	$SSH_CONNECTION "rm -f ~/$REMOTE_FILES_DIR/wp-sync-deploy.tasks.php" </dev/null
+
+	return $STATUS
 }
 
 # Pull the remote database into the local database
