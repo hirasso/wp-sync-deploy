@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.1 - 2026-10-27
+
+- Make production optional, require at least one remote
+
 ## 4.3.0 - 2026-10-27
 
 - Enable `.git` checks by default, warn about missing `composer:`
