@@ -33,6 +33,39 @@ function ask() {
 	echo "$ANSWER"
 }
 
+# Print a variable's value from the 3.x .env example, which the old `setup` command copied
+function legacyExampleValue() {
+	case "$1" in
+	LOCAL_HOST) echo "example.test" ;;
+	LOCAL_ROOT_DIR) echo "/absolute/path/to/local/root" ;;
+	PUBLIC_DIR) echo "web" ;;
+	WP_CONTENT_DIR) echo "web/app" ;;
+	WP_CORE_DIR) echo "web/wp" ;;
+	ADDITIONAL_DIRS) echo "vendor config" ;;
+	GIT_DIR) echo "" ;;
+	PROD_HOST) echo "example.com" ;;
+	PROD_ROOT_DIR) echo "/absolute/path/to/production/root" ;;
+	STAG_HOST) echo "staging.example.com" ;;
+	STAG_ROOT_DIR) echo "/absolute/path/to/staging/root" ;;
+	PROD_SSH | STAG_SSH) echo "username@example.com" ;;
+	PROD_SSH_PORT | STAG_SSH_PORT) echo "22" ;;
+	PROD_PHP_BINARY | STAG_PHP_BINARY) echo "php" ;;
+	PROD_DEPLOY_STRATEGY) echo "conservative" ;;
+	esac
+}
+
+# Ask unless a 3.x .env.wp-sync-deploy set the variable to a value of its own, then use the default without asking.
+# Values left as in the example weren't chosen by the user
+function askUnlessSetByUser() {
+	local NAME="$1" LABEL="$2" DEFAULT="${3:-}"
+	if [ -z "${!NAME+x}" ] || [[ "${!NAME}" == "$(legacyExampleValue "$NAME")" ]]; then
+		ask "$LABEL" "$DEFAULT"
+		return
+	fi
+	[[ "$INTERACTIVE" == true ]] && printf "   %s: ${BLUE}%s${NC}\n" "$LABEL" "$DEFAULT" >&2
+	echo "$DEFAULT"
+}
+
 # Express a path relative to a base dir, `.` for the base dir itself
 function relativeTo() {
 	[[ "$1" == "$2" ]] && echo "." && return
@@ -53,13 +86,13 @@ function askRemote() {
 	[ -n "${!HOST:-}" ] && DEFAULT_URL="$(valueOr "${PREFIX}PROTOCOL" https)://${!HOST}"
 
 	[[ "$INTERACTIVE" == true ]] && log "🌍 ${BOLD}$ENV${NORMAL}\n"
-	URL=$(trimTrailingSlashes "$(ask "URL" "$DEFAULT_URL")")
+	URL=$(trimTrailingSlashes "$(askUnlessSetByUser "$HOST" "URL" "$DEFAULT_URL")")
 	export "${PREFIX}PROTOCOL=${URL%%://*}" "${PREFIX}HOST=${URL#*://}"
-	export "${PREFIX}SSH=$(ask "SSH (user@host)" "$(valueOr "${PREFIX}SSH" "$4")")"
-	export "${PREFIX}SSH_PORT=$(ask "SSH port" "$(valueOr "${PREFIX}SSH_PORT" 22)")"
-	export "${PREFIX}ROOT_DIR=$(ask "Root dir (absolute)" "$(valueOr "${PREFIX}ROOT_DIR" "$5")")"
-	export "${PREFIX}PHP_BINARY=$(ask "PHP binary" "$(valueOr "${PREFIX}PHP_BINARY" php)")"
-	export "${PREFIX}DEPLOY_STRATEGY=$(ask "Deploy strategy (conservative|risky)" "$(valueOr "${PREFIX}DEPLOY_STRATEGY" conservative)")"
+	export "${PREFIX}SSH=$(askUnlessSetByUser "${PREFIX}SSH" "SSH (user@host)" "$(valueOr "${PREFIX}SSH" "$4")")"
+	export "${PREFIX}SSH_PORT=$(askUnlessSetByUser "${PREFIX}SSH_PORT" "SSH port" "$(valueOr "${PREFIX}SSH_PORT" 22)")"
+	export "${PREFIX}ROOT_DIR=$(askUnlessSetByUser "${PREFIX}ROOT_DIR" "Root dir (absolute)" "$(valueOr "${PREFIX}ROOT_DIR" "$5")")"
+	export "${PREFIX}PHP_BINARY=$(askUnlessSetByUser "${PREFIX}PHP_BINARY" "PHP binary" "$(valueOr "${PREFIX}PHP_BINARY" php)")"
+	export "${PREFIX}DEPLOY_STRATEGY=$(askUnlessSetByUser "${PREFIX}DEPLOY_STRATEGY" "Deploy strategy (conservative|risky)" "$(valueOr "${PREFIX}DEPLOY_STRATEGY" conservative)")"
 }
 
 # Write a config file from the detected local setup, a 3.x .env.wp-sync-deploy and the answers.
@@ -115,24 +148,24 @@ function writeConfig() (
 
 	# WordPress knows the local URL best, e.g. if the protocol changed
 	[ -z "$HOME_URL" ] && [ -n "${LOCAL_HOST:-}" ] && HOME_URL="$(valueOr LOCAL_PROTOCOL https)://$LOCAL_HOST"
-	local URL=$(trimTrailingSlashes "$(ask "URL" "$HOME_URL")")
+	local URL=$(trimTrailingSlashes "$(askUnlessSetByUser LOCAL_HOST "URL" "$HOME_URL")")
 	export LOCAL_PROTOCOL="${URL%%://*}" LOCAL_HOST="${URL#*://}"
-	export LOCAL_ROOT_DIR=$(ask "Root dir (absolute)" "$ROOT")
-	export WP_CORE_DIR=$(ask "WordPress core dir, relative to the root dir" "${WP_CORE_DIR:-$(relativeTo "$CORE" "$LOCAL_ROOT_DIR")}")
-	export WP_CONTENT_DIR=$(ask "Content dir, relative to the root dir" "${WP_CONTENT_DIR:-$(relativeTo "$CONTENT" "$LOCAL_ROOT_DIR")}")
+	export LOCAL_ROOT_DIR=$(askUnlessSetByUser LOCAL_ROOT_DIR "Root dir (absolute)" "$ROOT")
+	export WP_CORE_DIR=$(askUnlessSetByUser WP_CORE_DIR "WordPress core dir, relative to the root dir" "${WP_CORE_DIR:-$(relativeTo "$CORE" "$LOCAL_ROOT_DIR")}")
+	export WP_CONTENT_DIR=$(askUnlessSetByUser WP_CONTENT_DIR "Content dir, relative to the root dir" "${WP_CONTENT_DIR:-$(relativeTo "$CONTENT" "$LOCAL_ROOT_DIR")}")
 	[ -n "${PUBLIC_DIR+x}" ] && PUBLIC="${PUBLIC_DIR:-.}" || PUBLIC=$(relativeTo "$PUBLIC" "$LOCAL_ROOT_DIR")
-	PUBLIC=$(ask "Public dir, relative to the root dir" "$PUBLIC")
+	PUBLIC=$(askUnlessSetByUser PUBLIC_DIR "Public dir, relative to the root dir" "$PUBLIC")
 	export PUBLIC_DIR="${PUBLIC#.}"
-	export ADDITIONAL_DIRS=$(ask "Additional dirs to deploy, space separated" "$(echo " ${ADDITIONAL_DIRS:-} " | sed 's/ vendor / /' | xargs)")
+	export ADDITIONAL_DIRS=$(askUnlessSetByUser ADDITIONAL_DIRS "Additional dirs to deploy, space separated" "$(echo " ${ADDITIONAL_DIRS:-} " | sed 's/ vendor / /' | xargs)")
 
+	[ -n "$GIT" ] && GIT=$(askUnlessSetByUser GIT_DIR "Git repo, relative to the root dir" "$GIT")
 	unset GIT_DIR COMPOSER_DIR
-	[ -n "$GIT" ] && GIT=$(ask "Git repo, relative to the root dir" "$GIT")
 	[ -n "$GIT" ] && export GIT_DIR="${GIT#.}"
 	COMPOSER=$(ask "Composer dir to deploy vendor from, without dev dependencies" "$COMPOSER")
 	[ -n "$COMPOSER" ] && export COMPOSER_DIR="${COMPOSER#.}"
 
 	askRemote production PROD_ https://example.com username@example.com /absolute/path/to/production/root
-	if [[ $(ask "Add a staging environment? (y/n)" "$([ -n "${STAG_HOST:-}" ] && echo y || echo n)") == "y" ]]; then
+	if [[ $(askUnlessSetByUser STAG_HOST "Add a staging environment? (y/n)" "$([[ -n "${STAG_HOST:-}" && "$STAG_HOST" != "$(legacyExampleValue STAG_HOST)" ]] && echo y || echo n)") == "y" ]]; then
 		askRemote staging STAG_
 	else
 		unset STAG_HOST
@@ -179,7 +212,7 @@ function initConfig() {
 	if [[ "$INTERACTIVE" == true ]]; then
 		log "🚀 Setup ${BLUE}wp-sync-deploy${NC} at this location?"
 		log "  ${GREEN}$DIR${NC}"
-		[ -n "$ENV_FILE" ] && log "  Migrates ${BLUE}$(prettyPath "$ENV_FILE")${NC}, its values are the defaults"
+		[ -n "$ENV_FILE" ] && log "  Migrates ${BLUE}$(prettyPath "$ENV_FILE")${NC}, asks only for values you didn't set yourself"
 		read -r -p " [y/n] " PROMPT_RESPONSE
 		[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 	fi
@@ -376,3 +409,5 @@ init) initConfig "$@" ;;
 validate) validateConfig "$@" ;;
 *) logError "$USAGE_MESSAGE" ;;
 esac
+
+logLine

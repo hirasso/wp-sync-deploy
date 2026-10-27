@@ -254,7 +254,7 @@ Ignored files are never deleted on the remote, with one exception: when you remo
 vendor/bin/wp-sync-deploy config init
 ```
 
-It finds your `.env.wp-sync-deploy` and asks for your setup with its values as defaults (the local URL comes from WordPress), so you can fill in what's new, e.g. `composer: new Composer()`. With `-n`, it uses the old values without asking. It writes `wp-sync-deploy.config.php` next to the old file (including custom `.deployignore` rules), removes the old files (`git rm` if tracked, otherwise renamed to `.bak`), uses the `run()` helper in your tasks file, lists what's left to do and runs [`config validate`](#validate).
+It finds your `.env.wp-sync-deploy`, takes over the values you set yourself (the local URL comes from WordPress) and only asks for the rest: values still as in the old example file and new options like `composer: new Composer()`. With `-n`, it doesn't ask at all. It writes `wp-sync-deploy.config.php` next to the old file (including custom `.deployignore` rules), removes the old files (`git rm` if tracked, otherwise renamed to `.bak`), uses the `run()` helper in your tasks file, lists what's left to do and runs [`config validate`](#validate).
 
 - **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
 - **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** `config init` converts it, see the table below for the mapping
