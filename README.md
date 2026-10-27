@@ -94,9 +94,8 @@ This file is being used to run [automated tasks](https://github.com/hirasso/wp-s
 After adjusting your config, check it:
 
 ```shell
-vendor/bin/wp-sync-deploy config validate              # all environments
-vendor/bin/wp-sync-deploy config validate production   # one environment
-vendor/bin/wp-sync-deploy config validate --local      # skip the remote checks
+vendor/bin/wp-sync-deploy config validate           # all environments
+vendor/bin/wp-sync-deploy config validate --local   # skip the remote checks
 ```
 
 This prints the resolved config and checks your local paths, git repo and rsync. For each remote, it checks the SSH connection, the remote root, `.allow-deployment` (deploy strategy `conservative`) and the command line PHP version, and uploads WP-CLI. It also compares each configured URL with the home URL in WordPress.

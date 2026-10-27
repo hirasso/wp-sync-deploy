@@ -9,7 +9,7 @@
 # `vendor/bin/wp-sync-deploy config init [-n|--no-interaction]`
 #
 # Validate the config locally and on the remote servers
-# `vendor/bin/wp-sync-deploy config validate [production|staging] [--local]`
+# `vendor/bin/wp-sync-deploy config validate [--local]`
 #
 
 # The directory relative to the script
@@ -336,12 +336,11 @@ function validateRemote() {
 
 # Validate the config, locally and on the remote servers
 function validateConfig() {
-	local ONLY_ENV="" LOCAL_ONLY=false CONFIG_ARGS=() arg
+	local LOCAL_ONLY=false CONFIG_ARGS=() arg
 	for arg in "$@"; do
 		case $arg in
 		--local) LOCAL_ONLY=true ;;
 		--config=*) CONFIG_ARGS+=("$arg") WP_SYNC_DEPLOY_CONFIG_FILE="${arg#*=}" ;;
-		production | staging) ONLY_ENV="$arg" ;;
 		*) logError "$USAGE_MESSAGE" ;;
 		esac
 	done
@@ -354,7 +353,6 @@ function validateConfig() {
 	if [[ "$LOCAL_ONLY" != true ]]; then
 		local ENV
 		for ENV in production staging; do
-			[[ -n "$ONLY_ENV" && "$ENV" != "$ONLY_ENV" ]] && continue
 			[[ "$ENV" == "staging" && -z "${STAG_HOST+x}" ]] && continue
 			logLine
 			(
