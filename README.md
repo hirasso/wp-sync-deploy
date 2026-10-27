@@ -12,7 +12,7 @@ Sync and deploy your WordPress website between environments 🔀
 
 ## Prerequesites
 
-- [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy uploads WP-CLI to `~/.wp-sync-deploy/wp-cli.phar` automatically (outside of the web root, so the SSH home directory must be writable). The phar is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` and updated weekly.
+- A writable SSH home directory on the **remote server**. wp-sync-deploy brings its own [WP-CLI](https://wp-cli.org/): the phar is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` (updated weekly) and uploaded to `~/.wp-sync-deploy/wp-cli.phar` on the remote server, outside of the web root. Both run with PHP deprecation notices hidden.
 - PHP >= 8.2 on your **local machine**
 - A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 
@@ -95,7 +95,7 @@ vendor/bin/wp-sync-deploy config validate production   # one environment
 vendor/bin/wp-sync-deploy config validate --local      # skip the remote checks
 ```
 
-This prints the resolved config and checks your local paths, git repo, rsync and WP-CLI. For each remote, it checks the SSH connection, the remote root, `.allow-deployment` (deploy strategy `conservative`) and the command line PHP version, and uploads WP-CLI. It also compares each configured URL with the home URL in WordPress.
+This prints the resolved config and checks your local paths, git repo and rsync. For each remote, it checks the SSH connection, the remote root, `.allow-deployment` (deploy strategy `conservative`) and the command line PHP version, and uploads WP-CLI. It also compares each configured URL with the home URL in WordPress.
 
 ## Remote server preparation
 

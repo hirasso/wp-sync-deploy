@@ -123,11 +123,7 @@ function validateLocal() {
 	[ -n "${COMPOSER_DIR+x}" ] && check "Composer ${BLUE}${COMPOSER_DIR:-.}/composer.json${NC}" test -f "$LOCAL_ROOT_DIR/$COMPOSER_DIR/composer.json"
 
 	check "GNU rsync" bash -c "source '$SCRIPT_DIR/lib/functions.sh'; requireGnuRsync \"\$(resolveRsyncBin)\""
-	check "WP-CLI ${BLUE}wp${NC}" command -v wp
-
-	if command -v wp >/dev/null; then
-		checkHomeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST" "$(cd "$LOCAL_ROOT_DIR/$PUBLIC_DIR" && wp option get home 2>/dev/null)"
-	fi
+	checkHomeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST" "$(cd "$LOCAL_ROOT_DIR/$PUBLIC_DIR" && wpLocal option get home 2>/dev/null)"
 
 	local TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
 	if [ -n "$TASKS_FILE" ]; then

@@ -10,7 +10,7 @@ Source of truth for options: `vendor/hirasso/wp-sync-deploy/README.md`, `wp-sync
 ## 1. Install
 
 - Always a dev dependency: `composer require --dev hirasso/wp-sync-deploy` (pre-release: `:^4.0@rc`). Already in `require` → `composer remove --no-update` it first, then require with `--dev`.
-- Local `wp` (WP-CLI), PHP ≥ 8.2 and GNU `rsync` (not macOS openrsync) must exist. The remote SSH home dir must be writable (WP-CLI is uploaded there).
+- Local PHP ≥ 8.2 and GNU `rsync` (not macOS openrsync) must exist. The remote SSH home dir must be writable. wp-sync-deploy brings its own WP-CLI, locally and remotely.
 
 ## 2. Setup
 

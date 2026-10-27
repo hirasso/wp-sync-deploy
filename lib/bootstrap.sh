@@ -16,8 +16,8 @@ for arg in "$@"; do
     esac
 done
 
-# Clean up the WP-CLI marker (see installRemoteWpCli), the ignore file, the rsync logs (see logLeftovers), the vendor build (see buildVendor) and the SSH connection
-trap 'rm -f "$WP_CLI_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"; closeSshConnection' EXIT
+# Deactivate a leftover maintenance mode, clean up the WP-CLI marker (see installRemoteWpCli), the ignore file, the rsync logs (see logLeftovers), the vendor build (see buildVendor) and the SSH connection
+trap 'cleanupMaintenanceMode; rm -f "$WP_CLI_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"; closeSshConnection' EXIT
 
 # Load the config file
 loadConfigFile

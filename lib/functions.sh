@@ -411,15 +411,33 @@ function installRemoteWpCli() {
 	cacheWpCli
 
 	local RESULT
-	# rsync only transfers the phar if it changed. </dev/null keeps rsync and ssh from reading wpRemote's piped stdin
+	# rsync only transfers changed files. </dev/null keeps rsync and ssh from reading wpRemote's piped stdin
 	RESULT=$("$RSYNC_BIN" -t -e "$SSH_COMMAND" --rsync-path="mkdir -p $REMOTE_FILES_DIR && rsync" \
-		"$WP_CLI_LOCAL_PHAR" "$REMOTE_SSH:$REMOTE_FILES_DIR/wp-cli.phar" </dev/null 2>&1) ||
+		"$WP_CLI_LOCAL_PHAR" "$SCRIPT_DIR/lib/hide-deprecations.php" "$REMOTE_SSH:$REMOTE_FILES_DIR/" </dev/null 2>&1) ||
 		logError "Failed to upload WP-CLI to ${BLUE}~/$REMOTE_FILES_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
 
 	# Legacy: remove the hashed phar and the tasks file from the web root, uploaded by wp-sync-deploy < 4.1
 	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT/wp-cli-$(createHash $REMOTE_WEB_ROOT).phar' '$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php'" </dev/null
 
 	logSuccess "WP-CLI available on the remote server."
+}
+
+# Run WP-CLI locally, forwarding all arguments.
+# Uses the cached phar with deprecation notices hidden, like wpRemote
+function wpLocal() {
+	cacheWpCli
+	php -d error_reporting=24575 "$WP_CLI_LOCAL_PHAR" --require="$SCRIPT_DIR/lib/hide-deprecations.php" "$@"
+}
+
+# Deactivate maintenance mode if the script exits before doing so, e.g. on errors or Ctrl-C.
+# Deletes the .maintenance file directly, as WordPress might not load after an interrupted import
+function cleanupMaintenanceMode() {
+	case "${MAINTENANCE_MODE:-}" in
+	local) rm -f "$LOCAL_ROOT_DIR/$WP_CORE_DIR/.maintenance" ;;
+	remote) $SSH_CONNECTION "rm -f '$REMOTE_ROOT_DIR/$WP_CORE_DIR/.maintenance'" </dev/null ;;
+	*) return 0 ;;
+	esac
+	log "🔧 Deactivated maintenance mode at $MAINTENANCE_MODE"
 }
 
 # Close the shared SSH connection
@@ -439,7 +457,7 @@ function wpRemote() {
 	logLine
 
 	# Construct the remote command
-	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --url=$REMOTE_URL $ARGS'"
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/hide-deprecations.php --url=$REMOTE_URL $ARGS'"
 
 	# @see ChatGPT
 	eval $REMOTE_COMMAND
@@ -478,26 +496,28 @@ function pullDatabase() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
 	# Activate maintenance mode
-	wp maintenance-mode activate
+	wpLocal maintenance-mode activate
+	MAINTENANCE_MODE=local
 
 	# Import the remote database into the local database
 	# Removes lines containing '999999' followed by 'enable the sandbox'
 	# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
-	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wp db import -
+	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wpLocal db import -
 
 	# Replace the remote URL with the local URL
-	wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix --report-changed-only
+	wpLocal search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix --report-changed-only
 	# Multisite: replace the bare domains in the network tables
-	wp search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain --quiet
+	wpLocal search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain --quiet
 
 	# Deactivate maintenance mode
-	wp maintenance-mode deactivate
+	wpLocal maintenance-mode deactivate
+	MAINTENANCE_MODE=""
 
 	# Run tasks on the local server
-	wp eval-file "$TASKS_FILE" sync
+	[ -e "$TASKS_FILE" ] && wpLocal eval-file "$TASKS_FILE" sync
 
 	# Delete local transients
-	wp transient delete --all
+	wpLocal transient delete --all
 
 	logSuccess "Database imported from ${GREEN}$REMOTE_URL${NC} to ${GREEN}$LOCAL_URL${NC}"
 }
@@ -524,9 +544,10 @@ function pushDatabase() {
 
 	# Activate maintenance mode on the remote server
 	wpRemote maintenance-mode activate &&
+		MAINTENANCE_MODE=remote &&
 
 		# Import the local database into the remote database
-		wp db export --default-character-set=utf8mb4 - | wpRemote db import - &&
+		wpLocal db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
 		# Replace the local URL with the remote URL
 		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix --report-changed-only &&
@@ -536,6 +557,7 @@ function pushDatabase() {
 
 	# Deactivate maintenance mode on the remote server
 	wpRemote maintenance-mode deactivate
+	MAINTENANCE_MODE=""
 
 	# Run tasks on the remote server
 	runRemoteTasks sync
