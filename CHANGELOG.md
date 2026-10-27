@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.2 - 2026-10-27
+
+- Skip a missing production remote in config validate, ask for it in config init
+
 ## 4.3.1 - 2026-10-27
 
 - Make production optional, require at least one remote
