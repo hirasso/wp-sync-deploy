@@ -46,7 +46,7 @@ function loadConfigFile() {
 	# Hard cut: the .env config was removed in 4.0.0
 	local LEGACY_FILE
 	for LEGACY_FILE in ".env.wp-sync-deploy" "wp-sync-deploy.env"; do
-		[ -n "$(findUp "$LEGACY_FILE" $SCRIPT_DIR)" ] && logError "${RED}$LEGACY_FILE${NC} is not supported anymore. Run ${GREEN}vendor/bin/wp-sync-deploy config migrate${NC} to migrate it to ${GREEN}wp-sync-deploy.config.php${NC}.\n   @see https://github.com/hirasso/wp-sync-deploy#upgrading-from-3x"
+		[ -n "$(findUp "$LEGACY_FILE" $SCRIPT_DIR)" ] && logError "${RED}$LEGACY_FILE${NC} is not supported anymore. Run ${GREEN}vendor/bin/wp-sync-deploy config init${NC} to migrate it to ${GREEN}wp-sync-deploy.config.php${NC}.\n   @see https://github.com/hirasso/wp-sync-deploy#upgrading-from-3x"
 	done
 
 	CONFIG_FILE="${WP_SYNC_DEPLOY_CONFIG_FILE:-}"

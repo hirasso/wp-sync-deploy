@@ -17,10 +17,10 @@ Source of truth for options: `vendor/hirasso/wp-sync-deploy/README.md`, `wp-sync
 Run from the directory holding `composer.json` (config and tasks files are found by walking up from the package dir):
 
 ```bash
-echo y | vendor/bin/wp-sync-deploy config init
+vendor/bin/wp-sync-deploy config init -n
 ```
 
-Creates `wp-sync-deploy.config.php` and `wp-sync-deploy.tasks.php` (keeps existing ones).
+Creates `wp-sync-deploy.tasks.php` and `wp-sync-deploy.config.php` with the local values detected from WordPress and placeholders for `production` (keeps existing files). Without `-n`, it asks interactively, so it's better suited for the user.
 
 ## 3. Configure `wp-sync-deploy.config.php`
 
@@ -50,7 +50,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 
 ## Upgrading from 3.x
 
-- Run `vendor/bin/wp-sync-deploy config migrate`: creates the config from `.env.wp-sync-deploy` and `.deployignore`, removes both, applies the `run()` helper to simple tasks calls, lists what's left and validates.
+- Run `vendor/bin/wp-sync-deploy config init -n`: creates the config from `.env.wp-sync-deploy` (local URL from WordPress) and `.deployignore`, removes both, applies the `run()` helper to simple tasks calls and lists what's left. Then run `config validate`.
 - Then review the generated config against step 3 (e.g. ignore candidates, `composer`). Fix what validate reports (e.g. a wrong `local` protocol).
 - Remove any `!.env.wp-sync-deploy` from `.gitignore`.
 - `run` is gone, deploys are live by default: drop `run` from scripts; dry run is `--dry-run`. Replace old per-env composer scripts with step 4.

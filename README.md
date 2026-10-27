@@ -75,7 +75,11 @@ Run this command:
 vendor/bin/wp-sync-deploy config init
 ```
 
-(`vendor/bin/wp-sync-deploy setup` still works as an alias.) This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
+(`vendor/bin/wp-sync-deploy setup` still works as an alias.) It detects your local WordPress setup (URL, root, core, content and public dirs, git repo, composer) through WP-CLI, asks for your remote servers with the detected values as defaults, writes the config and validates it.
+
+With `-n` (`--no-interaction`, also used automatically without a terminal), it writes the detected local values and placeholders for the remote server without asking.
+
+You should now have these two files in your working directory:
 
 ### `wp-sync-deploy.config.php`
 
@@ -249,13 +253,13 @@ Ignored files are never deleted on the remote, with one exception: when you remo
 4.0.0 contains breaking changes. Most of them are migrated automatically:
 
 ```shell
-vendor/bin/wp-sync-deploy config migrate
+vendor/bin/wp-sync-deploy config init
 ```
 
-This creates `wp-sync-deploy.config.php` from your `.env.wp-sync-deploy` (including custom `.deployignore` rules), removes the old files (`git rm` if tracked, otherwise renamed to `.bak`), uses the `run()` helper in your tasks file, lists what's left to do and runs [`config validate`](#validate).
+It finds your `.env.wp-sync-deploy` and asks for your setup with its values as defaults (the local URL comes from WordPress), so you can fill in what's new, e.g. `composer: new Composer()`. With `-n`, it uses the old values without asking. It writes `wp-sync-deploy.config.php` next to the old file (including custom `.deployignore` rules), removes the old files (`git rm` if tracked, otherwise renamed to `.bak`), uses the `run()` helper in your tasks file, lists what's left to do and runs [`config validate`](#validate).
 
 - **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
-- **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** `config migrate` converts it, see the table below for the mapping
+- **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** `config init` converts it, see the table below for the mapping
 - **PHP >= 8.2** is required on your local machine
 - **`vendor` is deployed without dev dependencies** if you add `composer: new Composer()` and remove `vendor` from `additional`
 - **`.deployignore` has been replaced** by [`ignore: new Ignore()`](#ignored-files). Its `-p` rules (e.g. `package.json`, `composer.json`, `*.config.js`, `README.md`) never worked before and are now applied

@@ -1,11 +1,12 @@
 <?php
 
 /**
- * Migrations for `wp-sync-deploy config migrate`
+ * Config generation and migrations for `wp-sync-deploy config init|migrate`
  *
  * Usage:
  * - `php lib/migrate.php config <config-file> [<.deployignore>]`: print a config file
- *   built from the 3.x variables in the environment (the sourced .env.wp-sync-deploy)
+ *   built from the 3.x variables in the environment (the sourced .env.wp-sync-deploy,
+ *   or the answers from `config init`)
  * - `php lib/migrate.php tasks <tasks-file>`: use the run() helper in a tasks file
  */
 
@@ -54,6 +55,12 @@ function args(array $args, string $indent): string
     return implode("\n", $lines);
 }
 
+/** Render a constructor call with named arguments */
+function instance(string $class, array $args): string
+{
+    return $args ? "new $class(\n" . args($args, '        ') . "\n    )" : "new $class()";
+}
+
 /** Render a remote from the variables with the given prefix */
 function remote(string $prefix, array &$uses, array &$notes): string
 {
@@ -76,7 +83,7 @@ function remote(string $prefix, array &$uses, array &$notes): string
         $args['httpAuth'] = "getenv('{$prefix}HTTP_AUTH') ?: null";
         $notes[] = "Set the environment variable {$prefix}HTTP_AUTH, the credentials aren't written to the config file";
     }
-    return "new Remote(\n" . args($args, '        ') . "\n    )";
+    return instance('Remote', $args);
 }
 
 /** Read the custom rules from a 3.x .deployignore file */
@@ -131,8 +138,8 @@ function migrateConfig(string $configFile, string $deployignore): void
     }
 
     $config = [
-        'local' => "new Local(\n" . args($local, '        ') . "\n    )",
-        'paths' => "new Paths(\n" . args($paths, '        ') . "\n    )",
+        'local' => instance('Local', $local),
+        'paths' => instance('Paths', $paths),
         'production' => remote('PROD_', $uses, $notes),
     ];
 
@@ -148,8 +155,9 @@ function migrateConfig(string $configFile, string $deployignore): void
     if ($branch !== '' && $branch !== 'master|main') {
         $git['productionBranch'] = export($branch);
     }
-    if ($git) {
-        $config['git'] = "new Git(\n" . args($git, '        ') . "\n    )";
+    // An empty GIT_DIR means the repo is at the root
+    if ($git || getenv('GIT_DIR') !== false) {
+        $config['git'] = instance('Git', $git);
         $uses[] = 'Git';
     }
 
@@ -157,6 +165,9 @@ function migrateConfig(string $configFile, string $deployignore): void
         $config['composer'] = 'new Composer()';
         $uses[] = 'Composer';
         $notes[] = 'vendor is now built and deployed without dev dependencies (composer: new Composer())';
+    } elseif (getenv('COMPOSER_DIR') !== false) {
+        $config['composer'] = instance('Composer', env('COMPOSER_DIR') !== '' ? ['dir' => export(env('COMPOSER_DIR'))] : []);
+        $uses[] = 'Composer';
     }
 
     $patterns = deployignorePatterns($deployignore);

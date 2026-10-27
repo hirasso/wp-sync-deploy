@@ -4,14 +4,12 @@
 #
 # COMMANDS:
 #
-# Create wp-sync-deploy.config.php and wp-sync-deploy.tasks.php in the current directory
-# `vendor/bin/wp-sync-deploy config init`
+# Create wp-sync-deploy.config.php (asking for your setup) and wp-sync-deploy.tasks.php.
+# Migrates a 3.x setup (.env.wp-sync-deploy, .deployignore, tasks file)
+# `vendor/bin/wp-sync-deploy config init [-n|--no-interaction]`
 #
 # Validate the config locally and on the remote servers
 # `vendor/bin/wp-sync-deploy config validate [production|staging] [--local]`
-#
-# Migrate a 3.x setup (.env.wp-sync-deploy, .deployignore, tasks file)
-# `vendor/bin/wp-sync-deploy config migrate`
 #
 
 # The directory relative to the script
@@ -22,36 +20,214 @@ source "$SCRIPT_DIR/lib/functions.sh"
 
 USAGE_MESSAGE="Usage: https://github.com/hirasso/wp-sync-deploy#configuration
 
-vendor/bin/wp-sync-deploy config <init|validate|migrate> [args]"
+vendor/bin/wp-sync-deploy config <init|validate> [args]"
 
-# Create the config and tasks files in the current directory
+# Ask for a value, prefilled with a default. `-` leaves it empty.
+# Returns the default without asking in non-interactive mode
+INTERACTIVE=true
+function ask() {
+	local LABEL="$1" DEFAULT="${2:-}" ANSWER=""
+	[[ "$INTERACTIVE" == true ]] && read -r -p "   $LABEL${DEFAULT:+ [$DEFAULT]}: " ANSWER
+	ANSWER="${ANSWER:-$DEFAULT}"
+	[[ "$ANSWER" == "-" ]] && ANSWER=""
+	echo "$ANSWER"
+}
+
+# Express a path relative to a base dir, `.` for the base dir itself
+function relativeTo() {
+	[[ "$1" == "$2" ]] && echo "." && return
+	echo "${1#"$2"/}"
+}
+
+# Print a variable's value, or a default if it's empty
+function valueOr() {
+	local NAME="$1"
+	echo "${!NAME:-$2}"
+}
+
+# Ask for a remote and export its variables with the given prefix (PROD_ or STAG_).
+# Defaults come from a sourced .env.wp-sync-deploy, or the given placeholders
+function askRemote() {
+	local ENV="$1" PREFIX="$2" URL DEFAULT_URL="$3"
+	local HOST="${PREFIX}HOST"
+	[ -n "${!HOST:-}" ] && DEFAULT_URL="$(valueOr "${PREFIX}PROTOCOL" https)://${!HOST}"
+
+	[[ "$INTERACTIVE" == true ]] && log "🌍 ${BOLD}$ENV${NORMAL}\n"
+	URL=$(trimTrailingSlashes "$(ask "URL" "$DEFAULT_URL")")
+	export "${PREFIX}PROTOCOL=${URL%%://*}" "${PREFIX}HOST=${URL#*://}"
+	export "${PREFIX}SSH=$(ask "SSH (user@host)" "$(valueOr "${PREFIX}SSH" "$4")")"
+	export "${PREFIX}SSH_PORT=$(ask "SSH port" "$(valueOr "${PREFIX}SSH_PORT" 22)")"
+	export "${PREFIX}ROOT_DIR=$(ask "Root dir (absolute)" "$(valueOr "${PREFIX}ROOT_DIR" "$5")")"
+	export "${PREFIX}PHP_BINARY=$(ask "PHP binary" "$(valueOr "${PREFIX}PHP_BINARY" php)")"
+	export "${PREFIX}DEPLOY_STRATEGY=$(ask "Deploy strategy (conservative|risky)" "$(valueOr "${PREFIX}DEPLOY_STRATEGY" conservative)")"
+}
+
+# Write a config file from the detected local setup, a 3.x .env.wp-sync-deploy and the answers.
+# Runs in a subshell to keep the exported variables
+function writeConfig() (
+	local FILE="$1" ENV_FILE="$2" DEPLOYIGNORE="$3"
+	local WP_CONFIG INFO CORE CONTENT HOME_URL PUBLIC GIT_ROOT ROOT COMPOSER="-" GIT="" DIR NOTE
+
+	# Before sourcing the .env file, as git reads its exported GIT_DIR
+	GIT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || true
+
+	if [ -n "$ENV_FILE" ]; then
+		set -a
+		source "$ENV_FILE"
+		set +a
+	fi
+
+	log "🔍 Detecting your local WordPress setup ..."
+	WP_CONFIG=$(wpLocal config path 2>/dev/null) || true
+	INFO=$(wpLocal eval --skip-plugins --skip-themes 'echo rtrim(ABSPATH, "/"), PHP_EOL, WP_CONTENT_DIR, PHP_EOL, home_url(), PHP_EOL;' 2>/dev/null) || true
+	{
+		read -r CORE
+		read -r CONTENT
+		read -r HOME_URL
+	} <<<"$INFO"
+
+	# Without a local WordPress or a 3.x config, there is nothing to prefill
+	if [[ -z "$HOME_URL" && -z "$ENV_FILE" && "$INTERACTIVE" != true ]]; then
+		cp "$SCRIPT_DIR/wp-sync-deploy.config.example.php" "$FILE"
+		log "ℹ️  No local WordPress found, created the config from the example"
+		return
+	fi
+
+	# The public dir holds the index.php loading WordPress, usually next to wp-config.php
+	PUBLIC=$(dirname "${WP_CONFIG:-$PWD/.}")
+	[ -f "$PUBLIC/index.php" ] || PUBLIC="${CORE:-$PWD}"
+
+	# The root dir is the git repo if it contains the public dir (e.g. Bedrock), else the public dir
+	ROOT="$PUBLIC"
+	[[ -n "$GIT_ROOT" && "$PUBLIC/" == "$GIT_ROOT/"* ]] && ROOT="$GIT_ROOT"
+	ROOT="${LOCAL_ROOT_DIR:-$ROOT}"
+
+	# Any composer.json: the vendor dir might hold the autoloader, and dev packages must never be deployed
+	for DIR in "$ROOT" "$GIT_ROOT"; do
+		[ -n "$DIR" ] && [ -f "$DIR/composer.json" ] && COMPOSER=$(relativeTo "$DIR" "$ROOT") && break
+	done
+	[[ " ${ADDITIONAL_DIRS:-} " == *" vendor "* ]] && COMPOSER="."
+
+	[ -n "$GIT_ROOT" ] && [[ "$GIT_ROOT/" == "$ROOT/"* ]] && GIT=$(relativeTo "$GIT_ROOT" "$ROOT")
+	[ -n "${GIT_DIR+x}" ] && GIT="${GIT_DIR:-.}"
+
+	[[ "$INTERACTIVE" == true ]] && log "Press enter to accept the [default], ${BLUE}-${NC} leaves a value empty.\n\n📁 ${BOLD}local${NORMAL}\n"
+
+	# WordPress knows the local URL best, e.g. if the protocol changed
+	[ -z "$HOME_URL" ] && [ -n "${LOCAL_HOST:-}" ] && HOME_URL="$(valueOr LOCAL_PROTOCOL https)://$LOCAL_HOST"
+	local URL=$(trimTrailingSlashes "$(ask "URL" "$HOME_URL")")
+	export LOCAL_PROTOCOL="${URL%%://*}" LOCAL_HOST="${URL#*://}"
+	export LOCAL_ROOT_DIR=$(ask "Root dir (absolute)" "$ROOT")
+	export WP_CORE_DIR=$(ask "WordPress core dir, relative to the root dir" "${WP_CORE_DIR:-$(relativeTo "$CORE" "$LOCAL_ROOT_DIR")}")
+	export WP_CONTENT_DIR=$(ask "Content dir, relative to the root dir" "${WP_CONTENT_DIR:-$(relativeTo "$CONTENT" "$LOCAL_ROOT_DIR")}")
+	[ -n "${PUBLIC_DIR+x}" ] && PUBLIC="${PUBLIC_DIR:-.}" || PUBLIC=$(relativeTo "$PUBLIC" "$LOCAL_ROOT_DIR")
+	PUBLIC=$(ask "Public dir, relative to the root dir" "$PUBLIC")
+	export PUBLIC_DIR="${PUBLIC#.}"
+	export ADDITIONAL_DIRS=$(ask "Additional dirs to deploy, space separated" "$(echo " ${ADDITIONAL_DIRS:-} " | sed 's/ vendor / /' | xargs)")
+
+	unset GIT_DIR COMPOSER_DIR
+	[ -n "$GIT" ] && GIT=$(ask "Git repo, relative to the root dir" "$GIT")
+	[ -n "$GIT" ] && export GIT_DIR="${GIT#.}"
+	COMPOSER=$(ask "Composer dir to deploy vendor from, without dev dependencies" "$COMPOSER")
+	[ -n "$COMPOSER" ] && export COMPOSER_DIR="${COMPOSER#.}"
+
+	askRemote production PROD_ https://example.com username@example.com /absolute/path/to/production/root
+	if [[ $(ask "Add a staging environment? (y/n)" "$([ -n "${STAG_HOST:-}" ] && echo y || echo n)") == "y" ]]; then
+		askRemote staging STAG_
+	else
+		unset STAG_HOST
+	fi
+
+	php "$SCRIPT_DIR/lib/migrate.php" config "$FILE" "$DEPLOYIGNORE" >"$FILE.tmp" 2>"$FILE.notes" && mv "$FILE.tmp" "$FILE"
+	while IFS= read -r NOTE; do
+		log "ℹ️  $NOTE"
+	done <"$FILE.notes"
+	rm -f "$FILE.tmp" "$FILE.notes"
+	[ -e "$FILE" ]
+)
+
+# Remove a migrated 3.x file: `git rm` if tracked (recoverable), otherwise keep a backup
+function removeLegacyFile() {
+	local FILE="$1"
+	if git -C "$(dirname "$FILE")" rm -q "$FILE" 2>/dev/null; then
+		log "🗑️  Removed ${BLUE}$(prettyPath "$FILE")${NC} (git rm)"
+	else
+		mv "$FILE" "$FILE.bak"
+		log "🗑️  Renamed ${BLUE}$(prettyPath "$FILE")${NC} to ${BLUE}$(prettyPath "$FILE").bak${NC}, delete it after reviewing the config"
+	fi
+}
+
+# Create the config and tasks files, migrating a 3.x setup if found.
+# The config goes next to an existing .env.wp-sync-deploy, else into the current directory
 function initConfig() {
-	local CONFIG_FILE="wp-sync-deploy.config.php"
-	local TASKS_FILE="wp-sync-deploy.tasks.php"
+	local ENV_FILE DIR CONFIG_FILE DEPLOYIGNORE TASKS_FILE COUNT FILE TODOS="" arg
+	for arg in "$@"; do
+		case $arg in
+		-n | --no-interaction) INTERACTIVE=false ;;
+		*) logError "$USAGE_MESSAGE" ;;
+		esac
+	done
+	[ -t 0 ] || INTERACTIVE=false
 
-	log "🚀 Setup ${BLUE}wp-sync-deploy${NC} at this location?"
-	log "  ${GREEN}$(pwd)${NC}"
+	ENV_FILE=$(findUp ".env.wp-sync-deploy" $SCRIPT_DIR)
+	[ -z "$ENV_FILE" ] && ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
+	DIR=$(dirname "${ENV_FILE:-$PWD/.}")
+	CONFIG_FILE="$DIR/wp-sync-deploy.config.php"
+	DEPLOYIGNORE="$DIR/.deployignore"
+	[ -e "$PWD/.deployignore" ] && DEPLOYIGNORE="$PWD/.deployignore"
 
-	read -r -p " [y/n] " PROMPT_RESPONSE
-	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
-
-	log "🚀 Installing ${GREEN}wp-sync-deploy${NC} ... \n"
-
-	if [ ! -e $CONFIG_FILE ]; then
-		cp "$SCRIPT_DIR/wp-sync-deploy.config.example.php" $CONFIG_FILE
-		logSuccess "File ${GREEN}$CONFIG_FILE${NC} created! "
-	else
-		logSuccess "File ${GREEN}$CONFIG_FILE${NC} already exists. "
+	if [[ "$INTERACTIVE" == true ]]; then
+		log "🚀 Setup ${BLUE}wp-sync-deploy${NC} at this location?"
+		log "  ${GREEN}$DIR${NC}"
+		[ -n "$ENV_FILE" ] && log "  Migrates ${BLUE}$(prettyPath "$ENV_FILE")${NC}, its values are the defaults"
+		read -r -p " [y/n] " PROMPT_RESPONSE
+		[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 	fi
 
-	if [ ! -e $TASKS_FILE ]; then
-		cp "$SCRIPT_DIR/wp-sync-deploy.tasks.example.php" $TASKS_FILE
-		logSuccess "File ${GREEN}$TASKS_FILE${NC} created!"
+	if [ -e "$CONFIG_FILE" ]; then
+		logSuccess "File ${GREEN}$(prettyPath "$CONFIG_FILE")${NC} already exists"
+		[ -n "$ENV_FILE" ] && TODOS="$TODOS\n\r   - Compare ${BLUE}$(prettyPath "$ENV_FILE")${NC} with your config, then delete it"
+		[ -e "$DEPLOYIGNORE" ] && TODOS="$TODOS\n\r   - Move the rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore(patterns: [...])${NC}, then delete it"
 	else
-		logSuccess "File ${GREEN}$TASKS_FILE${NC} already exists. "
+		writeConfig "$CONFIG_FILE" "$ENV_FILE" "$DEPLOYIGNORE" || logError "Failed to create ${RED}$(prettyPath "$CONFIG_FILE")${NC}"
+		logSuccess "File ${GREEN}$(prettyPath "$CONFIG_FILE")${NC} created"
+		[ -n "$ENV_FILE" ] && removeLegacyFile "$ENV_FILE"
+		if [ -e "$DEPLOYIGNORE" ]; then
+			log "✅ Moved custom rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore()${NC}"
+			removeLegacyFile "$DEPLOYIGNORE"
+		fi
 	fi
 
-	log "\n🚀 Setup complete! Adjust both files to your setup, then run ${BLUE}vendor/bin/wp-sync-deploy config validate${NC}"
+	TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
+	if [ -z "$TASKS_FILE" ]; then
+		cp "$SCRIPT_DIR/wp-sync-deploy.tasks.example.php" "$DIR/wp-sync-deploy.tasks.php"
+		logSuccess "File ${GREEN}$(prettyPath "$DIR/wp-sync-deploy.tasks.php")${NC} created"
+	else
+		logSuccess "File ${GREEN}$(prettyPath "$TASKS_FILE")${NC} already exists"
+		COUNT=$(php "$SCRIPT_DIR/lib/migrate.php" tasks "$TASKS_FILE")
+		[ -n "$COUNT" ] && log "✅ Using the ${BLUE}run()${NC} helper for $COUNT WP-CLI command(s) in ${BLUE}$(prettyPath "$TASKS_FILE")${NC}"
+	fi
+
+	# The `run` argument was removed in 4.0.0
+	local FILES=("$DIR/composer.json" "$DIR/package.json")
+	[[ "$PWD" != "$DIR" ]] && FILES+=("$PWD/composer.json" "$PWD/package.json")
+	for FILE in "${FILES[@]}"; do
+		[ -f "$FILE" ] && grep -qE 'wp-sync-deploy deploy[^"]* run\b' "$FILE" &&
+			TODOS="$TODOS\n\r   - Remove the ${BLUE}run${NC} argument in ${BLUE}$(prettyPath "$FILE")${NC}, deploys are live by default. Preview with ${BLUE}--dry-run${NC}"
+	done
+
+	[ -n "$TODOS" ] && log "📋 ${BOLD}Still to do:${NORMAL}$TODOS"
+
+	if [[ "$INTERACTIVE" != true ]]; then
+		log "🚀 Review ${BLUE}$(prettyPath "$CONFIG_FILE")${NC}, then run ${BLUE}vendor/bin/wp-sync-deploy config validate${NC}"
+		return
+	fi
+
+	# The legacy file check would fail the validation
+	[ -e "${ENV_FILE:-}" ] && return
+
+	logLine
+	validateConfig "--config=$CONFIG_FILE"
 }
 
 # Shorten a path relative to the current directory
@@ -194,97 +370,11 @@ function validateConfig() {
 	logSuccess "The config is valid"
 }
 
-# Remove a migrated 3.x file: `git rm` if tracked (recoverable), otherwise keep a backup
-function removeLegacyFile() {
-	local FILE="$1"
-	if git -C "$(dirname "$FILE")" rm -q "$FILE" 2>/dev/null; then
-		log "🗑️  Removed ${BLUE}$(prettyPath "$FILE")${NC} (git rm)"
-	else
-		mv "$FILE" "$FILE.bak"
-		log "🗑️  Renamed ${BLUE}$(prettyPath "$FILE")${NC} to ${BLUE}$(prettyPath "$FILE").bak${NC}, delete it after reviewing the config"
-	fi
-}
-
-# Migrate a 3.x setup, then validate the result
-function migrateConfig() {
-	local MIGRATED=false TODOS="" ENV_FILE CONFIG DIR COUNT FILE
-
-	ENV_FILE=$(findUp ".env.wp-sync-deploy" $SCRIPT_DIR)
-	[ -z "$ENV_FILE" ] && ENV_FILE=$(findUp "wp-sync-deploy.env" $SCRIPT_DIR)
-	DIR=$(dirname "${ENV_FILE:-$PWD/.}")
-	CONFIG="$DIR/wp-sync-deploy.config.php"
-	local DEPLOYIGNORE="$DIR/.deployignore"
-	[ -e "$PWD/.deployignore" ] && DEPLOYIGNORE="$PWD/.deployignore"
-
-	if [ -n "$ENV_FILE" ] && [ -e "$CONFIG" ]; then
-		log "ℹ️  ${BLUE}$(prettyPath "$CONFIG")${NC} already exists, skipping ${BLUE}$(prettyPath "$ENV_FILE")${NC}"
-		TODOS="$TODOS\n\r   - Compare ${BLUE}$(prettyPath "$ENV_FILE")${NC} with your config, then delete it"
-	elif [ -n "$ENV_FILE" ]; then
-		(
-			set -a
-			source "$ENV_FILE"
-			set +a
-			php "$SCRIPT_DIR/lib/migrate.php" config "$CONFIG" "$DEPLOYIGNORE" 2>"$CONFIG.notes"
-		) >"$CONFIG.tmp" || {
-			rm -f "$CONFIG.tmp" "$CONFIG.notes"
-			logError "Failed to migrate ${RED}$ENV_FILE${NC}"
-		}
-		mv "$CONFIG.tmp" "$CONFIG"
-		logSuccess "Created ${GREEN}$(prettyPath "$CONFIG")${NC} from ${BLUE}$(prettyPath "$ENV_FILE")${NC}"
-		while IFS= read -r FILE; do
-			TODOS="$TODOS\n\r   - $FILE"
-		done <"$CONFIG.notes"
-		rm -f "$CONFIG.notes"
-		removeLegacyFile "$ENV_FILE"
-		MIGRATED=true
-	fi
-
-	if [ -e "$DEPLOYIGNORE" ] && [[ "$MIGRATED" == true ]]; then
-		log "✅ Moved custom rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore()${NC}"
-		removeLegacyFile "$DEPLOYIGNORE"
-	elif [ -e "$DEPLOYIGNORE" ]; then
-		TODOS="$TODOS\n\r   - Move the rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore(patterns: [...])${NC}, then delete it"
-		MIGRATED=true
-	fi
-
-	FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
-	if [ -n "$FILE" ]; then
-		COUNT=$(php "$SCRIPT_DIR/lib/migrate.php" tasks "$FILE")
-		if [ -n "$COUNT" ]; then
-			log "✅ Using the ${BLUE}run()${NC} helper for $COUNT WP-CLI command(s) in ${BLUE}$(prettyPath "$FILE")${NC}"
-			MIGRATED=true
-		fi
-	fi
-
-	# The `run` argument was removed in 4.0.0
-	local FILES=("$DIR/composer.json" "$DIR/package.json")
-	[[ "$PWD" != "$DIR" ]] && FILES+=("$PWD/composer.json" "$PWD/package.json")
-	for FILE in "${FILES[@]}"; do
-		[ -f "$FILE" ] || continue
-		if grep -qE 'wp-sync-deploy deploy[^"]* run\b' "$FILE"; then
-			TODOS="$TODOS\n\r   - Remove the ${BLUE}run${NC} argument in ${BLUE}$(prettyPath "$FILE")${NC}, deploys are live by default. Preview with ${BLUE}--dry-run${NC}"
-			MIGRATED=true
-		fi
-	done
-
-	if [[ "$MIGRATED" != true ]]; then
-		logSuccess "Nothing to migrate"
-		return
-	fi
-
-	[ -n "$TODOS" ] && log "📋 ${BOLD}Still to do:${NORMAL}$TODOS"
-	[ ! -e "$CONFIG" ] && return
-
-	logLine
-	validateConfig "--config=$CONFIG"
-}
-
 SUBCOMMAND="${1:-}"
 [ $# -gt 0 ] && shift
 
 case $SUBCOMMAND in
-init) initConfig ;;
+init) initConfig "$@" ;;
 validate) validateConfig "$@" ;;
-migrate) migrateConfig ;;
 *) logError "$USAGE_MESSAGE" ;;
 esac
