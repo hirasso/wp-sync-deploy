@@ -42,7 +42,7 @@ composer require --dev hirasso/wp-sync-deploy
 All commands are then available through a single binary:
 
 ```shell
-vendor/bin/wp-sync-deploy <setup|sync|deploy|upload> [args]
+vendor/bin/wp-sync-deploy <config|sync|deploy|upload> [args]
 ```
 
 Optionally, add script aliases to your project's `composer.json`:
@@ -72,10 +72,10 @@ Optionally, add script aliases to your project's `composer.json`:
 Run this command:
 
 ```shell
-vendor/bin/wp-sync-deploy setup
+vendor/bin/wp-sync-deploy config init
 ```
 
-This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
+(`vendor/bin/wp-sync-deploy setup` still works as an alias.) This will move the required configuration files to your current working directory and remove the `.example` part. You should now have these two files in your working directory:
 
 ### `wp-sync-deploy.config.php`
 
@@ -84,6 +84,18 @@ This file holds all information about your environments (local, staging, product
 ### `wp-sync-deploy.tasks.php`
 
 This file is being used to run [automated tasks](https://github.com/hirasso/wp-sync-deploy?tab=readme-ov-file#run-automated-tasks-after-each-deploy--sync-) after deployment. You can adjust this file as you wish or delete it if you don't want it to be executed.
+
+### Validate
+
+After adjusting your config, check it:
+
+```shell
+vendor/bin/wp-sync-deploy config validate              # all environments
+vendor/bin/wp-sync-deploy config validate production   # one environment
+vendor/bin/wp-sync-deploy config validate --local      # skip the remote checks
+```
+
+This prints the resolved config and checks your local paths, git repo, rsync and WP-CLI. For each remote, it checks the SSH connection, the remote root, `.allow-deployment` (deploy strategy `conservative`) and the command line PHP version, and uploads WP-CLI. It also compares each configured URL with the home URL in WordPress.
 
 ## Remote server preparation
 
@@ -234,10 +246,16 @@ Ignored files are never deleted on the remote, with one exception: when you remo
 
 ## Upgrading from 3.x
 
-4.0.0 contains breaking changes:
+4.0.0 contains breaking changes. Most of them are migrated automatically:
+
+```shell
+vendor/bin/wp-sync-deploy config migrate
+```
+
+This creates `wp-sync-deploy.config.php` from your `.env.wp-sync-deploy` (including custom `.deployignore` rules), removes the old files (`git rm` if tracked, otherwise renamed to `.bak`), uses the `run()` helper in your tasks file, lists what's left to do and runs [`config validate`](#validate).
 
 - **Deploys are live by default.** The `run` argument has been removed. Use `--dry-run` for a preview
-- **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** Run the [setup command](#setup), move your settings over and delete the old file
+- **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** `config migrate` converts it, see the table below for the mapping
 - **PHP >= 8.2** is required on your local machine
 - **`vendor` is deployed without dev dependencies** if you add `composer: new Composer()` and remove `vendor` from `additional`
 - **`.deployignore` has been replaced** by [`ignore: new Ignore()`](#ignored-files). Its `-p` rules (e.g. `package.json`, `composer.json`, `*.config.js`, `README.md`) never worked before and are now applied

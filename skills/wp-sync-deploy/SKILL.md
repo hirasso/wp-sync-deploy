@@ -17,7 +17,7 @@ Source of truth for options: `vendor/hirasso/wp-sync-deploy/README.md`, `wp-sync
 Run from the directory holding `composer.json` (config and tasks files are found by walking up from the package dir):
 
 ```bash
-echo y | vendor/bin/wp-sync-deploy setup
+echo y | vendor/bin/wp-sync-deploy config init
 ```
 
 Creates `wp-sync-deploy.config.php` and `wp-sync-deploy.tasks.php` (keeps existing ones).
@@ -38,7 +38,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
   - Check the `IGNORE_RULES` in the validation output (below).
 - Secrets (http auth) → `getenv('…') ?: null`, never literal.
 - Commit the file. Never gitignore it.
-- Validate: `php -d display_errors=stderr vendor/hirasso/wp-sync-deploy/lib/config.php wp-sync-deploy.config.php` prints the resolved values.
+- Validate: `vendor/bin/wp-sync-deploy config validate` prints the resolved config and checks local paths and each remote (SSH, root, PHP, WP-CLI, URLs). Without SSH access: `--local`.
 
 ## Upgrading from 2.x
 
@@ -50,12 +50,11 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 
 ## Upgrading from 3.x
 
-- Map `.env.wp-sync-deploy` to the config file using the README's "Upgrading from 3.x" table; validate (above) and compare against the old values.
-- `vendor` in `ADDITIONAL_DIRS` becomes `composer: new Composer()` (dev dependencies are no longer deployed).
-- `git rm` `.env.wp-sync-deploy`; remove any `!.env.wp-sync-deploy` from `.gitignore`.
+- Run `vendor/bin/wp-sync-deploy config migrate`: creates the config from `.env.wp-sync-deploy` and `.deployignore`, removes both, applies the `run()` helper to simple tasks calls, lists what's left and validates.
+- Then review the generated config against step 3 (e.g. ignore candidates, `composer`). Fix what validate reports (e.g. a wrong `local` protocol).
+- Remove any `!.env.wp-sync-deploy` from `.gitignore`.
 - `run` is gone, deploys are live by default: drop `run` from scripts; dry run is `--dry-run`. Replace old per-env composer scripts with step 4.
-- Existing tasks file: apply step 5.
-- Project has its own `.deployignore` → move rules that aren't in `Ignore::DEFAULTS` to `ignore: new Ignore(patterns: [...])`, then `git rm` the file.
+- Existing tasks file: check step 5 for calls `migrate` didn't convert.
 - Update mentions in `AGENTS.md`.
 
 ## 4. Scripts

@@ -46,7 +46,7 @@ function loadConfigFile() {
 	# Hard cut: the .env config was removed in 4.0.0
 	local LEGACY_FILE
 	for LEGACY_FILE in ".env.wp-sync-deploy" "wp-sync-deploy.env"; do
-		[ -n "$(findUp "$LEGACY_FILE" $SCRIPT_DIR)" ] && logError "${RED}$LEGACY_FILE${NC} is not supported anymore. Please migrate it to ${GREEN}wp-sync-deploy.config.php${NC}.\n   @see https://github.com/hirasso/wp-sync-deploy#configuration"
+		[ -n "$(findUp "$LEGACY_FILE" $SCRIPT_DIR)" ] && logError "${RED}$LEGACY_FILE${NC} is not supported anymore. Run ${GREEN}vendor/bin/wp-sync-deploy config migrate${NC} to migrate it to ${GREEN}wp-sync-deploy.config.php${NC}.\n   @see https://github.com/hirasso/wp-sync-deploy#upgrading-from-3x"
 	done
 
 	CONFIG_FILE="${WP_SYNC_DEPLOY_CONFIG_FILE:-}"
@@ -796,6 +796,16 @@ function deployVendor() {
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
 
+# List the files in $DEPLOY_PATHS matching a pattern that a deploy would transfer.
+# rsync applies the ignore rules, so ignored files and folders are skipped
+function listDeployedFiles() {
+	local DEST=$(mktemp -d)
+	(cd "$LOCAL_ROOT_DIR" && "$RSYNC_BIN" --dry-run -r --relative --out-format='%n' \
+		--filter="merge $IGNORE_FILE" --include='*/' --include="$1" --exclude='*' \
+		$DEPLOY_PATHS "$DEST/") | grep -v '/$'
+	rmdir "$DEST"
+}
+
 # Ask for confirmation if deployed composer vendor dirs contain dev packages
 function checkVendorDevPackages() {
 	local FILE VENDOR DIR COUNT SUGGESTION PROBLEMS=""
@@ -811,7 +821,7 @@ function checkVendorDevPackages() {
 		SUGGESTION="new Composer()"
 		[[ "$DIR" != "." ]] && SUGGESTION="new Composer(dir: '$DIR')"
 		PROBLEMS="$PROBLEMS\n\r   - ${BLUE}$VENDOR${NC} contains ${RED}$COUNT${NC} dev package(s). Use ${BLUE}composer: $SUGGESTION${NC} to deploy it without them"
-	done < <(cd "$LOCAL_ROOT_DIR" && find $DEPLOY_PATHS -name node_modules -prune -o -path '*/vendor/composer/installed.json' -print 2>/dev/null)
+	done < <(listDeployedFiles 'vendor/composer/installed.json')
 
 	[[ -z "$PROBLEMS" ]] && return 0
 

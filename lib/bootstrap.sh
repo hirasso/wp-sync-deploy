@@ -25,7 +25,7 @@ loadConfigFile
 checkMinimumSelfVersion
 
 # Hard cut: .deployignore was replaced by `ignore: new Ignore()` in 4.0.0
-[ -e "$PWD/.deployignore" ] && logError "${RED}.deployignore${NC} is not supported anymore. Move your rules to ${GREEN}ignore: new Ignore(patterns: [...])${NC} in your config.\n   @see https://github.com/hirasso/wp-sync-deploy#ignored-files"
+[ -e "$PWD/.deployignore" ] && logError "${RED}.deployignore${NC} is not supported anymore. Run ${GREEN}vendor/bin/wp-sync-deploy config migrate${NC} or move your rules to ${GREEN}ignore: new Ignore(patterns: [...])${NC} in your config.\n   @see https://github.com/hirasso/wp-sync-deploy#ignored-files"
 
 # Write the ignore rules to a file for rsync
 IGNORE_FILE=$(mktemp)
