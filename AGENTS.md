@@ -13,6 +13,16 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 - keep the skill lean: it describes the setup/upgrade procedure and points to `README.md` and `src/Config.php` for details. Don't duplicate option lists or defaults there
 - `composer release` asks for confirmation if code changed since the last tag but README and skill didn't
 
+- `README.md` is for end users only. Implementation details go here
+
+## Internals
+
+- WP-CLI is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` (re-downloaded when older than a week) and uploaded to `~/.wp-sync-deploy/` on the remote, outside of the web root, once per run
+- `wpLocal` and `wpRemote` load `lib/wp-cli-setup.php` with `--require`: it hides PHP deprecation notices and swaps the WP-CLI logger, so WP-CLI logs like `logSuccess`/`logWarning`/`logError`
+- the tasks file is uploaded to `~/.wp-sync-deploy/` for each run and deleted afterwards
+- `new Composer()` builds `vendor` in a temp dir (`composer install --no-dev --optimize-autoloader`) and deploys that one
+- `log` prints its newline *before* the message, WP-CLI *after*. Add a `logLine` where WP-CLI output directly follows a `log`
+
 ## Before making changes
 
 - if the change is big, always first propose what you are planning, even if not in plan mode

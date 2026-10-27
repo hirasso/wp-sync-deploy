@@ -10,9 +10,9 @@ Sync and deploy your WordPress website between environments 🔀
 > [!NOTE]
 >  For less technical users I recommend to use a plugin instead. For database migrations, I'd recommend [WP Migrate](https://deliciousbrains.com/wp-migrate-db-pro/). For deployment, I'd recommend good old (S)FTP.
 
-## Prerequesites
+## Prerequisites
 
-- A writable SSH home directory on the **remote server**. wp-sync-deploy brings its own [WP-CLI](https://wp-cli.org/): the phar is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` (updated weekly) and uploaded to `~/.wp-sync-deploy/wp-cli.phar` on the remote server, outside of the web root. Both run with PHP deprecation notices hidden.
+- A writable SSH home directory on the **remote server**. wp-sync-deploy brings its own [WP-CLI](https://wp-cli.org/) and uploads it to `~/.wp-sync-deploy/`, outside of the web root
 - PHP >= 8.2 on your **local machine**
 - A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 
@@ -30,7 +30,7 @@ Sync and deploy your WordPress website between environments 🔀
 > [!TIP]
 > While it's easy to setup the custom directory structure yourself, I'd recommend to use a framework
 > like [Bedrock](https://roots.io/bedrock/), [WPStarter](https://github.com/wecodemore/wpstarter) or
-> [wordplate](https://github.com/vinkla/wordplate). All of these provide amazing convencience features for
+> [wordplate](https://github.com/vinkla/wordplate). All of these provide amazing convenience features for
 > modern WordPress development.
 
 ## Installation
@@ -87,7 +87,7 @@ This file holds all information about your environments (local, staging, product
 
 ### `wp-sync-deploy.tasks.php`
 
-This file is being used to run [automated tasks](https://github.com/hirasso/wp-sync-deploy?tab=readme-ov-file#run-automated-tasks-after-each-deploy--sync-) after deployment. You can adjust this file as you wish or delete it if you don't want it to be executed.
+This file is used to run [automated tasks](#run-automated-tasks-after-each-deploy--sync-) after each deploy or sync. You can adjust this file as you wish or delete it if you don't want it to be executed.
 
 ### Validate
 
@@ -134,9 +134,7 @@ vendor/bin/wp-sync-deploy sync <production|staging> backup
 ```
 
 > [!NOTE]
-> Syncing your local database is only possible to the staging server by default.
-> If you are sure you know what you are doing, you can also enable syncing to
-> the production server.
+> Pushing your local database is only possible to the staging server.
 
 ### Deploy your local files to remote environments
 
@@ -157,16 +155,17 @@ vendor/bin/wp-sync-deploy deploy production --yes
 > [!WARNING]
 > Since 4.0.0, deploys are live by default. Use `--dry-run` for a preview.
 
+Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
+
 A `--dry-run` never asks for confirmation. Instead, it lists everything a live deploy will ask about at the end.
 
 ### Composer dependencies
 
-With `composer: new Composer()` in your config, wp-sync-deploy builds your `vendor` directory **without dev dependencies** in a temporary directory (`composer install --no-dev --optimize-autoloader`) and deploys that one. Your local `vendor` directory stays untouched. Don't add `vendor` to `additional` in this case.
+With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. Don't add `vendor` to `additional` in this case.
 
 If your `composer.json` is not in the root dir (e.g. inside your theme), pass its location: `new Composer(dir: 'content/themes/my-theme')`.
 
 wp-sync-deploy asks for confirmation if a deployed `vendor` directory contains dev dependencies, and suggests the matching `new Composer()` config.
-Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
 ### Simple Upload
 
@@ -183,7 +182,7 @@ vendor/bin/wp-sync-deploy upload staging --paths=".env wp-cli.yml config public 
 
 ## Run automated tasks after each deploy / sync ✨
 
-wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup command](#setup), to customize which tasks should be executed. The file is uploaded to `~/.wp-sync-deploy/` on the remote server for each run (outside of the web root) and deleted afterwards.
+wp-sync-deploy will **automatically run tasks on the target server** when you sync or deploy. Modify the `wp-sync-deploy.tasks.php` file created by the [setup command](#setup), to customize which tasks should be executed.
 
 Default tasks defined in the file are:
 
