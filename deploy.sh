@@ -138,8 +138,8 @@ run)
   conservative)
     # Confirm the deployment if the deploy strategy is conservative
     if [[ "$SKIP_CONFIRM" != true ]]; then
-      log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST" ?
-      read -r -p "[y/n] " PROMPT_RESPONSE
+      log "🚀 Would you really like to deploy to $PRETTY_REMOTE_HOST?"
+      read -r -p " [y/n] " PROMPT_RESPONSE
 
       # Exit if not confirmed
       [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1

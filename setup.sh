@@ -23,7 +23,7 @@ TASKS_FILE="wp-sync-deploy.tasks.php"
 log "🚀 Setup ${BLUE}wp-sync-deploy${NC} at this location?"
 log "  ${GREEN}$(pwd)${NC}"
 
-read -r -p "[y/n] " PROMPT_RESPONSE
+read -r -p " [y/n] " PROMPT_RESPONSE
 
 # Exit if not confirmed
 [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1

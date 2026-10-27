@@ -14,7 +14,7 @@ fi
 # Log a string and redirect to stderr to prevent function return pollution
 # @see https://unix.stackexchange.com/a/331620/504158
 function log() {
-	printf "\n\r$1 " >&2
+	printf "\n\r$1" >&2
 }
 
 # Log an empty line
@@ -128,7 +128,7 @@ function confirmDeploy() {
 		return 0
 	fi
 
-	read -r -p "Deploy anyway? [y/n] " PROMPT_RESPONSE
+	read -r -p " Deploy anyway? [y/n] " PROMPT_RESPONSE
 	if [[ "$PROMPT_RESPONSE" != "y" ]]; then
 		log "❌ Deploy to $PRETTY_REMOTE_ENV canceled"
 		exit 1
@@ -226,7 +226,7 @@ function checkMinimumSelfVersion() {
 	log "⚠️ ${BOLD}${RED}Important update:${NC} wp-sync-deploy $installed is outdated, please update to $minimum or later"
 	log "   ${BLUE}composer update hirasso/wp-sync-deploy${NC}"
 	log "   https://github.com/hirasso/wp-sync-deploy/releases"
-	read -r -p "Continue anyway? [y/n] " PROMPT_RESPONSE
+	read -r -p " Continue anyway? [y/n] " PROMPT_RESPONSE
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 }
 
@@ -472,7 +472,7 @@ function pullDatabase() {
 	# Confirmation dialog
 	log "🔄 Would you really like to 💥 ${RED}reset the local database${NC} ($PRETTY_LOCAL_HOST)"
 	log "and sync from ${BOLD}$REMOTE_ENV${NORMAL} ($PRETTY_REMOTE_HOST)?"
-	read -r -p "[y/n] " PROMPT_RESPONSE
+	read -r -p " [y/n] " PROMPT_RESPONSE
 
 	# Return early if not confirmed
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
@@ -486,9 +486,9 @@ function pullDatabase() {
 	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wp db import -
 
 	# Replace the remote URL with the local URL
-	wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix
+	wp search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix --report-changed-only
 	# Multisite: replace the bare domains in the network tables
-	wp search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain
+	wp search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain --quiet
 
 	# Deactivate maintenance mode
 	wp maintenance-mode deactivate
@@ -499,14 +499,14 @@ function pullDatabase() {
 	# Delete local transients
 	wp transient delete --all
 
-	logLine && logSuccess "Database imported from ${GREEN}$REMOTE_URL${NC} to ${GREEN}$LOCAL_URL${NC}"
+	logSuccess "Database imported from ${GREEN}$REMOTE_URL${NC} to ${GREEN}$LOCAL_URL${NC}"
 }
 
 # Backup a remote database and store it locally
 function backupDatabase() {
 	local NAME="$REMOTE_HOST-$(date +"%Y-%m-%d_%H-%M-%S").sql"
 	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' >"$NAME"
-	logLine && logSuccess "Database backup saved to ${GREEN}$NAME${NC}"
+	logSuccess "Database backup saved to ${GREEN}$NAME${NC}"
 }
 
 # Push the local database to the remote environment
@@ -517,7 +517,7 @@ function pushDatabase() {
 	# Confirmation dialog
 	log "🚨 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($PRETTY_REMOTE_HOST)"
 	log "and ${RED}push from local${NC}?"
-	read -r -p "Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
+	read -r -p " Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
 
 	# Return early if not confirmed
 	[[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && logError "Permission denied, aborting ..."
@@ -529,10 +529,10 @@ function pushDatabase() {
 		wp db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
 		# Replace the local URL with the remote URL
-		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix &&
+		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix --report-changed-only &&
 
 		# Multisite: replace the bare domains in the network tables
-		wpRemote search-replace "$LOCAL_HOST" "$REMOTE_HOST" --all-tables-with-prefix --include-columns=domain
+		wpRemote search-replace "$LOCAL_HOST" "$REMOTE_HOST" --all-tables-with-prefix --include-columns=domain --quiet
 
 	# Deactivate maintenance mode on the remote server
 	wpRemote maintenance-mode deactivate
@@ -543,7 +543,7 @@ function pushDatabase() {
 	# Delete remote transients
 	wpRemote transient delete --all
 
-	logLine && logSuccess "Pushed the database from ${GREEN}$LOCAL_URL${NC} to ${GREEN}$REMOTE_URL${NC}"
+	logSuccess "Pushed the database from ${GREEN}$LOCAL_URL${NC} to ${GREEN}$REMOTE_URL${NC}"
 }
 
 # Resolve the rsync binary to use.

@@ -55,7 +55,7 @@ log "📦 Remote host: ${BLUE}$PRETTY_REMOTE_HOST${NC}"
 log "📦 Remote dir: ${BLUE}$REMOTE_ROOT_DIR${NC}"
 log "📦 Upload: ${BLUE}$(echo "$DEPLOY_PATHS" | sed 's/ /, /g')${NC}"
 log "📦 Existing files & folders on the remote server will be skipped. Proceed?"
-read -r -p "[y/n] " PROMPT_RESPONSE
+read -r -p " [y/n] " PROMPT_RESPONSE
 
 # Exit if not confirmed
 [[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
