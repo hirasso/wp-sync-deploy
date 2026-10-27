@@ -166,12 +166,19 @@ function writeConfig() (
 	COMPOSER=$(ask "Composer dir to deploy vendor from, without dev dependencies" "$COMPOSER")
 	[ -n "$COMPOSER" ] && export COMPOSER_DIR="${COMPOSER#.}"
 
-	askRemote production PROD_ https://example.com username@example.com /absolute/path/to/production/root
+	local ADD_PROD=y
+	[[ -n "${STAG_HOST:-}" && "$STAG_HOST" != "$(legacyExampleValue STAG_HOST)" && ( -z "${PROD_HOST:-}" || "$PROD_HOST" == "$(legacyExampleValue PROD_HOST)" ) ]] && ADD_PROD=n
+	if [[ $(askUnlessSetByUser PROD_HOST "Add a production environment? (y/n)" "$ADD_PROD") == "y" ]]; then
+		askRemote production PROD_ https://example.com username@example.com /absolute/path/to/production/root
+	else
+		unset PROD_HOST
+	fi
 	if [[ $(askUnlessSetByUser STAG_HOST "Add a staging environment? (y/n)" "$([[ -n "${STAG_HOST:-}" && "$STAG_HOST" != "$(legacyExampleValue STAG_HOST)" ]] && echo y || echo n)") == "y" ]]; then
 		askRemote staging STAG_
 	else
 		unset STAG_HOST
 	fi
+	[ -z "${PROD_HOST+x}${STAG_HOST+x}" ] && logError "Define at least one remote: production or staging"
 
 	php "$SCRIPT_DIR/lib/migrate.php" config "$FILE" "$DEPLOYIGNORE" >"$FILE.tmp" 2>"$FILE.notes" && mv "$FILE.tmp" "$FILE"
 	while IFS= read -r NOTE; do
@@ -409,7 +416,9 @@ function validateConfig() {
 	if [[ "$LOCAL_ONLY" != true ]]; then
 		local ENV
 		for ENV in production staging; do
-			[[ "$ENV" == "staging" && -z "${STAG_HOST+x}" ]] && continue
+			local HOST_VAR="PROD_HOST"
+			[[ "$ENV" == "staging" ]] && HOST_VAR="STAG_HOST"
+			[ -z "${!HOST_VAR+x}" ] && continue
 			logLine
 			(
 				set -- "$ENV" "${CONFIG_ARGS[@]}"
