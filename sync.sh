@@ -30,7 +30,7 @@ vendor/bin/wp-sync-deploy sync <production|staging> [push|backup]"
 source "$SCRIPT_DIR/lib/bootstrap.sh"
 
 SYNC_MODE="pull"
-[ ! -z "${2+x}" ] && SYNC_MODE="$2"
+[[ -n "${2:-}" && "$2" != --* ]] && SYNC_MODE="$2"
 
 case $SYNC_MODE in
 
