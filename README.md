@@ -198,6 +198,8 @@ Default tasks defined in the file are:
 
 wp-sync-deploy is configured through a `wp-sync-deploy.config.php` file returning a typed `Hirasso\WPSyncDeploy\Config` object. Your IDE will autocomplete and document all options. Have a look at the [example file](wp-sync-deploy.config.example.php).
 
+The remotes `production` and `staging` are both optional, but you need at least one of them.
+
 The file is meant to be **committed**. For secrets like HTTP auth credentials, use environment variables exported in your shell:
 
 ```php

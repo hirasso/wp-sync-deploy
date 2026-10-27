@@ -54,6 +54,7 @@ PRODUCTION_BRANCH="${PRODUCTION_BRANCH:-master|main}"
 case $REMOTE_ENV in
 
 production)
+    [ -z "${PROD_HOST+x}" ] && logError "No production environment defined in ${BLUE}$CONFIG_FILE${NC}"
     REMOTE_HOST=$(trimWhitespace "$PROD_HOST")
     REMOTE_PROTOCOL=$(trimWhitespace "$PROD_PROTOCOL")
     REMOTE_HTTP_AUTH=$(trimWhitespace "${PROD_HTTP_AUTH:-}")

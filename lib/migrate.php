@@ -140,8 +140,11 @@ function migrateConfig(string $configFile, string $deployignore): void
     $config = [
         'local' => instance('Local', $local),
         'paths' => instance('Paths', $paths),
-        'production' => remote('PROD_', $uses, $notes),
     ];
+
+    if (env('PROD_HOST') !== '') {
+        $config['production'] = remote('PROD_', $uses, $notes);
+    }
 
     if (env('STAG_HOST') !== '') {
         $config['staging'] = remote('STAG_', $uses, $notes);

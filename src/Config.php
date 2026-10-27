@@ -13,7 +13,7 @@ final readonly class Config
     /**
      * @param Local $local The local environment
      * @param Paths $paths Directories, relative to the root dir (same in all environments)
-     * @param Remote $production The production environment
+     * @param Remote|null $production The production environment (optional)
      * @param Remote|null $staging The staging environment (optional)
      * @param Git|false|null $git Git checks before deploying to production. Default: on if the root dir is in a git repo, `false` disables them
      * @param Composer|null $composer Deploy the composer vendor dir without dev dependencies (optional)
@@ -22,12 +22,16 @@ final readonly class Config
     public function __construct(
         public Local $local,
         public Paths $paths,
-        public Remote $production,
+        public ?Remote $production = null,
         public ?Remote $staging = null,
         public Git|false|null $git = null,
         public ?Composer $composer = null,
         public Ignore $ignore = new Ignore(),
-    ) {}
+    ) {
+        if (!$production && !$staging) {
+            throw new InvalidArgumentException("Define at least one remote: production or staging");
+        }
+    }
 
     /** Export as shell variables, to be eval'd by bash */
     public function toShell(): string
@@ -40,10 +44,13 @@ final readonly class Config
             'PUBLIC_DIR' => $this->paths->public,
             'WP_CONTENT_DIR' => $this->paths->wpContent,
             'WP_CORE_DIR' => $this->paths->wpCore,
-            ...$this->remoteVars('PROD_', $this->production),
             'IGNORE_RULES' => implode("\n", $this->ignore->rules()),
             'IGNORE_GITATTRIBUTES' => $this->ignore->gitattributes ? '1' : '',
         ];
+
+        if ($this->production) {
+            $vars = [...$vars, ...$this->remoteVars('PROD_', $this->production)];
+        }
 
         if ($this->staging) {
             $vars = [...$vars, ...$this->remoteVars('STAG_', $this->staging)];
