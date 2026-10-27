@@ -193,7 +193,7 @@ function initConfig() {
 		logSuccess "File ${GREEN}$(prettyPath "$CONFIG_FILE")${NC} created"
 		[ -n "$ENV_FILE" ] && removeLegacyFile "$ENV_FILE"
 		if [ -e "$DEPLOYIGNORE" ]; then
-			log "✅ Moved custom rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore()${NC}"
+			logSuccess "Moved custom rules from ${BLUE}$(prettyPath "$DEPLOYIGNORE")${NC} to ${BLUE}ignore: new Ignore()${NC}"
 			removeLegacyFile "$DEPLOYIGNORE"
 		fi
 	fi
@@ -205,7 +205,7 @@ function initConfig() {
 	else
 		logSuccess "File ${GREEN}$(prettyPath "$TASKS_FILE")${NC} already exists"
 		COUNT=$(php "$SCRIPT_DIR/lib/migrate.php" tasks "$TASKS_FILE")
-		[ -n "$COUNT" ] && log "✅ Using the ${BLUE}run()${NC} helper for $COUNT WP-CLI command(s) in ${BLUE}$(prettyPath "$TASKS_FILE")${NC}"
+		[ -n "$COUNT" ] && logSuccess "Using the ${BLUE}run()${NC} helper for $COUNT WP-CLI command(s) in ${BLUE}$(prettyPath "$TASKS_FILE")${NC}"
 	fi
 
 	# The `run` argument was removed in 4.0.0
@@ -241,9 +241,9 @@ function check() {
 	local LABEL="$1"
 	shift
 	if "$@" >/dev/null 2>&1; then
-		log "✅ $LABEL"
+		logSuccess "$LABEL"
 	else
-		log "❌ ${RED}$LABEL${NC}"
+		log "🚨 ${RED}$LABEL${NC}"
 		VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
 	fi
 }
@@ -253,9 +253,9 @@ function checkHomeUrl() {
 	local CONFIGURED=$(normalizeUrl "$1")
 	local ACTUAL=$(normalizeUrl "$2")
 	if [[ "$CONFIGURED" == "$ACTUAL" ]]; then
-		log "✅ URL matches the home URL in WordPress: ${BLUE}$ACTUAL${NC}"
+		logSuccess "URL matches the home URL in WordPress: ${BLUE}$ACTUAL${NC}"
 	else
-		log "❌ ${RED}URL ${CONFIGURED} doesn't match the home URL in WordPress: ${ACTUAL:-(unknown)}${NC}"
+		log "🚨 ${RED}URL ${CONFIGURED} doesn't match the home URL in WordPress: ${ACTUAL:-(unknown)}${NC}"
 		VALIDATION_ERRORS=$((VALIDATION_ERRORS + 1))
 	fi
 }
@@ -303,7 +303,7 @@ function validateLocal() {
 
 	local TASKS_FILE=$(findUp "wp-sync-deploy.tasks.php" $SCRIPT_DIR)
 	if [ -n "$TASKS_FILE" ]; then
-		log "✅ Tasks file ${BLUE}$(prettyPath "$TASKS_FILE")${NC}"
+		logSuccess "Tasks file ${BLUE}$(prettyPath "$TASKS_FILE")${NC}"
 	else
 		log "ℹ️  No tasks file found, no tasks will run after a sync or deploy"
 	fi
@@ -315,7 +315,7 @@ function validateRemote() {
 	log "🔍 ${BOLD}$REMOTE_ENV${NORMAL}"
 
 	$SSH_CONNECTION true </dev/null || logError "SSH connection to ${RED}$REMOTE_SSH${NC} (port $REMOTE_SSH_PORT) failed"
-	log "✅ SSH connection ${BLUE}$REMOTE_SSH${NC}"
+	logSuccess "SSH connection ${BLUE}$REMOTE_SSH${NC}"
 
 	checkRemoteRootExists
 

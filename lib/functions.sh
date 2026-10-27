@@ -24,13 +24,18 @@ function logLine() {
 
 # Log an error message and exit with code 1
 function logError() {
-	log "🚨${BOLD}${RED} Error: ${NC}$1"
+	log "🚨 $1"
 	exit 1
 }
 
 # Log a success message
 function logSuccess() {
-	log "✅${BOLD}${GREEN} Success: ${NC}$1"
+	log "${GREEN}✔${NC} $1"
+}
+
+# Log a warning message
+function logWarning() {
+	log "⚠️  $1"
 }
 
 # Dump something and exit
@@ -138,7 +143,7 @@ function confirmDeploy() {
 # List everything a live deploy will ask for confirmation
 function logDryRunSummary() {
 	[[ -z "${DRY_RUN_CONFIRMATIONS:-}" ]] && return 0
-	log "🚨 ${BOLD}${RED}A live deploy will ask for confirmation:${NC}${NORMAL}$DRY_RUN_CONFIRMATIONS"
+	logWarning "${BOLD}${RED}A live deploy will ask for confirmation:${NC}${NORMAL}$DRY_RUN_CONFIRMATIONS"
 }
 
 # Check the git branch from the theme
@@ -160,7 +165,7 @@ function validateProductionBranch() {
 
 	# Validate the branch
 	if [[ "${REMOTE_ENV}" == "production" && ! $CURRENT_BRANCH =~ $PRODUCTION_BRANCH ]]; then
-		log "🚨 You are on the branch ${RED}${CURRENT_BRANCH}${NC}"
+		logWarning "You are on the branch ${RED}${CURRENT_BRANCH}${NC}"
 		confirmDeploy "You are on the branch ${RED}${CURRENT_BRANCH}${NC}"
 	else
 		logSuccess "Branch ${BLUE}${CURRENT_BRANCH}${NC} allowed in ${BLUE}${REMOTE_ENV}${NC}"
@@ -190,7 +195,7 @@ function checkGitState() {
 		return
 	fi
 
-	log "🚨 ${BOLD}${RED}Your git repo differs from the remote repo${NC}${NORMAL}$PROBLEMS"
+	logWarning "${BOLD}${RED}Your git repo differs from the remote repo${NC}${NORMAL}$PROBLEMS"
 	confirmDeploy "Your git repo differs from the remote repo"
 }
 
@@ -223,7 +228,7 @@ function checkMinimumSelfVersion() {
 
 	[ "$(printf '%s\n' "$minimum" "$installed" | sort -V | head -1)" = "$minimum" ] && return 0
 
-	log "⚠️ ${BOLD}${RED}Important update:${NC} wp-sync-deploy $installed is outdated, please update to $minimum or later"
+	logWarning "${BOLD}${RED}Important update:${NC} wp-sync-deploy $installed is outdated, please update to $minimum or later"
 	log "   ${BLUE}composer update hirasso/wp-sync-deploy${NC}"
 	log "   https://github.com/hirasso/wp-sync-deploy/releases"
 	read -r -p " Continue anyway? [y/n] " PROMPT_RESPONSE
@@ -283,7 +288,7 @@ function checkCommandLinePHPVersions() {
 	log "   - Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
 	if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
-		log "🚨 Command line PHP version mismatch detected"
+		logWarning "Command line PHP version mismatch detected"
 		confirmDeploy "Command line PHP version mismatch"
 	else
 		logSuccess "Command line PHP versions match between $PRETTY_LOCAL_ENV and $PRETTY_REMOTE_ENV"
@@ -397,7 +402,7 @@ function cacheWpCli() {
 
 	rm -f "$TMP_PHAR"
 	[ ! -e "$WP_CLI_LOCAL_PHAR" ] && logError "Failed to download WP-CLI to ${BLUE}$WP_CLI_LOCAL_PHAR${NC}"
-	log "⚠️  Failed to update WP-CLI at ${BLUE}$WP_CLI_LOCAL_PHAR${NC}, using the existing one"
+	logWarning "Failed to update WP-CLI at ${BLUE}$WP_CLI_LOCAL_PHAR${NC}, using the existing one"
 }
 
 # Upload WP-CLI to the remote server, once per script run.
@@ -413,7 +418,7 @@ function installRemoteWpCli() {
 	local RESULT
 	# rsync only transfers changed files. </dev/null keeps rsync and ssh from reading wpRemote's piped stdin
 	RESULT=$("$RSYNC_BIN" -t -e "$SSH_COMMAND" --rsync-path="mkdir -p $REMOTE_FILES_DIR && rsync" \
-		"$WP_CLI_LOCAL_PHAR" "$SCRIPT_DIR/lib/hide-deprecations.php" "$REMOTE_SSH:$REMOTE_FILES_DIR/" </dev/null 2>&1) ||
+		"$WP_CLI_LOCAL_PHAR" "$SCRIPT_DIR/lib/wp-cli-setup.php" "$REMOTE_SSH:$REMOTE_FILES_DIR/" </dev/null 2>&1) ||
 		logError "Failed to upload WP-CLI to ${BLUE}~/$REMOTE_FILES_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
 
 	# Legacy: remove the hashed phar and the tasks file from the web root, uploaded by wp-sync-deploy < 4.1
@@ -426,7 +431,7 @@ function installRemoteWpCli() {
 # Uses the cached phar with deprecation notices hidden, like wpRemote
 function wpLocal() {
 	cacheWpCli
-	php -d error_reporting=24575 "$WP_CLI_LOCAL_PHAR" --require="$SCRIPT_DIR/lib/hide-deprecations.php" "$@"
+	php -d error_reporting=24575 "$WP_CLI_LOCAL_PHAR" --require="$SCRIPT_DIR/lib/wp-cli-setup.php" "$@"
 }
 
 # Deactivate maintenance mode if the script exits before doing so, e.g. on errors or Ctrl-C.
@@ -457,7 +462,7 @@ function wpRemote() {
 	logLine
 
 	# Construct the remote command
-	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/hide-deprecations.php --url=$REMOTE_URL $ARGS'"
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/wp-cli-setup.php --url=$REMOTE_URL $ARGS'"
 
 	# @see ChatGPT
 	eval $REMOTE_COMMAND
@@ -496,7 +501,8 @@ function pullDatabase() {
 	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
 
 	# Activate maintenance mode
-	wpLocal maintenance-mode activate
+	wpLocal maintenance-mode activate --quiet
+	logSuccess "Maintenance mode activated at $PRETTY_LOCAL_ENV"
 	MAINTENANCE_MODE=local
 
 	# Import the remote database into the local database
@@ -505,12 +511,16 @@ function pullDatabase() {
 	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wpLocal db import -
 
 	# Replace the remote URL with the local URL
+	log "🔄 Replacing ${BLUE}$REMOTE_HOST${NC} with ${BLUE}$LOCAL_HOST${NC} ..."
+	logLine
 	wpLocal search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix --report-changed-only
 	# Multisite: replace the bare domains in the network tables
 	wpLocal search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain --quiet
 
 	# Deactivate maintenance mode
-	wpLocal maintenance-mode deactivate
+	wpLocal maintenance-mode deactivate --quiet
+	logSuccess "Maintenance mode deactivated at $PRETTY_LOCAL_ENV"
+	logLine
 	MAINTENANCE_MODE=""
 
 	# Run tasks on the local server
@@ -543,20 +553,23 @@ function pushDatabase() {
 	[[ "$PROMPT_RESPONSE" != "push" ]] && logError "Permission denied, aborting ..."
 
 	# Activate maintenance mode on the remote server
-	wpRemote maintenance-mode activate &&
+	wpRemote maintenance-mode activate --quiet &&
+		logSuccess "Maintenance mode activated at $PRETTY_REMOTE_ENV" &&
 		MAINTENANCE_MODE=remote &&
 
 		# Import the local database into the remote database
 		wpLocal db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
 		# Replace the local URL with the remote URL
+		log "🔄 Replacing ${BLUE}$LOCAL_HOST${NC} with ${BLUE}$REMOTE_HOST${NC} ..." &&
 		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix --report-changed-only &&
 
 		# Multisite: replace the bare domains in the network tables
 		wpRemote search-replace "$LOCAL_HOST" "$REMOTE_HOST" --all-tables-with-prefix --include-columns=domain --quiet
 
 	# Deactivate maintenance mode on the remote server
-	wpRemote maintenance-mode deactivate
+	wpRemote maintenance-mode deactivate --quiet
+	logSuccess "Maintenance mode deactivated at $PRETTY_REMOTE_ENV"
 	MAINTENANCE_MODE=""
 
 	# Run tasks on the remote server
@@ -615,7 +628,7 @@ function requireGnuRsync() {
 	version=$("$bin" --version 2>&1 || true)
 	[[ "$version" == *openrsync* || "$version" == *OpenRSYNC* ]] || return 0
 
-	log "🚨${BOLD}${RED} Error: openrsync detected${NC} at ${BLUE}$bin${NC}"
+	log "🚨 ${BOLD}${RED}openrsync detected${NC} at ${BLUE}$bin${NC}"
 	log ""
 	log "   Recent macOS releases ship openrsync as /usr/bin/rsync instead of GNU"
 	log "   rsync. Its ${BOLD}--delete${NORMAL} is unsafe for deployments: it deletes undeployed"
@@ -710,7 +723,7 @@ function checkWPVersions() {
 		return 0
 	fi
 
-	log "🚨 ${BOLD}${RED}WordPress at $PRETTY_REMOTE_ENV is newer than locally${NC}${NORMAL}"
+	logWarning "${BOLD}${RED}WordPress at $PRETTY_REMOTE_ENV is newer than locally${NC}${NORMAL}"
 	log "   The deploy will downgrade it from ${BLUE}$REMOTE_VERSION${NC} to ${BLUE}$LOCAL_VERSION${NC}"
 	confirmDeploy "WordPress at $PRETTY_REMOTE_ENV is newer than locally"
 }
@@ -769,7 +782,7 @@ function checkExtensionVersions() {
 		return 0
 	fi
 
-	log "🚨 ${BOLD}${RED}Plugins or themes at $PRETTY_REMOTE_ENV differ from local${NC}${NORMAL}$PROBLEMS"
+	logWarning "${BOLD}${RED}Plugins or themes at $PRETTY_REMOTE_ENV differ from local${NC}${NORMAL}$PROBLEMS"
 	confirmDeploy "Plugins or themes at $PRETTY_REMOTE_ENV differ from local"
 	return 0
 }
@@ -847,7 +860,7 @@ function checkVendorDevPackages() {
 
 	[[ -z "$PROBLEMS" ]] && return 0
 
-	log "🚨 ${BOLD}${RED}Composer dev dependencies will be deployed${NC}${NORMAL}$PROBLEMS"
+	logWarning "${BOLD}${RED}Composer dev dependencies will be deployed${NC}${NORMAL}$PROBLEMS"
 	confirmDeploy "Composer dev dependencies will be deployed"
 }
 

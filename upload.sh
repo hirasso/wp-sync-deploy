@@ -79,4 +79,5 @@ done
     $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
 )
 
-log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Upload to $PRETTY_REMOTE_ENV completed"
+logLine
+logSuccess "${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Upload to $PRETTY_REMOTE_ENV completed"

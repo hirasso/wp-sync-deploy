@@ -126,7 +126,7 @@ dry)
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
   logLine
-  log "✅ ${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
+  logSuccess "${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
   logLeftovers
   logDryRunSummary
   ;;
@@ -169,14 +169,16 @@ run)
     deployVendor 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi
 
-  log "\n✅ ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
+  logLine
+  logSuccess "${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
   logLeftovers
 
   logLine
 
   runRemoteTasks deploy
 
-  log "\n✅ Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
+  logLine
+  logSuccess "Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"
   log "\n${GREEN}$REMOTE_PROTOCOL://$REMOTE_HOST${NC}"
   log ""
   ;;
