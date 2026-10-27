@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.0 - 2026-10-27
+
+- Enable `.git` checks by default, warn about missing `composer:`
+
 ## 4.2.1 - 2026-10-27
 
 - Only check the project's own vendor dirs for dev packages
