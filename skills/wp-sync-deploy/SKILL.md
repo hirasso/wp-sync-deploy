@@ -7,6 +7,14 @@ description: Set up hirasso/wp-sync-deploy (database sync + rsync deploy for Wor
 
 Source of truth for options: `vendor/hirasso/wp-sync-deploy/README.md`, `wp-sync-deploy.config.example.php` and `src/Config.php` (constructor signatures). Read them first; they may have changed.
 
+## DDEV projects
+
+If the project has a `.ddev/` folder, wp-sync-deploy always runs inside the web container, never on the host (the host has no database access, so WordPress values like the home URL can't be read):
+
+- Prefix every command in this skill and in the user's instructions: `ddev composer …`, `ddev exec vendor/bin/wp-sync-deploy …`, `ddev exec pnpm production:deploy -- --dry-run`. SSH agent: `ddev auth ssh` (once per DDEV start).
+- `local.url`: `getenv('DDEV_PRIMARY_URL') ?: throw new \RuntimeException('Run wp-sync-deploy inside DDEV')`, never a hardcoded URL.
+- Secrets: the host shell env doesn't reach the container. Put them in `.ddev/.env.web` (loaded into the web container, `ddev restart` after changes) and check it's gitignored (`git check-ignore .ddev/.env.web`).
+
 ## 1. Install
 
 - Always a dev dependency: `composer require --dev hirasso/wp-sync-deploy` (pre-release: `:^4.0@rc`). Already in `require` → `composer remove --no-update` it first, then require with `--dev`.
@@ -26,7 +34,7 @@ Creates `wp-sync-deploy.tasks.php` and `wp-sync-deploy.config.php` with the loca
 
 Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and imports; drop unused imports.
 
-- `local`: `url` from `WP_HOME`/`WP_HOME_DEV` in `wp-config.php` (or `ddev describe`). `rootDir` = WP root, relative to the config file via `__DIR__` / `dirname(__DIR__, n)`, never a hardcoded absolute path.
+- `local`: `url` from `WP_HOME`/`WP_HOME_DEV` in `wp-config.php` (DDEV: see [DDEV projects](#ddev-projects)). `rootDir` = WP root, relative to the config file via `__DIR__` / `dirname(__DIR__, n)`, never a hardcoded absolute path.
 - `paths`: `wpContent`/`wpCore`/`public` relative to `rootDir` (verify with `ls`); omit `public` if empty.
 - `git`: `dir` = repo path relative to `rootDir` (omit if the repo is the root).
 - `composer`: add `new Composer()` if the deployed code loads composer packages (root `vendor`, or a theme/plugin requiring its own `vendor/autoload.php`). `dir` = location of `composer.json` relative to `rootDir` (omit if it is the root). The vendor dir is then built and deployed without dev dependencies. Never put `vendor` in `additional` then. Deploys ask for confirmation if the vendor dir in the root or git repo contains dev packages (third-party plugin vendors aren't checked).
@@ -36,7 +44,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
   - Repeated paths: define e.g. `$theme = 'content/themes/my-theme';` above `return new Config(...)` and reuse it in `git`, `composer` and the patterns.
   - Typical candidates in build-tool projects: source dirs (`assets-src`), build scripts (`build.mjs`, not covered by the `*.config.mjs` default), vendored tarballs, agent/dev docs (`AGENTS.md`, `CONTEXT.md`).
   - Check the `IGNORE_RULES` in the validation output (below).
-- Secrets (http auth) → `getenv('…') ?: null`, never literal.
+- Secrets (http auth) → `getenv('…') ?: null`, never literal. Tell the user where to set the variable (shell, or `.ddev/.env.web` for DDEV) and write it there only after asking.
 - Commit the file. Never gitignore it.
 - Validate: `vendor/bin/wp-sync-deploy config validate` prints the resolved config and checks local paths and each remote (SSH, root, PHP, WP-CLI, URLs). Without SSH access: `--local`.
 
@@ -51,6 +59,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
 ## Upgrading from 3.x
 
 - Run `vendor/bin/wp-sync-deploy config init -n`: creates the config from `.env.wp-sync-deploy` (local URL from WordPress) and `.deployignore`, removes both, applies the `run()` helper to simple tasks calls and lists what's left. Then run `config validate`.
+- Several env files (e.g. `.env.wp-sync-deploy.<site>`, used via `--config=`): don't convert by hand, let the migrator do it per file. Copy one to `.env.wp-sync-deploy`, run `config init -n`, rename the result to `wp-sync-deploy.config.<site>.php` (init keeps an existing `wp-sync-deploy.config.php`), repeat, then `git rm` the originals and point the scripts' `--config=` at the new files.
 - Then review the generated config against step 3 (e.g. ignore candidates, `composer`). Fix what validate reports (e.g. a wrong `local` protocol).
 - Remove any `!.env.wp-sync-deploy` from `.gitignore`.
 - `run` is gone, deploys are live by default: drop `run` from scripts; dry run is `--dry-run`. Replace old per-env composer scripts with step 4.
