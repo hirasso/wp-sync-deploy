@@ -149,9 +149,9 @@ function logDryRunSummary() {
 # Check the git branch from the theme
 function validateProductionBranch() {
 
-	# Bail early if $GIT_DIR is not defined
 	if [[ -z "${GIT_DIR+x}" ]]; then
-		log "ℹ️  Skipping branch validation because ${BLUE}\$GIT_DIR${NC} is not defined"
+		[[ "${GIT_CHECKS:-}" == "disabled" ]] && log "ℹ️  Skipping git checks (${BLUE}git: false${NC})"
+		[[ "${GIT_CHECKS:-}" == "no-repo" ]] && log "ℹ️  Skipping git checks, the root dir is not in a git repo"
 		return
 	fi
 

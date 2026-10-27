@@ -155,8 +155,10 @@ function migrateConfig(string $configFile, string $deployignore): void
     if ($branch !== '' && $branch !== 'master|main') {
         $git['productionBranch'] = export($branch);
     }
-    // An empty GIT_DIR means the repo is at the root
-    if ($git || getenv('GIT_DIR') !== false) {
+    // A repo at the root is detected without config
+    if (getenv('GIT_DISABLED')) {
+        $config['git'] = 'false';
+    } elseif ($git) {
         $config['git'] = instance('Git', $git);
         $uses[] = 'Git';
     }

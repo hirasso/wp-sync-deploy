@@ -157,6 +157,8 @@ vendor/bin/wp-sync-deploy deploy production --yes
 
 Before deploying, wp-sync-deploy asks for confirmation if the remote WordPress version is newer than the local one (e.g. after a security update applied on the server). The same goes for plugins and themes that are newer at the remote or missing locally (e.g. after an update or install via wp-admin), as the deploy would downgrade or remove them.
 
+If your root dir is in a git repo, deploys to production also ask for confirmation on a branch other than `master` or `main` and on uncommitted or unpushed changes. Configure this with `git: new Git(dir: …, productionBranch: …)` (e.g. if your repo is your theme), or disable it with `git: false`.
+
 A `--dry-run` never asks for confirmation. Instead, it lists everything a live deploy will ask about at the end.
 
 ### Composer dependencies
@@ -166,6 +168,8 @@ With `composer: new Composer()` in your config, wp-sync-deploy deploys your `ven
 If your `composer.json` is not in the root dir (e.g. inside your theme), pass its location: `new Composer(dir: 'content/themes/my-theme')`.
 
 wp-sync-deploy asks for confirmation if the `vendor` directory in your root dir or git repo contains dev dependencies, and suggests the matching `new Composer()` config. The `vendor` directories that third-party plugins ship are not checked.
+
+`config validate` warns if your `composer.lock` contains runtime libraries but your config has no `composer:`. Projects that only use composer for dev tools or for installing plugins and themes don't need it.
 
 ### Simple Upload
 

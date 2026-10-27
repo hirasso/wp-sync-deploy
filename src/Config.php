@@ -15,7 +15,7 @@ final readonly class Config
      * @param Paths $paths Directories, relative to the root dir (same in all environments)
      * @param Remote $production The production environment
      * @param Remote|null $staging The staging environment (optional)
-     * @param Git|null $git Validate the git branch before deploying to production (optional)
+     * @param Git|false|null $git Git checks before deploying to production. Default: on if the root dir is in a git repo, `false` disables them
      * @param Composer|null $composer Deploy the composer vendor dir without dev dependencies (optional)
      * @param Ignore $ignore Files and directories that won't be deployed
      */
@@ -24,7 +24,7 @@ final readonly class Config
         public Paths $paths,
         public Remote $production,
         public ?Remote $staging = null,
-        public ?Git $git = null,
+        public Git|false|null $git = null,
         public ?Composer $composer = null,
         public Ignore $ignore = new Ignore(),
     ) {}
@@ -53,9 +53,16 @@ final readonly class Config
             $vars['ADDITIONAL_DIRS'] = implode(' ', $this->paths->additional);
         }
 
-        if ($this->git) {
-            $vars['GIT_DIR'] = $this->git->dir;
-            $vars['PRODUCTION_BRANCH'] = $this->git->productionBranch;
+        $git = $this->git ?? ($this->isInGitRepo() ? new Git() : false);
+        $vars['GIT_CHECKS'] = match (true) {
+            $this->git instanceof Git => 'configured',
+            $this->git === false => 'disabled',
+            $git instanceof Git => 'detected',
+            default => 'no-repo',
+        };
+        if ($git) {
+            $vars['GIT_DIR'] = $git->dir;
+            $vars['PRODUCTION_BRANCH'] = $git->productionBranch;
         }
 
         if ($this->composer) {
@@ -67,6 +74,16 @@ final readonly class Config
             $lines[] = "$name=" . escapeshellarg((string) $value);
         }
         return implode(PHP_EOL, $lines) . PHP_EOL;
+    }
+
+    private function isInGitRepo(): bool
+    {
+        for ($dir = $this->local->rootDir; $dir !== dirname($dir); $dir = dirname($dir)) {
+            if (file_exists("$dir/.git")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** @return array<string, string|int> */
@@ -161,7 +178,7 @@ final readonly class Paths
 }
 
 /**
- * Validate the git branch before deploying to production
+ * Check the git branch and uncommitted/unpushed changes before deploying to production
  */
 final readonly class Git
 {

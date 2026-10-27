@@ -158,9 +158,11 @@ function writeConfig() (
 	export PUBLIC_DIR="${PUBLIC#.}"
 	export ADDITIONAL_DIRS=$(askUnlessSetByUser ADDITIONAL_DIRS "Additional dirs to deploy, space separated" "$(echo " ${ADDITIONAL_DIRS:-} " | sed 's/ vendor / /' | xargs)")
 
-	[ -n "$GIT" ] && GIT=$(askUnlessSetByUser GIT_DIR "Git repo, relative to the root dir" "$GIT")
+	local DETECTED_GIT="$GIT"
+	[ -n "$GIT" ] && GIT=$(askUnlessSetByUser GIT_DIR "Git repo, relative to the root dir (- disables the git checks)" "$GIT")
 	unset GIT_DIR COMPOSER_DIR
 	[ -n "$GIT" ] && export GIT_DIR="${GIT#.}"
+	[ -n "$DETECTED_GIT" ] && [ -z "$GIT" ] && export GIT_DISABLED=1
 	COMPOSER=$(ask "Composer dir to deploy vendor from, without dev dependencies" "$COMPOSER")
 	[ -n "$COMPOSER" ] && export COMPOSER_DIR="${COMPOSER#.}"
 
@@ -298,7 +300,11 @@ function logConfigSummary() {
 	log "📄 ${BOLD}$(prettyPath "$CONFIG_FILE")${NORMAL}"
 	log "   local:      ${BLUE}$LOCAL_PROTOCOL://$LOCAL_HOST${NC} at $LOCAL_ROOT_DIR"
 	log "   paths:      core ${BLUE}$WP_CORE_DIR${NC}, content ${BLUE}$WP_CONTENT_DIR${NC}${PUBLIC_DIR:+, public ${BLUE}$PUBLIC_DIR${NC}}${ADDITIONAL_DIRS:+, additional ${BLUE}$ADDITIONAL_DIRS${NC}}"
-	[ -n "${GIT_DIR+x}" ] && log "   git:        ${BLUE}${GIT_DIR:-.}${NC}, production branch ${BLUE}$PRODUCTION_BRANCH${NC}"
+	if [ -n "${GIT_DIR+x}" ]; then
+		log "   git:        ${BLUE}${GIT_DIR:-.}${NC}, production branch ${BLUE}$PRODUCTION_BRANCH${NC}$([[ "$GIT_CHECKS" == "detected" ]] && echo " (detected)")"
+	else
+		log "   git:        ${BLUE}off${NC} ($([[ "$GIT_CHECKS" == "disabled" ]] && echo "git: false" || echo "no git repo"))"
+	fi
 	[ -n "${COMPOSER_DIR+x}" ] && log "   composer:   ${BLUE}${COMPOSER_DIR:-.}${NC}, vendor deployed without dev dependencies"
 
 	local ENV PREFIX
@@ -316,6 +322,22 @@ function logConfigSummary() {
 	return 0
 }
 
+# Warn if a composer.lock in the root dir or git repo has runtime libraries, but no `composer:` is configured.
+# Composer used only for dev tools or for installing plugins and themes doesn't need it
+function warnAboutMissingComposer() {
+	local DIR LOCK COUNT SUGGESTION
+	for DIR in "" ${GIT_DIR:-}; do
+		LOCK="$LOCAL_ROOT_DIR/${DIR:+$DIR/}composer.lock"
+		[ -f "$LOCK" ] || continue
+		COUNT=$(php -r 'echo count(array_filter(json_decode(file_get_contents($argv[1]), true)["packages"] ?? [], fn ($p) => ($p["type"] ?? "library") === "library"));' "$LOCK")
+		[[ "$COUNT" == "0" ]] && continue
+		SUGGESTION="new Composer()"
+		[ -n "$DIR" ] && SUGGESTION="new Composer(dir: '$DIR')"
+		logWarning "${BLUE}$(prettyPath "$LOCK")${NC} has ${RED}$COUNT${NC} runtime package(s). Add ${BLUE}composer: $SUGGESTION${NC} to deploy vendor without dev dependencies"
+		return
+	done
+}
+
 # Validate the local environment
 function validateLocal() {
 	log "🔍 ${BOLD}local${NORMAL}"
@@ -330,6 +352,7 @@ function validateLocal() {
 
 	[ -n "${GIT_DIR+x}" ] && check "Git repo ${BLUE}${GIT_DIR:-.}${NC}" git -C "$LOCAL_ROOT_DIR/$GIT_DIR" rev-parse
 	[ -n "${COMPOSER_DIR+x}" ] && check "Composer ${BLUE}${COMPOSER_DIR:-.}/composer.json${NC}" test -f "$LOCAL_ROOT_DIR/$COMPOSER_DIR/composer.json"
+	[ -z "${COMPOSER_DIR+x}" ] && warnAboutMissingComposer
 
 	check "GNU rsync" bash -c "source '$SCRIPT_DIR/lib/functions.sh'; requireGnuRsync \"\$(resolveRsyncBin)\""
 	checkHomeUrl "$LOCAL_PROTOCOL://$LOCAL_HOST" "$(cd "$LOCAL_ROOT_DIR/$PUBLIC_DIR" && wpLocal option get home 2>/dev/null)"
