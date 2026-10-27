@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.0 - 2026-10-27
+
+- Upload the tasks file to ~/.wp-sync-deploy and delete it after each run
+- Upload WP-CLI from a local cache to ~/.wp-sync-deploy, share one SSH connection
+
 ## 4.0.0 - 2026-10-26
 
 - Run task commands in-process to avoid PHP deprecation notices from WP-CLI child processes
