@@ -72,7 +72,7 @@ done
   cd "$LOCAL_ROOT_DIR"
   "$RSYNC_BIN" -avz --ignore-existing --relative \
     --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
-    -e "ssh -p $REMOTE_SSH_PORT" \
+    -e "$SSH_COMMAND" \
     $INCLUDE_ARGS \
     --include=.htaccess \
     --filter="merge $IGNORE_FILE" \

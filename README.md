@@ -12,7 +12,7 @@ Sync and deploy your WordPress website between environments 🔀
 
 ## Prerequesites
 
-- [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy takes care of installing WP-CLI automatically.
+- [WP-CLI](https://wp-cli.org/) installed on your **local machine**. On the remote server, wp-sync-deploy uploads WP-CLI to `~/.wp-sync-deploy/wp-cli.phar` automatically (outside of the web root, so the SSH home directory must be writable). The phar is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` and updated weekly.
 - PHP >= 8.2 on your **local machine**
 - A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 

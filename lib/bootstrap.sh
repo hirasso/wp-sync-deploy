@@ -16,8 +16,8 @@ for arg in "$@"; do
     esac
 done
 
-# Clean up the WP-CLI update marker (see updateRemoteWpCli), the ignore file, the rsync logs (see logLeftovers) and the vendor build (see buildVendor)
-trap 'rm -f "$WP_CLI_UPDATE_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"' EXIT
+# Clean up the WP-CLI marker (see installRemoteWpCli), the ignore file, the rsync logs (see logLeftovers), the vendor build (see buildVendor) and the SSH connection
+trap 'rm -f "$WP_CLI_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"; closeSshConnection' EXIT
 
 # Load the config file
 loadConfigFile
@@ -83,8 +83,10 @@ staging)
     ;;
 esac
 
-# Store the SSH connection with the port for usage
-SSH_CONNECTION="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH"
+# Store the SSH command with the port for usage. All calls share one connection (see closeSshConnection)
+SSH_CONTROL_PATH="${TMPDIR:-/tmp}/wp-sync-deploy-ssh-$$"
+SSH_COMMAND="ssh -p $REMOTE_SSH_PORT -o ControlMaster=auto -o ControlPath=$SSH_CONTROL_PATH -o ControlPersist=60"
+SSH_CONNECTION="$SSH_COMMAND $REMOTE_SSH"
 
 # Prepare variables for printing
 PRETTY_LOCAL_ENV=$(printf "${BOLD}local${NORMAL}")

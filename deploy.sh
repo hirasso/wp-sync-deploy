@@ -111,7 +111,7 @@ dry)
     cd "$LOCAL_ROOT_DIR"
     "$RSYNC_BIN" --dry-run -avz --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
-      -e "ssh -p $REMOTE_SSH_PORT" \
+      -e "$SSH_COMMAND" \
       "${PROTECT_FILTERS[@]}" \
       --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
@@ -157,7 +157,7 @@ run)
     cd "$LOCAL_ROOT_DIR"
     "$RSYNC_BIN" -avz --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
-      -e "ssh -p $REMOTE_SSH_PORT" \
+      -e "$SSH_COMMAND" \
       "${PROTECT_FILTERS[@]}" \
       --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"

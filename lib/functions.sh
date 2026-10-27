@@ -349,7 +349,7 @@ function checkWebFacingPHPVersions() {
 
 # Check if a file exists on a remote server
 function checkRemoteFile() {
-	ssh -p $REMOTE_SSH_PORT $REMOTE_SSH "[ -e \"$1\" ] && echo 1 || echo 0"
+	$SSH_CONNECTION "[ -e \"$1\" ] && echo 1 || echo 0"
 }
 
 # Validate that the required directories exist locally and remotely
@@ -376,53 +376,56 @@ function checkDeployPaths() {
 	done
 }
 
-# Get the remote wp-cli.phar file name
-function getRemoteWPCLIFilename() {
-	local HASH=$(createHash $REMOTE_WEB_ROOT)
-	echo "wp-cli-$HASH.phar"
-}
-
-# Install WP-CLI on the remote server
+# WP-CLI is downloaded locally and uploaded to the remote home dir, outside of the web root.
 # This makes it possible to easily run wp-cli with a custom command line PHP version
+WP_CLI_LOCAL_PHAR="${XDG_CACHE_HOME:-$HOME/.cache}/wp-sync-deploy/wp-cli.phar"
+WP_CLI_REMOTE_DIR=".wp-sync-deploy"
 
-function installRemoteWpCli() {
-	# Get the hashed filename of the wp-cli.phar
-	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
+# Download WP-CLI to the local cache, or update it if older than a week.
+# A stale phar can emit deprecation notices under newer PHP versions.
+function cacheWpCli() {
+	[ -n "$(find "$WP_CLI_LOCAL_PHAR" -mtime -7 2>/dev/null)" ] && return
 
-	# Don't install twice, but keep an existing install up to date
-	if [ $(checkRemoteFile "$REMOTE_WEB_ROOT/$WP_CLI_PHAR") == 1 ]; then
-		updateRemoteWpCli
-		logSuccess "WP-CLI available on the remote server."
+	local TMP_PHAR="$WP_CLI_LOCAL_PHAR.tmp"
+	mkdir -p "$(dirname "$WP_CLI_LOCAL_PHAR")"
+
+	if curl -fsSL -o "$TMP_PHAR" https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar &&
+		php "$TMP_PHAR" --version >/dev/null 2>&1; then
+		mv "$TMP_PHAR" "$WP_CLI_LOCAL_PHAR"
 		return
 	fi
 
-	log "🚀 Installing WP-CLI on the remote server ..."
-
-	RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && curl -s -o $WP_CLI_PHAR https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && echo success")
-
-	[ ! "$RESULT" == 'success' ] && logError "Failed to install WP-CLI on the server"
-
-	logSuccess "WP-CLI installed on the remote server\n"
+	rm -f "$TMP_PHAR"
+	[ ! -e "$WP_CLI_LOCAL_PHAR" ] && logError "Failed to download WP-CLI to ${BLUE}$WP_CLI_LOCAL_PHAR${NC}"
+	log "⚠️  Failed to update WP-CLI at ${BLUE}$WP_CLI_LOCAL_PHAR${NC}, using the existing one"
 }
 
-# Update an existing WP-CLI on the remote server, once per script run.
-# A stale phar can emit deprecation notices under newer PHP versions.
+# Upload WP-CLI to the remote server, once per script run.
 # A marker file is used instead of a variable, as wpRemote often runs in a
 # subshell when its output is piped. $$ stays the same in those subshells.
-WP_CLI_UPDATE_MARKER="${TMPDIR:-/tmp}/wp-sync-deploy-wp-cli-updated-$$"
-function updateRemoteWpCli() {
-	[ -e "$WP_CLI_UPDATE_MARKER" ] && return
-	touch "$WP_CLI_UPDATE_MARKER"
+WP_CLI_MARKER="${TMPDIR:-/tmp}/wp-sync-deploy-wp-cli-$$"
+function installRemoteWpCli() {
+	[ -e "$WP_CLI_MARKER" ] && return
+	touch "$WP_CLI_MARKER"
 
-	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
+	cacheWpCli
+
 	local RESULT
+	# rsync only transfers the phar if it changed. </dev/null keeps rsync and ssh from reading wpRemote's piped stdin
+	RESULT=$("$RSYNC_BIN" -t -e "$SSH_COMMAND" --rsync-path="mkdir -p $WP_CLI_REMOTE_DIR && rsync" \
+		"$WP_CLI_LOCAL_PHAR" "$REMOTE_SSH:$WP_CLI_REMOTE_DIR/wp-cli.phar" </dev/null 2>&1) ||
+		logError "Failed to upload WP-CLI to ${BLUE}~/$WP_CLI_REMOTE_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
 
-	if ! RESULT=$($SSH_CONNECTION "cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR cli update --yes 2>&1"); then
-		log "⚠️  Failed to update WP-CLI on the remote server:\n\r$RESULT"
-		return
-	fi
+	# Legacy: remove the hashed phar from the web root, installed by wp-sync-deploy < 4.1
+	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT/wp-cli-$(createHash $REMOTE_WEB_ROOT).phar'" </dev/null
 
-	log "$RESULT"
+	logSuccess "WP-CLI available on the remote server."
+}
+
+# Close the shared SSH connection
+function closeSshConnection() {
+	[ -S "${SSH_CONTROL_PATH:-}" ] || return 0
+	ssh -o ControlPath="$SSH_CONTROL_PATH" -O exit "$REMOTE_SSH" 2>/dev/null || true
 }
 
 # Run wp cli on a remote server, forwarding all arguments
@@ -435,14 +438,11 @@ function wpRemote() {
 	# Log an empty line
 	logLine
 
-	# Get the hashed file name of the wp-cli.phar
-	local WP_CLI_PHAR=$(getRemoteWPCLIFilename)
-
 	# Construct the remote command
-	local SSH_COMMAND="ssh -p $REMOTE_SSH_PORT $REMOTE_SSH 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 $WP_CLI_PHAR --url=$REMOTE_URL $ARGS'"
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$WP_CLI_REMOTE_DIR/wp-cli.phar --url=$REMOTE_URL $ARGS'"
 
 	# @see ChatGPT
-	eval $SSH_COMMAND
+	eval $REMOTE_COMMAND
 }
 
 # Runs the task file on the remote server
@@ -454,7 +454,7 @@ function runRemoteTasks() {
 	log "Running ${BLUE}wp eval-file wp-sync-deploy.tasks.php $TASK${NC} on $PRETTY_REMOTE_ENV server ... \n"
 
 	# Upload the file to the remote web root
-	rsync -e "ssh -p $REMOTE_SSH_PORT" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT/"
+	rsync -e "$SSH_COMMAND" -q "$TASKS_FILE" "$REMOTE_SSH:$REMOTE_WEB_ROOT/"
 
 	# Execute the file on the remote server, passing in the current $TASK ("deploy" or "sync")
 	wpRemote eval-file "$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php" "$TASK"
@@ -784,7 +784,7 @@ function buildVendor() {
 function deployVendor() {
 	"$RSYNC_BIN" "$@" -avz --delete \
 		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
-		-e "ssh -p $REMOTE_SSH_PORT" \
+		-e "$SSH_COMMAND" \
 		--filter="merge $IGNORE_FILE" \
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
