@@ -127,7 +127,7 @@ vendor/bin/wp-sync-deploy sync production
 # sync the database from your staging server
 vendor/bin/wp-sync-deploy sync staging
 
-# push your local database to your staging server
+# push your local database to your staging server (asks you to type `push` to confirm)
 vendor/bin/wp-sync-deploy sync staging push
 
 # Backup the remote database and store it locally

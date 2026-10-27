@@ -537,10 +537,10 @@ function pushDatabase() {
 	# Confirmation dialog
 	log "🚨 Would you really like to 💥 ${RED}reset the $REMOTE_ENV database${NC} ($PRETTY_REMOTE_HOST)"
 	log "and ${RED}push from local${NC}?"
-	read -r -p " Type '$REMOTE_HOST' to continue ... " PROMPT_RESPONSE
+	read -r -p " Type 'push' to continue ... " PROMPT_RESPONSE
 
 	# Return early if not confirmed
-	[[ "$PROMPT_RESPONSE" != "$REMOTE_HOST" ]] && logError "Permission denied, aborting ..."
+	[[ "$PROMPT_RESPONSE" != "push" ]] && logError "Permission denied, aborting ..."
 
 	# Activate maintenance mode on the remote server
 	wpRemote maintenance-mode activate &&
