@@ -428,10 +428,10 @@ function installRemoteWpCli() {
 }
 
 # Run WP-CLI locally, forwarding all arguments.
-# Uses the cached phar with deprecation notices hidden, like wpRemote
+# Uses the cached phar with deprecation notices hidden, like wpRemote. WP_BOOT_URL sets --url
 function wpLocal() {
 	cacheWpCli
-	php -d error_reporting=24575 "$WP_CLI_LOCAL_PHAR" --require="$SCRIPT_DIR/lib/wp-cli-setup.php" "$@"
+	php -d error_reporting=24575 "$WP_CLI_LOCAL_PHAR" --require="$SCRIPT_DIR/lib/wp-cli-setup.php" ${WP_BOOT_URL:+--url=$WP_BOOT_URL} "$@"
 }
 
 # Deactivate maintenance mode if the script exits before doing so, e.g. on errors or Ctrl-C.
@@ -451,7 +451,7 @@ function closeSshConnection() {
 	ssh -o ControlPath="$SSH_CONTROL_PATH" -O exit "$REMOTE_SSH" 2>/dev/null || true
 }
 
-# Run wp cli on a remote server, forwarding all arguments
+# Run wp cli on a remote server, forwarding all arguments. WP_BOOT_URL overrides --url
 function wpRemote() {
 	local ARGS="$@"
 
@@ -462,7 +462,7 @@ function wpRemote() {
 	logLine
 
 	# Construct the remote command
-	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/wp-cli-setup.php --url=$REMOTE_URL $ARGS'"
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/wp-cli-setup.php --url=${WP_BOOT_URL:-$REMOTE_URL} $ARGS'"
 
 	# @see ChatGPT
 	eval $REMOTE_COMMAND
@@ -490,6 +490,47 @@ function runRemoteTasks() {
 	return $STATUS
 }
 
+# Replace one environment's hosts with the other's after a database import.
+# Multisite: also the other site domains (mapped via the local host suffix), domain columns last
+# Usage: replaceHosts <wpLocal|wpRemote> <from-host> <to-host>
+function replaceHosts() {
+	local WP=$1 FROM=$2 TO=$3
+	local PAIRS=("$FROM=$TO") SKIPPED=() SUFFIX="" DOMAIN NEW PAIR OLD
+
+	# Suffix that turns a remote host into the local one, e.g. ".ddev.site:8443"
+	[[ $LOCAL_HOST == "$REMOTE_HOST"?* ]] && SUFFIX=${LOCAL_HOST#"$REMOTE_HOST"}
+
+	# Until the domain columns are replaced, WP-CLI boots on a domain from the imported blogs table
+	for DOMAIN in $({ WP_BOOT_URL=$FROM $WP site list --field=domain 2>/dev/null || true; } | grep -E '^[A-Za-z0-9.-]+(:[0-9]+)?$' || true); do
+		[ "$DOMAIN" = "$FROM" ] && continue
+		NEW=""
+		if [ -n "$SUFFIX" ] && [ "$FROM" = "$REMOTE_HOST" ]; then
+			NEW="$DOMAIN$SUFFIX"
+		elif [ -n "$SUFFIX" ] && [[ $DOMAIN == ?*"$SUFFIX" ]]; then
+			NEW=${DOMAIN%"$SUFFIX"}
+		fi
+		if [ -n "$NEW" ]; then PAIRS=("$DOMAIN=$NEW" "${PAIRS[@]}"); else SKIPPED+=("$DOMAIN"); fi
+	done
+
+	for PAIR in "${PAIRS[@]}"; do
+		OLD=${PAIR%%=*}
+		NEW=${PAIR#*=}
+		log "🔄 Replacing ${BLUE}$OLD${NC} with ${BLUE}$NEW${NC} ..."
+		# wpRemote logs its own empty line
+		if [ "$WP" = wpLocal ]; then logLine; fi
+		WP_BOOT_URL=$FROM $WP search-replace "//$OLD" "//$NEW" --all-tables-with-prefix --report-changed-only || return
+	done
+
+	# Multisite: exact domains in the network tables, the main one last
+	for PAIR in "${PAIRS[@]}"; do
+		OLD=${PAIR%%=*}
+		NEW=${PAIR#*=}
+		WP_BOOT_URL=$FROM $WP search-replace "^$OLD\$" "$NEW" --regex --all-tables-with-prefix --include-columns=domain --quiet || return
+	done
+
+	[ ${#SKIPPED[@]} -eq 0 ] || logWarning "Site domains not replaced: ${BLUE}${SKIPPED[*]}${NC}. Local domains need the local host suffix, e.g. ${BLUE}example.org${NC} → ${BLUE}example.org.ddev.site${NC}"
+}
+
 # Pull the remote database into the local database
 function pullDatabase() {
 	# Confirmation dialog
@@ -510,12 +551,7 @@ function pullDatabase() {
 	# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
 	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wpLocal db import -
 
-	# Replace the remote URL with the local URL
-	log "🔄 Replacing ${BLUE}$REMOTE_HOST${NC} with ${BLUE}$LOCAL_HOST${NC} ..."
-	logLine
-	wpLocal search-replace "//$REMOTE_HOST" "//$LOCAL_HOST" --all-tables-with-prefix --report-changed-only
-	# Multisite: replace the bare domains in the network tables
-	wpLocal search-replace "$REMOTE_HOST" "$LOCAL_HOST" --all-tables-with-prefix --include-columns=domain --quiet
+	replaceHosts wpLocal "$REMOTE_HOST" "$LOCAL_HOST"
 
 	# Deactivate maintenance mode
 	wpLocal maintenance-mode deactivate --quiet
@@ -560,12 +596,7 @@ function pushDatabase() {
 		# Import the local database into the remote database
 		wpLocal db export --default-character-set=utf8mb4 - | wpRemote db import - &&
 
-		# Replace the local URL with the remote URL
-		log "🔄 Replacing ${BLUE}$LOCAL_HOST${NC} with ${BLUE}$REMOTE_HOST${NC} ..." &&
-		wpRemote search-replace "//$LOCAL_HOST" "//$REMOTE_HOST" --all-tables-with-prefix --report-changed-only &&
-
-		# Multisite: replace the bare domains in the network tables
-		wpRemote search-replace "$LOCAL_HOST" "$REMOTE_HOST" --all-tables-with-prefix --include-columns=domain --quiet
+		replaceHosts wpRemote "$LOCAL_HOST" "$REMOTE_HOST"
 
 	# Deactivate maintenance mode on the remote server
 	wpRemote maintenance-mode deactivate --quiet

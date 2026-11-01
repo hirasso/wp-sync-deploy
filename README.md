@@ -136,6 +136,8 @@ vendor/bin/wp-sync-deploy sync <production|staging> backup
 > [!NOTE]
 > Pushing your local database is only possible to the staging server.
 
+**Multisite:** the other site domains (e.g. mapped domains) are replaced too. Their local domain is the remote domain plus the suffix of your local host: with `example.com` → `example.com.ddev.site:8443`, `example.org` becomes `example.org.ddev.site:8443`. Domains that don't follow this scheme are skipped with a warning.
+
 ### Deploy your local files to remote environments
 
 ```shell

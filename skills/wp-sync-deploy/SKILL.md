@@ -91,6 +91,8 @@ Always `composer <script> -- <args>`: without `--`, composer silently drops opti
 
 Review `wp-sync-deploy.tasks.php` against the site (e.g. caching plugin present?). Keep it unless the user wants changes.
 
+Multisite with mapped domains: their local domains must be `<prod-domain><local suffix>` (e.g. `example.org.ddev.site:8443` next to `example.com.ddev.site:8443`), otherwise `sync` skips them (see `README.md`). DDEV: add them as `additional_hostnames`.
+
 Multisite: `wp rewrite flush` has no `--network` flag and only reaches the main site. Replace the deploy task's `run('rewrite flush')` with a reset of every site's cached rules (rebuilt on the next request, in each site's own context; `flush_rewrite_rules()` after `switch_to_blog()` would build them from the main site's post types):
 
 ```php
