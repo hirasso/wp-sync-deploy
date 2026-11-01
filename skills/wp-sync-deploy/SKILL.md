@@ -91,6 +91,20 @@ Always `composer <script> -- <args>`: without `--`, composer silently drops opti
 
 Review `wp-sync-deploy.tasks.php` against the site (e.g. caching plugin present?). Keep it unless the user wants changes.
 
+Multisite: `wp rewrite flush` has no `--network` flag and only reaches the main site. Replace the deploy task's `run('rewrite flush')` with a reset of every site's cached rules (rebuilt on the next request, in each site's own context; `flush_rewrite_rules()` after `switch_to_blog()` would build them from the main site's post types):
+
+```php
+if (is_multisite()) {
+    foreach (get_sites(['fields' => 'ids']) as $id) {
+        switch_to_blog($id);
+        delete_option('rewrite_rules');
+        restore_current_blog();
+    }
+} else {
+    run('rewrite flush');
+}
+```
+
 Existing tasks file (on every setup or upgrade): if it calls `\WP_CLI::runcommand()` without `'launch' => false`, copy the `run()` helper from `vendor/hirasso/wp-sync-deploy/wp-sync-deploy.tasks.example.php` into it and replace those calls with `run('…')`. Calls that use the return value or other options: add `'launch' => false` to their options instead. Reason: WP-CLI child processes ignore wp-sync-deploy's PHP settings and print PHP 8.5 deprecation notices.
 
 ## 6. Preflight requirements (tell the user)
