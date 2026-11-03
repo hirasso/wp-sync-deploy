@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.3.3 - 2026-11-03
+
+- Deploy vendor: do not print unchanged directories (via checksum check)
+- Sync multisite databases: boot on the imported domain, replace all site domains
+- Skill: multisite rewrite flush in the tasks file
+- Skill: production: null for remotes that aren't set up yet
+- Skill: Bedrock needs additional: ['config']
+
 ## 4.3.2 - 2026-10-27
 
 - Skip a missing production remote in config validate, ask for it in config init
