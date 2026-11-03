@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.4 - 2026-11-03
+
+- Keep WP-CLI colors on remote servers
+
 ## 4.3.3 - 2026-11-03
 
 - Deploy vendor: do not print unchanged directories (via checksum check)
