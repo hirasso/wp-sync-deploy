@@ -855,7 +855,7 @@ function buildVendor() {
 # Deploy the vendor dir built by buildVendor
 # Usage: deployVendor [--dry-run]
 function deployVendor() {
-	"$RSYNC_BIN" "$@" -avz --delete \
+	"$RSYNC_BIN" "$@" -avzc --omit-dir-times --delete \
 		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
 		-e "$SSH_COMMAND" \
 		--filter="merge $IGNORE_FILE" \
