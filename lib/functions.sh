@@ -461,8 +461,8 @@ function wpRemote() {
 	# Log an empty line
 	logLine
 
-	# Construct the remote command
-	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/wp-cli-setup.php --url=${WP_BOOT_URL:-$REMOTE_URL} $ARGS'"
+	# Construct the remote command. WP-CLI has no TTY over SSH, so pass on the local color choice
+	local REMOTE_COMMAND="$SSH_CONNECTION 'cd $REMOTE_WEB_ROOT && $REMOTE_PHP_BINARY -d error_reporting=24575 ~/$REMOTE_FILES_DIR/wp-cli.phar --require=\$HOME/$REMOTE_FILES_DIR/wp-cli-setup.php ${GREEN:+--color} --url=${WP_BOOT_URL:-$REMOTE_URL} $ARGS'"
 
 	# @see ChatGPT
 	eval $REMOTE_COMMAND
