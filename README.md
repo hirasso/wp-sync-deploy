@@ -230,6 +230,8 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 
 wp-sync-deploy ignores common dev files during a deploy (`node_modules`, dotfiles, `package.json`, `*.sql`, ...). See `Ignore::DEFAULTS` in [src/Config.php](src/Config.php) for the full list.
 
+`composer.json` is deployed because plugins and themes may read it at runtime.
+
 Add your own rules in your config:
 
 ```php
@@ -270,7 +272,7 @@ It finds your `.env.wp-sync-deploy`, takes over the values you set yourself (the
 - **`.env.wp-sync-deploy` has been replaced by `wp-sync-deploy.config.php`.** `config init` converts it, see the table below for the mapping
 - **PHP >= 8.2** is required on your local machine
 - **`vendor` is deployed without dev dependencies** if you add `composer: new Composer()` and remove `vendor` from `additional`
-- **`.deployignore` has been replaced** by [`ignore: new Ignore()`](#ignored-files). Its `-p` rules (e.g. `package.json`, `composer.json`, `*.config.js`, `README.md`) never worked before and are now applied
+- **`.deployignore` has been replaced** by [`ignore: new Ignore()`](#ignored-files). Its `-p` rules (e.g. `package.json`, `*.config.js`, `README.md`) never worked before and are now applied
 
 | `.env.wp-sync-deploy`                           | `wp-sync-deploy.config.php`         |
 | ----------------------------------------------- | ----------------------------------- |

@@ -43,6 +43,7 @@ Returns a typed `Hirasso\WPSyncDeploy\Config`. Keep the example's docblock and i
   - Patterns are relative to `rootDir` and unanchored; `*` doesn't cross `/`, so `content/themes/x/*.md` only matches the theme root. Unlike the defaults, they keep locally removed folders alive on the remote, so no catch-alls like `.*`.
   - Repeated paths: define e.g. `$theme = 'content/themes/my-theme';` above `return new Config(...)` and reuse it in `git`, `composer` and the patterns.
   - Typical candidates in build-tool projects: source dirs (`assets-src`), build scripts (`build.mjs`, not covered by the `*.config.mjs` default), vendored tarballs, agent/dev docs (`AGENTS.md`, `CONTEXT.md`).
+  - Keep `composer.json` deployable: plugins and themes may read it at runtime.
   - Check the `IGNORE_RULES` in the validation output (below).
 - Secrets (http auth) → `getenv('…') ?: null`, never literal. Tell the user where to set the variable (shell, or `.ddev/.env.web` for DDEV) and write it there only after asking.
 - Commit the file. Never gitignore it.

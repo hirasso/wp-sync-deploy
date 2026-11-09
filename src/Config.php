@@ -219,7 +219,6 @@ final readonly class Ignore
         'package.json',
         'package-lock.json',
         'pnpm-*.yaml',
-        'composer.json',
         'composer.lock',
         // Build configs
         '*.config.js',
