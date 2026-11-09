@@ -858,7 +858,6 @@ function deployVendor() {
 	"$RSYNC_BIN" "$@" -avzc --omit-dir-times --delete \
 		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
 		-e "$SSH_COMMAND" \
-		--filter="merge $IGNORE_FILE" \
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
 }
 

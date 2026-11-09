@@ -167,7 +167,7 @@ A `--dry-run` never asks for confirmation. Instead, it lists everything a live d
 
 ### Composer dependencies
 
-With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. Don't add `vendor` to `additional` in this case.
+With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. The built vendor directory is deployed in full, without applying any ignore rules. Don't add `vendor` to `additional` in this case.
 
 If your `composer.json` is not in the root dir (e.g. inside your theme), pass its location: `new Composer(dir: 'content/themes/my-theme')`.
 
@@ -231,6 +231,8 @@ vendor/bin/wp-sync-deploy upload staging --paths="..." --config=my-custom.config
 wp-sync-deploy ignores common dev files during a deploy (`node_modules`, dotfiles, `package.json`, `*.sql`, ...). See `Ignore::DEFAULTS` in [src/Config.php](src/Config.php) for the full list.
 
 `composer.json` is deployed because plugins and themes may read it at runtime.
+
+The vendor directory built with `composer: new Composer()` is exempt from all ignore rules (defaults, custom patterns and `export-ignore`). Vendor directories deployed through regular paths still follow the rules below.
 
 Add your own rules in your config:
 
