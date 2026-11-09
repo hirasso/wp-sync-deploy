@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.6 - 2026-11-09
+
+- Deploy `composer.json` needed at runtime
+
 ## 4.3.5 - 2026-11-09
 
 - Skill: always deploy the migrations directory
