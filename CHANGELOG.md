@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.3.7 - 2026-11-09
+
+- Deploy Composer-built vendor without ignore rules
+
 ## 4.3.6 - 2026-11-09
 
 - Deploy `composer.json` needed at runtime
