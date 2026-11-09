@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.3.5 - 2026-11-09
+
+- Skill: always deploy the migrations directory
+- Suggest php-stubs/wp-cli-stubs for IDE support in the tasks file
+- Skill: always deploy Bedrock's public/wp-config.php
+- Skill: deploy wp-cli.yml if present, load SSH key only around remote commands
+
 ## 4.3.4 - 2026-11-03
 
 - Keep WP-CLI colors on remote servers
