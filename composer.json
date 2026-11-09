@@ -6,6 +6,9 @@
     "require": {
         "php": ">=8.2"
     },
+    "suggest": {
+        "php-stubs/wp-cli-stubs": "IDE support for wp-sync-deploy.tasks.php"
+    },
     "autoload": {
         "classmap": ["src/"]
     },

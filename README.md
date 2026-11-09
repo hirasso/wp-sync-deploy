@@ -89,6 +89,8 @@ This file holds all information about your environments (local, staging, product
 
 This file is used to run [automated tasks](#run-automated-tasks-after-each-deploy--sync-) after each deploy or sync. You can adjust this file as you wish or delete it if you don't want it to be executed.
 
+For IDE support in this file, install the WP-CLI stubs: `composer require --dev php-stubs/wp-cli-stubs`
+
 ### Validate
 
 After adjusting your config, check it:
