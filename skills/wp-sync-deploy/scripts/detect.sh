@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# SessionStart hook: if the cwd uses an outdated major version of wp-sync-deploy,
-# tell Claude to offer an upgrade with the wp-sync-deploy skill. Prints nothing otherwise.
+# SessionStart hook: if the cwd uses an outdated major version of wp-sync-deploy
+# or a pre-4.x config without wp-sync-deploy.config.php, tell Claude to offer an upgrade with the wp-sync-deploy skill. Prints nothing otherwise.
 #
 # Usage: detect.sh          check the cwd
 #        detect.sh snooze   stay quiet for this project for 30 days
@@ -15,13 +15,33 @@ fi
 
 [ -n "$(find "$SNOOZE_FILE" -mtime -30 2>/dev/null)" ] && exit 0
 
-# Installed version: composer since 3.x, a cloned folder or legacy config before
+# Pre-4.x config files left without a 4.x config
+LEGACY_CONFIG=""
+if [[ ! -f wp-sync-deploy.config.php ]]; then
+    for f in wp-sync-deploy/deploy.sh .env.wp-sync-deploy wp-sync-deploy.env; do
+        [[ -e "$f" ]] && LEGACY_CONFIG="$f" && break
+    done
+fi
+
+# Installed version: composer since 3.x, a cloned folder before
 INSTALLED=""
 if [ -f composer.lock ]; then
     INSTALLED=$(jq -r '[.packages[]?, .["packages-dev"][]?] | map(select(.name == "hirasso/wp-sync-deploy")) | .[0].version // empty' composer.lock 2>/dev/null)
 fi
-if [[ -z "$INSTALLED" ]] && [[ -f wp-sync-deploy/deploy.sh || -f .env.wp-sync-deploy || -f wp-sync-deploy.env ]]; then
+if [[ -z "$INSTALLED" ]] && [[ -f wp-sync-deploy/deploy.sh ]]; then
     INSTALLED="2.x"
+fi
+
+print_context() {
+    local context="$1
+
+Before anything else, ask the user whether to upgrade now with the wp-sync-deploy skill. If they decline, run \`bash $0 snooze\` (quiet for this project for 30 days)."
+    jq -n --arg ctx "$context" '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
+}
+
+if [[ -n "$LEGACY_CONFIG" ]]; then
+    print_context "This project uses wp-sync-deploy ${INSTALLED:-without composer}, configured with the pre-4.x $LEGACY_CONFIG instead of wp-sync-deploy.config.php."
+    exit 0
 fi
 [[ -z "$INSTALLED" ]] && exit 0
 
@@ -43,8 +63,4 @@ LATEST_MAJOR=$(cat "$LATEST_FILE" 2>/dev/null)
 
 ((INSTALLED_MAJOR < LATEST_MAJOR)) || exit 0
 
-context="This project uses wp-sync-deploy $INSTALLED, but $LATEST_MAJOR.x is available.
-
-Before anything else, ask the user whether to upgrade now with the wp-sync-deploy skill. If they decline, run \`bash $0 snooze\` (quiet for this project for 30 days)."
-
-jq -n --arg ctx "$context" '{hookSpecificOutput: {hookEventName: "SessionStart", additionalContext: $ctx}}'
+print_context "This project uses wp-sync-deploy $INSTALLED, but $LATEST_MAJOR.x is available."
