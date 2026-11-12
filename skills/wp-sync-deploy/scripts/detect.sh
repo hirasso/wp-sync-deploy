@@ -5,8 +5,8 @@
 # Usage: detect.sh          check the cwd
 #        detect.sh snooze   stay quiet for this project for 30 days
 
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/wp-sync-deploy"
-SNOOZE_FILE="$CACHE_DIR/snoozed/$(printf '%s' "$PWD" | shasum | cut -c1-16)"
+STATE_DIR="$HOME/.agents/state/wp-sync-deploy"
+SNOOZE_FILE="$STATE_DIR/snoozed/$(printf '%s' "$PWD" | shasum | cut -c1-16)"
 
 if [[ "${1:-}" == "snooze" ]]; then
     mkdir -p "$(dirname "$SNOOZE_FILE")" && touch "$SNOOZE_FILE"
@@ -50,13 +50,13 @@ INSTALLED_MAJOR="${INSTALLED_MAJOR%%.*}"
 [[ "$INSTALLED_MAJOR" =~ ^[0-9]+$ ]] || exit 0
 
 # Latest stable major from packagist, cached for a day
-LATEST_FILE="$CACHE_DIR/latest-major"
+LATEST_FILE="$STATE_DIR/latest-major"
 if [ -z "$(find "$LATEST_FILE" -mtime -1 2>/dev/null)" ]; then
     LATEST=$(curl -fsSL --max-time 2 "https://repo.packagist.org/p2/hirasso/wp-sync-deploy.json" 2>/dev/null |
         jq -r '.packages["hirasso/wp-sync-deploy"][].version' 2>/dev/null |
         grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | cut -d. -f1 | sort -n | tail -1)
     [[ "$LATEST" =~ ^[0-9]+$ ]] || exit 0
-    mkdir -p "$CACHE_DIR" && echo "$LATEST" >"$LATEST_FILE"
+    mkdir -p "$STATE_DIR" && echo "$LATEST" >"$LATEST_FILE"
 fi
 LATEST_MAJOR=$(cat "$LATEST_FILE" 2>/dev/null)
 [[ "$LATEST_MAJOR" =~ ^[0-9]+$ ]] || exit 0
