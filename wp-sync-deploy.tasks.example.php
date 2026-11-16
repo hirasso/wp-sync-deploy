@@ -47,6 +47,24 @@ function run(string $command)
     \WP_CLI::runcommand($command, ['launch' => false]);
 }
 
+/**
+ * Activate a theme. Success if it's already active (`wp theme activate` warns then)
+ */
+function activate_theme(string $stylesheet)
+{
+    $theme = wp_get_theme($stylesheet);
+    $theme->errors() && \WP_CLI::error($theme->errors());
+    $name = html_entity_decode($theme->get('Name'), ENT_QUOTES);
+
+    if (get_stylesheet() === $stylesheet) {
+        \WP_CLI::success("Theme '$name' is already active");
+        return;
+    }
+
+    switch_theme($stylesheet);
+    \WP_CLI::success("Switched to theme '$name'");
+}
+
 /** Clear all transients */
 run('transient delete --all');
 /** Clear the WP SuperCache cache if it exists */
@@ -59,6 +77,8 @@ if (function_exists('wp_cache_clear_cache')) {
  * Run tasks anytime you deploy
  */
 if ($task === 'deploy') {
+    /** Activate your theme (folder name) */
+    // activate_theme('my-theme');
     /** Update the database */
     run('core update-db');
     /** Flush the rewrite rules */

@@ -197,6 +197,7 @@ Default tasks defined in the file are:
 - Optionally delete all transients
 - Optionally delete your static cache
 - When deploying: Optionally update the rewrite rules
+- When deploying: Optionally activate your theme (`activate_theme()`, unlike `wp theme activate` reports an already active theme as success)
 
 ## Configuration
 

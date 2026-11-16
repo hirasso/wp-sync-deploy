@@ -112,6 +112,8 @@ if (is_multisite()) {
 
 Existing tasks file (on every setup or upgrade): if it calls `\WP_CLI::runcommand()` without `'launch' => false`, copy the `run()` helper from `vendor/hirasso/wp-sync-deploy/wp-sync-deploy.tasks.example.php` into it and replace those calls with `run('…')`. Calls that use the return value or other options: add `'launch' => false` to their options instead. Reason: WP-CLI child processes ignore wp-sync-deploy's PHP settings and print PHP 8.5 deprecation notices.
 
+Existing tasks file activating a theme (`run('theme activate …')` or `runcommand`): copy the `activate_theme()` helper from the example file and replace the call with `activate_theme('…')`, without asking. Reason: `wp theme activate` warns on every deploy if the theme is already active, with an HTML-escaped name (`&amp;`).
+
 ## 6. Preflight requirements (tell the user)
 
 - The remote `rootDir` needs an empty `.allow-deployment` file.
