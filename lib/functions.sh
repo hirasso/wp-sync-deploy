@@ -549,7 +549,7 @@ function pullDatabase() {
 	# Import the remote database into the local database
 	# Removes lines containing '999999' followed by 'enable the sandbox'
 	# @see https://mariadb.org/mariadb-dump-file-compatibility-change/
-	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wpLocal db import -
+	wpRemote db export --single-transaction --skip-lock-tables --quick --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' | wpLocal db import -
 
 	replaceHosts wpLocal "$REMOTE_HOST" "$LOCAL_HOST"
 
@@ -571,7 +571,7 @@ function pullDatabase() {
 # Backup a remote database and store it locally
 function backupDatabase() {
 	local NAME="$REMOTE_HOST-$(date +"%Y-%m-%d_%H-%M-%S").sql"
-	wpRemote db export --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' >"$NAME"
+	wpRemote db export --single-transaction --skip-lock-tables --quick --default-character-set=utf8mb4 - | sed '/999999.*enable the sandbox/d' >"$NAME"
 	logSuccess "Database backup saved to ${GREEN}$NAME${NC}"
 }
 
@@ -708,7 +708,7 @@ function buildProtectFilters() {
 		while [[ "$parent" != "." && "$parent" != "/" && "$parent" != "" ]]; do
 			rule="R /$parent"
 			if [[ "$seen" != *"[$rule]"* ]]; then
-				seen="$seen[$rule]"
+				seen="${seen}[$rule]"
 				risks+=("--filter=$rule")
 			fi
 			parent=$(dirname "$parent")
@@ -719,7 +719,7 @@ function buildProtectFilters() {
 			rule="P /$parent/*"
 			# Skip parents that are deployed themselves, so --delete stays effective there
 			if ! isInsideDeployPaths "$parent" "$paths" && [[ "$seen" != *"[$rule]"* ]]; then
-				seen="$seen[$rule]"
+				seen="${seen}[$rule]"
 				protects+=("--filter=$rule")
 			fi
 			parent=$(dirname "$parent")
