@@ -1,3 +1,4 @@
 .DS_Store
 *.log
-*.sql
+*.sql/tmp/*
+!/tmp/.gitkeep

@@ -23,6 +23,23 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 - `new Composer()` builds `vendor` in a temp dir (`composer install --no-dev --optimize-autoloader`) and deploys that one
 - `log` prints its newline *before* the message, WP-CLI *after*. Add a `logLine` where WP-CLI output directly follows a `log`
 
+## Project structure
+
+| Path | Purpose |
+|------|---------|
+| `bin/wp-sync-deploy` | Entry point, dispatches to the root scripts |
+| `deploy.sh`, `sync.sh`, `upload.sh`, `config.sh` | Commands |
+| `lib/bootstrap.sh` | Shared setup, loads config |
+| `lib/functions.sh` | Shared functions |
+| `lib/config.php` | Prints `wp-sync-deploy.config.php` as shell variables |
+| `lib/migrate.php` | `config init\|migrate` |
+| `lib/wp-cli-setup.php` | WP-CLI `--require` (logger, notices) |
+| `src/Config.php` | Config options and defaults |
+| `wp-sync-deploy.*.example.php` | Example config and tasks files |
+| `scripts/release.sh` | `composer release` |
+| `skills/wp-sync-deploy/` | Agent skill for setup/upgrade |
+| `tmp/` | Throwaway scripts (gitignored) |
+
 ## Before making changes
 
 - if the change is big, always first propose what you are planning, even if not in plan mode
@@ -40,6 +57,16 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 - always delete the merged branch afterwards, without asking
 
 Currently I'm working only on the main branch locally, without PRs etc.
+
+## After making changes
+
+- issues solved by the change: add `Fixes #<n>` to the commit message; never close them directly
+
+## Issue tracker
+
+Issues and PRDs live as GitHub issues; use `gh` (`gh issue list`, `gh issue view`, `gh issue create`). They close via `Fixes #<n>` in the commit message when pushed to `main`; never `gh issue close`.
+
+Triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. `wontfix` issues are closed only on request.
 
 ## Releasing
 
