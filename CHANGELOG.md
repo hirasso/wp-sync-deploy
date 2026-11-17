@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.3.8 - 2026-11-17
+
+- Don't lock production tables during database export
+- Tasks example: activate_theme() helper, success if the theme is already active
+
 ## 4.3.7 - 2026-11-09
 
 - Deploy Composer-built vendor without ignore rules
