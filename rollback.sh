@@ -38,4 +38,5 @@ checkRemoteRootExists
 checkIsDeploymentAllowed
 
 rollbackLatestSnapshot
+runSmokeTest || logError "The site at $PRETTY_REMOTE_ENV still fails after the rollback"
 logLine

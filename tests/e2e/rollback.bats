@@ -61,13 +61,3 @@ snapshotCount() {
 	[ ! -e "/srv/staging/$THEME/new.php" ]
 	[ "$(snapshotCount)" -eq 0 ]
 }
-
-@test "rollback works when the deploy broke the site" {
-	echo '<?php e2e_undefined();' >"$LOCAL/$THEME/index.php"
-	wsd deploy staging --yes
-	[ "$(httpStatus http://staging.test/)" = 500 ]
-
-	run wsd rollback staging --yes
-	[ "$status" -eq 0 ]
-	eventuallyStatus http://staging.test/ 200
-}

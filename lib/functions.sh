@@ -1082,3 +1082,62 @@ function rollbackLatestSnapshot() {
 	logLine
 	logSuccess "Rolled back $PRETTY_REMOTE_ENV to before the deploy from ${BLUE}$WHEN${NC}"
 }
+
+# Request the URLs from lib/smoke-urls.php. Fails on failed tasks (first argument: their exit status),
+# a non-2xx status or a PHP error in the body
+function runSmokeTest() {
+	local TASKS_STATUS=${1:-0} URLS URL STATUS FAILED=""
+	log "🩺 Running a smoke test at $PRETTY_REMOTE_ENV ..."
+	[ "$TASKS_STATUS" -eq 0 ] || FAILED="$FAILED\n\r   - the tasks failed"
+
+	URLS=$(wpRemote eval-file - <"$SCRIPT_DIR/lib/smoke-urls.php" 2>/dev/null | grep -E '^https?://' | sort -u) || true
+	if [ -z "$URLS" ]; then
+		URLS="$REMOTE_URL/"
+		FAILED="$FAILED\n\r   - WP-CLI couldn't load WordPress"
+	fi
+
+	for URL in $URLS; do
+		STATUS=$(smokeTestUrl "$URL") || FAILED="$FAILED\n\r   - ${RED}$STATUS${NC} $URL"
+	done
+
+	if [ -z "$FAILED" ]; then
+		logSuccess "Smoke test passed ($(wc -l <<<"$URLS" | tr -d ' ') URLs)"
+		return 0
+	fi
+	logWarning "${BOLD}${RED}Smoke test failed at $PRETTY_REMOTE_ENV${NC}${NORMAL}$FAILED"
+	return 1
+}
+
+# Print the status of a URL. Fails unless 2xx without a PHP error.
+# Retries, as OPcache can serve the old code for a few seconds (revalidate_freq)
+function smokeTestUrl() {
+	local RESPONSE STATUS TRY
+	for TRY in 1 2 3 4 5; do
+		[ "$TRY" -eq 1 ] || sleep 1
+		RESPONSE=$(curl --silent --location --insecure --max-time 30 ${REMOTE_HTTP_AUTH:+--user "$REMOTE_HTTP_AUTH"} \
+			--write-out '\n%{http_code}' "$1") || RESPONSE=$'\n000'
+		STATUS=${RESPONSE##*$'\n'}
+		if [[ "$STATUS" == 2* ]] && ! grep -qE 'There has been a critical error|<b>(Fatal|Parse) error</b>' <<<"$RESPONSE"; then
+			echo "$STATUS"
+			return 0
+		fi
+	done
+	[[ "$STATUS" == 2* ]] && STATUS="$STATUS with a PHP error"
+	echo "$STATUS"
+	return 1
+}
+
+# After a failed smoke test: roll back, automatically with --yes. Always exits with an error
+function offerRollback() {
+	[ -n "$SNAPSHOT_DIR" ] || logError "No snapshot to roll back to (${BLUE}keepSnapshots: 0${NC}). Fix the problem and deploy again"
+	if [[ "$SKIP_CONFIRM" == true ]]; then
+		log "⏪ Rolling back automatically (${BLUE}--yes${NC}) ..."
+	else
+		read -r -p " Roll back now? [y/n] " PROMPT_RESPONSE
+		[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+		SKIP_CONFIRM=true
+	fi
+	rollbackLatestSnapshot
+	runSmokeTest || true
+	logError "The deploy to $PRETTY_REMOTE_ENV failed the smoke test and was rolled back"
+}

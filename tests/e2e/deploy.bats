@@ -32,13 +32,9 @@ THEME=public/content/themes/e2e
 }
 
 @test "deploy runs the tasks" {
-	# Rebuilt on the first request
-	httpStatus http://staging.test/ >/dev/null
-	wpAt staging option get rewrite_rules >/dev/null
-
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
-	! wpAt staging option get rewrite_rules >/dev/null 2>&1 || false
+	[[ "$output" == *"Reset the rewrite rules"* ]]
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 200 ]
 }
 

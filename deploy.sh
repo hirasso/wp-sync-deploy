@@ -127,6 +127,7 @@ dry)
   fi
   [ -n "$SNAPSHOT_DIR" ] && log "📸 Would take a snapshot at ${BLUE}$PRETTY_SNAPSHOT_DIR${NC}"
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
+  log "🩺 Would run a smoke test at $PRETTY_REMOTE_ENV"
 
   logLine
   logSuccess "${GREEN}${BOLD}[ DRY-RUN ]${NORMAL}${NC} Deploy preview to $PRETTY_REMOTE_ENV completed"
@@ -185,7 +186,10 @@ run)
 
   logLine
 
-  runRemoteTasks deploy
+  TASKS_STATUS=0
+  runRemoteTasks deploy || TASKS_STATUS=$?
+  logLine
+  runSmokeTest "$TASKS_STATUS" || offerRollback
   pruneSnapshots
 
   logLine
