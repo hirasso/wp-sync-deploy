@@ -3,7 +3,7 @@
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    bats ca-certificates curl git less mariadb-client mariadb-server nginx openssh-client openssh-server \
+    bats ca-certificates composer curl git less mariadb-client mariadb-server nginx openssh-client openssh-server \
     php-cli php-curl php-fpm php-mbstring php-mysql php-xml php-zip procps rsync sudo \
     && rm -rf /var/lib/apt/lists/*
 
