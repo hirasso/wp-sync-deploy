@@ -59,8 +59,8 @@ snapshotCount() {
 }
 
 @test "rollback works when the deploy broke the site" {
-	echo '<?php /** Plugin Name: e2e */ e2e_undefined();' >"$LOCAL/$PLUGIN/e2e.php"
-	run wsd deploy staging --yes
+	echo '<?php e2e_undefined();' >"$LOCAL/$THEME/index.php"
+	wsd deploy staging --yes
 	[ "$(httpStatus http://staging.test/)" = 500 ]
 
 	run wsd rollback staging --yes
