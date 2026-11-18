@@ -10,6 +10,7 @@ releaseLib() {
 	printf '{"name": "e2e/lib", "version": "%s"}\n' "$1" >"$LIB/composer.json"
 	echo "$1" >"$LIB/version.txt"
 	composer update --working-dir="$LOCAL" --quiet --no-interaction
+	installPackage
 }
 
 setup_file() {

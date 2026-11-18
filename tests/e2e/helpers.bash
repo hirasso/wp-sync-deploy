@@ -81,6 +81,12 @@ installWordPress() {
 	wpAt "$site" post create --post_status=publish --post_title="Post on $site" --post_name="post-on-$site" --quiet
 }
 
+# Copy wp-sync-deploy into the project, like composer. Again after `composer update`, which removes it
+installPackage() {
+	mkdir -p "$LOCAL/vendor/hirasso"
+	rsync -a --delete --exclude=.git --exclude=tests "$PACKAGE_DIR/" "$LOCAL/vendor/hirasso/wp-sync-deploy/"
+}
+
 # Local project (a git repo pushed to its origin) and two remotes, as after a first deploy
 resetSites() {
 	sudo rm -rf /srv/local /srv/staging /srv/prod /srv/origin.git /home/deploy/.wp-sync-deploy/snapshots
@@ -91,8 +97,7 @@ resetSites() {
 	cp -R /opt/wp-core "$LOCAL/public/wp"
 	cp "$PACKAGE_DIR/wp-sync-deploy.tasks.example.php" "$LOCAL/wp-sync-deploy.tasks.php"
 	writeWpConfig local >"$LOCAL/public/wp-config.php"
-	mkdir -p "$LOCAL/vendor/hirasso"
-	rsync -a --exclude=.git --exclude=tests "$PACKAGE_DIR/" "$LOCAL/vendor/hirasso/wp-sync-deploy/"
+	installPackage
 	installWordPress local
 
 	printf '/vendor/\n/public/wp-config.php\n' >"$LOCAL/.gitignore"
