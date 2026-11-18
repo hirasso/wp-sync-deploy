@@ -1011,6 +1011,25 @@ function formatAge() {
 	fi
 }
 
+# Drop the remote tables with the WordPress prefix that a dump doesn't contain, e.g. created by a
+# plugin update after it. `db import` only replaces the dump's own tables. Works without loading WordPress
+function dropTablesNotInDump() {
+	local DUMP_TABLES PREFIX DROP
+	DUMP_TABLES=$($SSH_CONNECTION "grep '^CREATE TABLE' '$1'" </dev/null | sed -n 's/^CREATE TABLE `\(.*\)` (.*/\1/p')
+	# Shortest `*options` table, e.g. `wp_options` on multisite next to `wp_2_options`
+	PREFIX=$(grep 'options$' <<<"$DUMP_TABLES" | awk '{ print length, $0 }' | sort -n | head -1 | cut -d' ' -f2- | sed 's/options$//')
+	[ -n "$PREFIX" ] || return 0
+
+	DROP=$(echo 'SHOW TABLES' | wpRemote db query --skip-column-names 2>/dev/null |
+		grep -F "$PREFIX" | while IFS= read -r TABLE; do
+			[[ "$TABLE" == "$PREFIX"* ]] && ! grep -qxF "$TABLE" <<<"$DUMP_TABLES" && echo "$TABLE"
+		done || true)
+	[ -n "$DROP" ] || return 0
+
+	sed 's/.*/DROP TABLE `&`;/' <<<"$DROP" | wpRemote db query
+	logSuccess "Dropped tables created after the snapshot: ${BLUE}$(echo $DROP)${NC}"
+}
+
 # Restore the latest snapshot: files, database, and remove the files its deploy added.
 # Then delete it, so the next rollback goes back one more deploy
 function rollbackLatestSnapshot() {
@@ -1047,6 +1066,7 @@ function rollbackLatestSnapshot() {
 
 	$SSH_CONNECTION "gunzip -c '$DIR/db.sql.gz' > '$DIR/db.sql'" </dev/null
 	wpRemote db import "$DIR/db.sql"
+	dropTablesNotInDump "$DIR/db.sql"
 
 	# Rollback-safe cleanup only. Deploy tasks could re-run migrations and undo the restore
 	wpRemote transient delete --all
