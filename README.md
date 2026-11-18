@@ -199,6 +199,12 @@ A rollback restores the latest [snapshot](#snapshots): it removes the files the 
 - Tables created after the snapshot (e.g. by a plugin update) are dropped. Only tables with your WordPress table prefix are touched
 - A bug noticed days later is better fixed by deploying a fix: a rollback would also lose all content since
 
+### Smoke test
+
+After each deploy and rollback, wp-sync-deploy requests the home URL of every site and the latest post of each public post type (e.g. a post, a page, a product). Each must return a 2xx status without a PHP error. Single posts matter: broken rewrite rules can leave the home page working while every post returns 404. Failed tasks count as a failed smoke test too.
+
+If the smoke test fails after a deploy, wp-sync-deploy asks whether to roll back. With `--yes`, it rolls back automatically, as nobody is there to answer. Either way, the deploy exits with an error.
+
 ### Composer dependencies
 
 With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. The built vendor directory is deployed in full, without applying any ignore rules. Don't add `vendor` to `additional` in this case.

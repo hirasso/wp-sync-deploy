@@ -114,7 +114,7 @@ Existing tasks file activating a theme (`run('theme activate …')` or `runcomma
 
 ## 7. Running it
 
-A dry run is safe to run (`npm run production:deploy -- --dry-run`). If SSH isn't available to you, ask the user to run it. Never run a live deploy, a `rollback` or a `push` sync (asks to type `push`) without explicit request.
+A dry run is safe to run (`npm run production:deploy -- --dry-run`). If SSH isn't available to you, ask the user to run it. Never run a live deploy, a `rollback` or a `push` sync (asks to type `push`) without explicit request. A deploy with `--yes` rolls back automatically if its smoke test fails (see README).
 
 Report what's configured and what the user must still do. Commit only when asked.
 
