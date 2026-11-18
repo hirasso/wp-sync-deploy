@@ -36,6 +36,8 @@ snapshotCount() {
 	rm "$LOCAL/$PLUGIN/obsolete.php"
 	wsd deploy staging --yes
 	wpAt staging option add e2e_migrated yes
+	wpAt staging db query "CREATE TABLE wp_e2e_new (id INT)"
+	wpAt staging db query "CREATE TABLE other_app (id INT)"
 	wpAt staging post create --post_status=publish --post_title="After deploy" --post_name=after-deploy
 
 	run wsd rollback staging --yes
@@ -45,6 +47,8 @@ snapshotCount() {
 	! grep -q changed "/srv/staging/$THEME/style.css"
 	[ -e "/srv/staging/$PLUGIN/obsolete.php" ]
 	! wpAt staging option get e2e_migrated
+	! wpAt staging db query "SHOW TABLES" --skip-column-names | grep -qx wp_e2e_new
+	wpAt staging db query "SHOW TABLES" --skip-column-names | grep -qx other_app
 	! wpAt staging post list --field=post_name | grep -qx after-deploy
 	[ ! -e /srv/staging/public/wp/.maintenance ]
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 200 ]
