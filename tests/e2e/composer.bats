@@ -23,11 +23,11 @@ setup_file() {
 EOF
 	sed -i 's|^);|    composer: new \\Hirasso\\WPSyncDeploy\\Composer(),\n);|' "$LOCAL/wp-sync-deploy.config.php"
 	releaseLib 1.0.0
-	wsd deploy staging --yes >"/tmp/e2e-deploy.log" 2>&1 || { grep -v public/wp/ "/tmp/e2e-deploy.log" | sed "s/^/# /" >&3; false; }
 }
 
 @test "deploy creates the vendor dir" {
-	ls -la /srv/staging /srv/staging/vendor || true; cat "$LOCAL/composer.lock" | head -30; ls "$LOCAL/vendor"
+	run wsd deploy staging --yes
+	[ "$status" -eq 0 ]
 	[ "$(cat "$VENDOR/version.txt")" = 1.0.0 ]
 }
 
