@@ -108,6 +108,7 @@ Existing tasks file activating a theme (`run('theme activate …')` or `runcomma
 - WordPress core, plugins and themes must already exist remotely; other deployed folders are created.
 - Local CLI and web PHP must match the remote PHP version (Herd: `herd isolate <version>` sets only the web version; the CLI check uses plain `php`, so also `herd use <version>` or confirm the mismatch prompt; DDEV: `php_version` in `.ddev/config.yaml`). Mismatch → ask before switching.
 - First deploy manually or via `upload`.
+- Each deploy keeps a snapshot (database + changed files) in the SSH user's home (see README's Snapshots section). Little disk space or a home inside the web root: ask whether to set `keepSnapshots` lower or `0`.
 - A live deploy asks for confirmation on: a non-production branch, uncommitted or unpushed changes, a newer WordPress/plugin/theme on the remote, composer dev packages. `--dry-run` never asks and lists these at the end, so run it first.
 
 ## 7. Running it

@@ -165,6 +165,19 @@ If your root dir is in a git repo, deploys to production also ask for confirmati
 
 A `--dry-run` never asks for confirmation. Instead, it lists everything a live deploy will ask about at the end.
 
+### Snapshots
+
+Before each deploy, wp-sync-deploy takes a snapshot on the remote server: the database, the files the deploy overwrites or deletes, and a list of the files it adds. Only changed files are stored, so a snapshot is mostly the size of the database dump. The site stays online while the snapshot is taken.
+
+Snapshots are stored in `~/.wp-sync-deploy/snapshots/` in the SSH user's home, outside the web root (the deploy refuses to store them inside the web root). The two newest are kept per remote. Change this with `keepSnapshots` per remote, `0` disables them:
+
+```php
+staging: new Remote(
+    // ...
+    keepSnapshots: 0,
+),
+```
+
 ### Composer dependencies
 
 With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. The built vendor directory is deployed in full, without applying any ignore rules. Don't add `vendor` to `additional` in this case.
