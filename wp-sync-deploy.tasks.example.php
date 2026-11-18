@@ -73,7 +73,11 @@ function activate_theme(string $stylesheet)
  */
 function reset_rewrite_rules()
 {
-    foreach (is_multisite() ? get_sites(['fields' => 'ids']) : [get_current_blog_id()] as $id) {
+    if (!is_multisite()) {
+        delete_option('rewrite_rules');
+    }
+    /** switch_to_blog() only exists on multisite */
+    foreach (is_multisite() ? get_sites(['fields' => 'ids']) : [] as $id) {
         switch_to_blog($id);
         delete_option('rewrite_rules');
         restore_current_blog();
