@@ -65,5 +65,6 @@ snapshotCount() {
 
 	run wsd rollback staging --yes
 	[ "$status" -eq 0 ]
+	echo "$output"; cat /srv/staging/$THEME/index.php; curl -s http://staging.test/ | head -c 500; sudo tail -5 /var/log/nginx/error.log
 	[ "$(httpStatus http://staging.test/)" = 200 ]
 }
