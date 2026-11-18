@@ -19,7 +19,7 @@ latestSnapshot() {
 
 # Set an option of the staging remote in the local config
 setStagingOption() {
-	sed -i "s|rootDir: '/srv/staging',|rootDir: '/srv/staging', $1,|" "$LOCAL/wp-sync-deploy.config.php"
+	sed -i "s|rootDir: '/srv/staging',|rootDir: '/srv/staging', ${1//\\/\\\\},|" "$LOCAL/wp-sync-deploy.config.php"
 }
 
 @test "dry run doesn't snapshot" {

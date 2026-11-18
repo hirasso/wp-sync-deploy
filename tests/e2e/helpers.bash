@@ -65,7 +65,7 @@ installWordPress() {
 
 # Local project (a git repo pushed to its origin) and two remotes, as after a first deploy
 resetSites() {
-	sudo rm -rf /srv/local /srv/staging /srv/prod /srv/origin.git
+	sudo rm -rf /srv/local /srv/staging /srv/prod /srv/origin.git /home/deploy/.wp-sync-deploy/snapshots
 	sudo install -d -o dev -g dev /srv/local /srv/origin.git
 	sudo install -d -o deploy -g deploy /srv/staging /srv/prod
 
