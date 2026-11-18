@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.4.0 - 2026-11-18
+
+- Run a smoke test after deploys and rollbacks, roll back on failure
+- Don't exit silently if composer's installed.json lacks wp-sync-deploy
+- Take a snapshot of files and database before each deploy
+- Fix reset_rewrite_rules() on single sites
+- add tests via docker + bats
+- Reset rewrite rules instead of flushing them in the example tasks file. WP recreates them automatically
+
 ## 4.3.8 - 2026-11-17
 
 - Don't lock production tables during database export
