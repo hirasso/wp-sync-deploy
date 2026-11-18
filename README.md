@@ -178,6 +178,27 @@ staging: new Remote(
 ),
 ```
 
+### Roll back a deploy
+
+```shell
+# restore files and database from before the latest deploy
+vendor/bin/wp-sync-deploy rollback production
+
+# without the confirmation prompt
+vendor/bin/wp-sync-deploy rollback production --yes
+```
+
+A rollback restores the latest [snapshot](#snapshots): it removes the files the deploy added, restores the ones it overwrote or deleted and imports the database. Files and database are always restored together, as old code on a new database (or the other way around) is broken by definition. The site is in maintenance mode meanwhile.
+
+> [!WARNING]
+> Database changes since the deploy (new posts, comments, orders, ...) are lost. The prompt shows how old the snapshot is.
+
+- Run it again to go back one more deploy, as long as there are snapshots
+- A rollback can't be undone. Fix a bad rollback by deploying again
+- Your tasks file doesn't run, as it could run migrations again. Transients, the object cache and the rewrite rules are reset instead
+- Tables a deploy created (e.g. by a plugin update) are kept, but unused
+- A bug noticed days later is better fixed by deploying a fix: a rollback would also lose all content since
+
 ### Composer dependencies
 
 With `composer: new Composer()` in your config, wp-sync-deploy deploys your `vendor` directory **without dev dependencies**. Your local `vendor` directory stays untouched. The built vendor directory is deployed in full, without applying any ignore rules. Don't add `vendor` to `additional` in this case.

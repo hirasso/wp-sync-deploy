@@ -74,7 +74,8 @@ Generic composer scripts, environment passed as argument:
 ```json
 "scripts": {
   "deploy": "wp-sync-deploy deploy",
-  "sync": "wp-sync-deploy sync"
+  "sync": "wp-sync-deploy sync",
+  "rollback": "wp-sync-deploy rollback"
 },
 "config": { "process-timeout": 0 }
 ```
@@ -113,7 +114,7 @@ Existing tasks file activating a theme (`run('theme activate …')` or `runcomma
 
 ## 7. Running it
 
-A dry run is safe to run (`npm run production:deploy -- --dry-run`). If SSH isn't available to you, ask the user to run it. Never run a live deploy or a `push` sync (asks to type `push`) without explicit request.
+A dry run is safe to run (`npm run production:deploy -- --dry-run`). If SSH isn't available to you, ask the user to run it. Never run a live deploy, a `rollback` or a `push` sync (asks to type `push`) without explicit request.
 
 Report what's configured and what the user must still do. Commit only when asked.
 
