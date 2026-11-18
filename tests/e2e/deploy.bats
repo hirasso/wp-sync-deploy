@@ -34,8 +34,7 @@ THEME=public/content/themes/e2e
 @test "deploy runs the tasks" {
 	# Rebuilt on the first request
 	httpStatus http://staging.test/ >/dev/null
-	curl -s -D - -o /dev/null http://staging.test/
-	wpAt staging option get rewrite_rules --format=json | head -c 300
+	wpAt staging option get rewrite_rules >/dev/null
 
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
