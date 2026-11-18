@@ -5,3 +5,5 @@
 /skills export-ignore
 /scripts export-ignore
 /tmp export-ignore
+/tests export-ignore
+/.github export-ignore

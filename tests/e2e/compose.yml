@@ -1,0 +1,9 @@
+services:
+  wp:
+    build: .
+    volumes:
+      - ../..:/opt/wp-sync-deploy:ro
+    healthcheck:
+      test: ["CMD", "test", "-e", "/tmp/ready"]
+      interval: 1s
+      retries: 60
