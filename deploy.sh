@@ -99,6 +99,8 @@ if [ -n "${COMPOSER_DIR+x}" ]; then
   logLine
 fi
 
+prepareSnapshot
+
 case $DEPLOY_MODE in
 
 dry)
@@ -123,6 +125,7 @@ dry)
     deployVendor --dry-run 2>&1 | tee "$VENDOR_RSYNC_LOG"
     logLine
   fi
+  [ -n "$SNAPSHOT_DIR" ] && log "📸 Would take a snapshot at ${BLUE}$PRETTY_SNAPSHOT_DIR${NC}"
   log "🔥 Would clear the cache at $PRETTY_REMOTE_ENV"
 
   logLine
@@ -148,6 +151,9 @@ run)
 
   esac
 
+  createSnapshot
+  IFS=$'\n' read -r -d '' -a SNAPSHOT_ARGS < <(snapshotRsyncArgs "${SNAPSHOT_LOG:-}" && printf '\0') || true
+
   log "🚀 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying to $PRETTY_REMOTE_ENV ..."
 
   # stderr, like log(), so it stays in order when stdout and stderr are read separately (e.g. by composer)
@@ -159,6 +165,7 @@ run)
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "$SSH_COMMAND" \
       "${PROTECT_FILTERS[@]}" \
+      ${SNAPSHOT_ARGS[@]+"${SNAPSHOT_ARGS[@]}"} \
       --filter="merge $IGNORE_FILE" \
       $DEPLOY_PATHS "$REMOTE_SSH:$REMOTE_ROOT_DIR"
   ) 2>&1 | tee "$RSYNC_LOG"
@@ -166,8 +173,11 @@ run)
   if [ -n "${COMPOSER_DIR+x}" ]; then
     log "📦 ${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploying $VENDOR_DIR ..."
     echo >&2
-    deployVendor 2>&1 | tee "$VENDOR_RSYNC_LOG"
+    IFS=$'\n' read -r -d '' -a VENDOR_SNAPSHOT_ARGS < <(snapshotRsyncArgs "${SNAPSHOT_VENDOR_LOG:-}" "$VENDOR_DIR" && printf '\0') || true
+    deployVendor ${VENDOR_SNAPSHOT_ARGS[@]+"${VENDOR_SNAPSHOT_ARGS[@]}"} 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi
+
+  saveAddedFiles
 
   logLine
   logSuccess "${GREEN}${BOLD}[ LIVE ]${NORMAL}${NC} Deploy to $PRETTY_REMOTE_ENV completed"
@@ -176,6 +186,7 @@ run)
   logLine
 
   runRemoteTasks deploy
+  pruneSnapshots
 
   logLine
   logSuccess "Done! Be sure to check if everything works as expected on your $PRETTY_REMOTE_ENV site:"

@@ -105,6 +105,7 @@ final readonly class Config
             "{$prefix}SSH_PORT" => $remote->sshPort,
             "{$prefix}PHP_BINARY" => $remote->phpBinary,
             "{$prefix}DEPLOY_STRATEGY" => $remote->deployStrategy->value,
+            "{$prefix}KEEP_SNAPSHOTS" => $remote->keepSnapshots,
         ];
     }
 }
@@ -146,6 +147,7 @@ final readonly class Remote
      * @param string $phpBinary The command line PHP binary on the remote server
      * @param DeployStrategy $deployStrategy Conservative runs all preflight checks, risky skips most of them
      * @param string|null $httpAuth HTTP authentication, e.g. 'username:password' (optional)
+     * @param int $keepSnapshots Snapshots of files and database taken before each deploy, for rollbacks. 0 disables them
      */
     public function __construct(
         public string $url,
@@ -155,10 +157,14 @@ final readonly class Remote
         public string $phpBinary = 'php',
         public DeployStrategy $deployStrategy = DeployStrategy::Conservative,
         public ?string $httpAuth = null,
+        public int $keepSnapshots = 2,
     ) {
         $this->validateUrl($url);
         validateAbsolutePath($rootDir, 'rootDir');
         validateNotEmpty($ssh, 'ssh');
+        if ($keepSnapshots < 0) {
+            throw new InvalidArgumentException("keepSnapshots must not be negative: $keepSnapshots");
+        }
     }
 }
 

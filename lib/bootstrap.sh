@@ -16,8 +16,8 @@ for arg in "$@"; do
     esac
 done
 
-# Deactivate a leftover maintenance mode, clean up the WP-CLI marker (see installRemoteWpCli), the ignore file, the rsync logs (see logLeftovers), the vendor build (see buildVendor) and the SSH connection
-trap 'cleanupMaintenanceMode; rm -f "$WP_CLI_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"; closeSshConnection' EXIT
+# Deactivate a leftover maintenance mode, clean up the WP-CLI marker (see installRemoteWpCli), the ignore file, the rsync logs (see logLeftovers, saveAddedFiles), the vendor build (see buildVendor) and the SSH connection
+trap 'cleanupMaintenanceMode; rm -f "$WP_CLI_MARKER" "${IGNORE_FILE:-}" "${RSYNC_LOG:-}" "${VENDOR_RSYNC_LOG:-}" "${SNAPSHOT_LOG:-}" "${SNAPSHOT_VENDOR_LOG:-}"; rm -rf "${VENDOR_BUILD_DIR:-}"; closeSshConnection' EXIT
 
 # Load the config file
 loadConfigFile
@@ -63,6 +63,7 @@ production)
     REMOTE_ROOT_DIR=$(trimWhitespace "$PROD_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "${PROD_PHP_BINARY:-php}")
     DEPLOY_STRATEGY=$(trimWhitespace "${PROD_DEPLOY_STRATEGY:-conservative}")
+    KEEP_SNAPSHOTS=$(trimWhitespace "${PROD_KEEP_SNAPSHOTS:-2}")
     REMOTE_ENV_PREFIX="PROD_"
     ;;
 
@@ -76,6 +77,7 @@ staging)
     REMOTE_ROOT_DIR=$(trimWhitespace "$STAG_ROOT_DIR")
     REMOTE_PHP_BINARY=$(trimWhitespace "${STAG_PHP_BINARY:-php}")
     DEPLOY_STRATEGY=$(trimWhitespace "${STAG_DEPLOY_STRATEGY:-conservative}")
+    KEEP_SNAPSHOTS=$(trimWhitespace "${STAG_KEEP_SNAPSHOTS:-2}")
     REMOTE_ENV_PREFIX="STAG_"
     ;;
 

@@ -935,3 +935,63 @@ function logLeftovers() {
 	[[ -z "$LEFTOVERS" ]] && return 0
 	log "🧹 ${BOLD}Can't be deleted at $PRETTY_REMOTE_ENV because of ignored files inside, clean up manually:${NORMAL}\n\r$LEFTOVERS"
 }
+
+# Snapshots, for rollbacks: before each deploy, the database, the files the deploy overwrites or
+# deletes (rsync --backup-dir) and a list of the files it adds. Stored in the remote home, outside the web root
+function prepareSnapshot() {
+	SNAPSHOT_DIR=""
+	[ "$KEEP_SNAPSHOTS" -gt 0 ] || return 0
+
+	local REMOTE_HOME SNAPSHOTS_PATH
+	REMOTE_HOME=$($SSH_CONNECTION 'echo $HOME' </dev/null)
+	[[ "$REMOTE_HOME/" == "$REMOTE_WEB_ROOT/"* ]] &&
+		logError "Snapshots would be public: the remote home ${RED}$REMOTE_HOME${NC} is inside the web root. Set ${GREEN}keepSnapshots: 0${NC} to deploy without them"
+
+	SNAPSHOTS_PATH="$REMOTE_FILES_DIR/snapshots/$(echo "${REMOTE_ROOT_DIR#/}" | tr / -)"
+	SNAPSHOTS_DIR="$REMOTE_HOME/$SNAPSHOTS_PATH"
+	SNAPSHOT_NAME=$(date -u +%Y%m%d-%H%M%S)
+	SNAPSHOT_DIR="$SNAPSHOTS_DIR/$SNAPSHOT_NAME"
+	PRETTY_SNAPSHOT_DIR="~/$SNAPSHOTS_PATH/$SNAPSHOT_NAME"
+	SNAPSHOT_LOG=$(mktemp)
+	SNAPSHOT_VENDOR_LOG=$(mktemp)
+}
+
+# Create the snapshot dir with the database and a manifest
+function createSnapshot() {
+	[ -n "$SNAPSHOT_DIR" ] || return 0
+	log "📸 Taking a snapshot at $PRETTY_REMOTE_ENV ..."
+
+	$SSH_CONNECTION "mkdir -p '$SNAPSHOTS_DIR' && mkdir -m 700 '$SNAPSHOT_DIR'" </dev/null
+	printf 'commit=%s\nbranch=%s\ntime=%s\n' \
+		"$(git -C "$LOCAL_ROOT_DIR" rev-parse HEAD 2>/dev/null || true)" \
+		"$(git -C "$LOCAL_ROOT_DIR" branch --show-current 2>/dev/null || true)" \
+		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" |
+		$SSH_CONNECTION "cat > '$SNAPSHOT_DIR/manifest'"
+
+	# No table locks, the site keeps running
+	wpRemote db export --single-transaction --skip-lock-tables --quick --default-character-set=utf8mb4 "$SNAPSHOT_DIR/db.sql" --quiet
+	$SSH_CONNECTION "gzip '$SNAPSHOT_DIR/db.sql'" </dev/null
+}
+
+# rsync arguments to back up overwritten and deleted files into the snapshot. Usage: snapshotRsyncArgs <log file> [subdir]
+function snapshotRsyncArgs() {
+	[ -n "$SNAPSHOT_DIR" ] || return 0
+	printf '%s\n' --backup "--backup-dir=$SNAPSHOT_DIR/files${2:+/$2}" "--log-file=$1" "--log-file-format=%i %n"
+}
+
+# Store the files and folders the deploy added, from rsync's itemized log (e.g. `<f+++++++++ path`)
+function saveAddedFiles() {
+	[ -n "$SNAPSHOT_DIR" ] || return 0
+	local ADDED='s/^[0-9/]+ [0-9:]+ \[[0-9]+\] [<>c][fdL]\+{9} //p'
+	{
+		sed -nE "$ADDED" "$SNAPSHOT_LOG"
+		sed -nE "$ADDED" "$SNAPSHOT_VENDOR_LOG" | sed "s|^|${VENDOR_DIR:-}/|"
+	} | $SSH_CONNECTION "cat > '$SNAPSHOT_DIR/added'"
+	logSuccess "Snapshot saved at ${BLUE}$PRETTY_SNAPSHOT_DIR${NC}"
+}
+
+# Keep the newest $KEEP_SNAPSHOTS snapshots
+function pruneSnapshots() {
+	[ -n "$SNAPSHOT_DIR" ] || return 0
+	$SSH_CONNECTION "cd '$SNAPSHOTS_DIR' && ls -1 | sort -r | tail -n +$((KEEP_SNAPSHOTS + 1)) | xargs rm -rf" </dev/null
+}
