@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     php-cli php-curl php-fpm php-mbstring php-mysql php-xml php-zip procps rsync sudo \
     && rm -rf /var/lib/apt/lists/*
 
+RUN sed -i "s|^listen = .*|listen = /run/php/php-fpm.sock|" /etc/php/*/fpm/pool.d/www.conf
+
 RUN curl -fsSL -o /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
     && chmod +x /usr/local/bin/wp \
     && wp core download --allow-root --skip-content --path=/opt/wp-core
