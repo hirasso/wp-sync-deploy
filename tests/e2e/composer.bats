@@ -23,7 +23,7 @@ setup_file() {
 EOF
 	sed -i 's|^);|    composer: new \\Hirasso\\WPSyncDeploy\\Composer(),\n);|' "$LOCAL/wp-sync-deploy.config.php"
 	releaseLib 1.0.0
-	wsd deploy staging --yes
+	wsd deploy staging --yes 2>&1 | tail -15 >&3
 }
 
 @test "deploy creates the vendor dir" {
