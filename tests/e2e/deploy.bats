@@ -32,6 +32,8 @@ THEME=public/content/themes/e2e
 }
 
 @test "deploy runs the tasks" {
+	# Rebuilt on the first request
+	httpStatus http://staging.test/ >/dev/null
 	wpAt staging option get rewrite_rules >/dev/null
 
 	run wsd deploy staging --yes
