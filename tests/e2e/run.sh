@@ -7,4 +7,4 @@ docker compose up -d --build --wait --quiet-pull
 
 [ $# -eq 0 ] && set -- .
 TTY=$([ -t 1 ] || echo -T)
-docker compose exec $TTY -u dev -w /opt/wp-sync-deploy/tests/e2e wp bats "$@"
+docker compose exec $TTY -u dev -w /opt/wp-sync-deploy/tests/e2e wp bats --print-output-on-failure "$@"

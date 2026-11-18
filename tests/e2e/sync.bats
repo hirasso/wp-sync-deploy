@@ -11,6 +11,8 @@ setup_file() {
 	[ "$status" -eq 0 ]
 	wpAt local post list --field=post_name | grep -qx post-on-prod
 	[ "$(wpAt local option get home)" = http://local.test ]
+	curl -s http://local.test/post-on-prod/ | head -c 600
+	wpAt local option get permalink_structure
 	[ "$(httpStatus http://local.test/post-on-prod/)" = 200 ]
 }
 
