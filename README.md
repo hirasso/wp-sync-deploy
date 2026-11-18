@@ -196,8 +196,14 @@ Default tasks defined in the file are:
 
 - Optionally delete all transients
 - Optionally delete your static cache
-- When deploying: Optionally update the rewrite rules
+- When deploying: Optionally update the database (`wp core update-db`)
+- When deploying: Optionally reset the rewrite rules of every site (`reset_rewrite_rules()`, rebuilt by WordPress on the next request)
 - When deploying: Optionally activate your theme (`activate_theme()`, unlike `wp theme activate` reports an already active theme as success)
+
+WordPress sites stay online during a deploy. If a migration in your tasks breaks the code that is still live, wrap it in `maintenance-mode activate` / `deactivate` (commented out in the example file).
+
+> [!IMPORTANT]
+> If your tasks run project migrations (e.g. from `database/migrations`), add their folder to `paths: new Paths(additional: […])`. Otherwise, the migrations aren't deployed and the runner on the server finds nothing to do and reports success.
 
 ## Configuration
 

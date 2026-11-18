@@ -65,6 +65,22 @@ function activate_theme(string $stylesheet)
     \WP_CLI::success("Switched to theme '$name'");
 }
 
+/**
+ * Reset the rewrite rules of every site. WordPress rebuilds them on the next request,
+ * after all plugins ran `init`. `wp rewrite flush` builds them in this process, which
+ * misses state a migration just changed (e.g. Polylang's post types), and on multisite
+ * only reaches the main site
+ */
+function reset_rewrite_rules()
+{
+    foreach (is_multisite() ? get_sites(['fields' => 'ids']) : [get_current_blog_id()] as $id) {
+        switch_to_blog($id);
+        delete_option('rewrite_rules');
+        restore_current_blog();
+    }
+    \WP_CLI::success('Reset the rewrite rules');
+}
+
 /** Clear all transients */
 run('transient delete --all');
 /** Clear the WP SuperCache cache if it exists */
@@ -79,8 +95,11 @@ if (function_exists('wp_cache_clear_cache')) {
 if ($task === 'deploy') {
     /** Activate your theme (folder name) */
     // activate_theme('my-theme');
+    /** Only if a migration breaks the old code, see `wp help maintenance-mode` */
+    // run('maintenance-mode activate');
     /** Update the database */
     run('core update-db');
-    /** Flush the rewrite rules */
-    run('rewrite flush');
+    // run('maintenance-mode deactivate');
+    /** Reset the rewrite rules */
+    reset_rewrite_rules();
 }

@@ -96,19 +96,7 @@ For IDE support in the tasks file, always `composer require --dev php-stubs/wp-c
 
 Multisite with mapped domains: their local domains must be `<prod-domain><local suffix>` (e.g. `example.org.ddev.site:8443` next to `example.com.ddev.site:8443`), otherwise `sync` skips them (see `README.md`). DDEV: add them as `additional_hostnames`.
 
-Multisite: `wp rewrite flush` has no `--network` flag and only reaches the main site. Replace the deploy task's `run('rewrite flush')` with a reset of every site's cached rules (rebuilt on the next request, in each site's own context; `flush_rewrite_rules()` after `switch_to_blog()` would build them from the main site's post types):
-
-```php
-if (is_multisite()) {
-    foreach (get_sites(['fields' => 'ids']) as $id) {
-        switch_to_blog($id);
-        delete_option('rewrite_rules');
-        restore_current_blog();
-    }
-} else {
-    run('rewrite flush');
-}
-```
+Existing tasks file flushing rewrite rules (`run('rewrite flush')`, `flush_rewrite_rules()`, or a per-site `delete_option('rewrite_rules')` loop): copy the `reset_rewrite_rules()` helper from the example file and replace the flush with `reset_rewrite_rules()`, without asking. Reason: an in-process flush misses state a migration just changed (e.g. Polylang's post types → single posts 404) and only reaches the main site on multisite.
 
 Existing tasks file (on every setup or upgrade): if it calls `\WP_CLI::runcommand()` without `'launch' => false`, copy the `run()` helper from `vendor/hirasso/wp-sync-deploy/wp-sync-deploy.tasks.example.php` into it and replace those calls with `run('…')`. Calls that use the return value or other options: add `'launch' => false` to their options instead. Reason: WP-CLI child processes ignore wp-sync-deploy's PHP settings and print PHP 8.5 deprecation notices.
 
