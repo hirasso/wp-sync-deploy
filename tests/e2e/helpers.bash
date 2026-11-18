@@ -6,7 +6,7 @@ LOCAL=/srv/local
 
 # Run wp-sync-deploy from the local project, like `vendor/bin/wp-sync-deploy`
 wsd() {
-	(cd "$LOCAL" && vendor/hirasso/wp-sync-deploy/bin/wp-sync-deploy "$@")
+	(cd "$LOCAL" && packages/wp-sync-deploy/bin/wp-sync-deploy "$@")
 }
 
 # Same, answering the confirmation prompt, e.g. `wsdAnswer n deploy staging`
@@ -81,10 +81,10 @@ installWordPress() {
 	wpAt "$site" post create --post_status=publish --post_title="Post on $site" --post_name="post-on-$site" --quiet
 }
 
-# Copy wp-sync-deploy into the project, like composer. Again after `composer update`, which removes it
+# Copy wp-sync-deploy into the project. Not into `vendor/`, which the composer tests manage
 installPackage() {
-	mkdir -p "$LOCAL/vendor/hirasso"
-	rsync -a --delete --exclude=.git --exclude=tests "$PACKAGE_DIR/" "$LOCAL/vendor/hirasso/wp-sync-deploy/"
+	mkdir -p "$LOCAL/packages"
+	rsync -a --exclude=.git --exclude=tests "$PACKAGE_DIR/" "$LOCAL/packages/wp-sync-deploy/"
 }
 
 # Local project (a git repo pushed to its origin) and two remotes, as after a first deploy
@@ -100,7 +100,7 @@ resetSites() {
 	installPackage
 	installWordPress local
 
-	printf '/vendor/\n/public/wp-config.php\n' >"$LOCAL/.gitignore"
+	printf '/vendor/\n/packages/\n/public/wp-config.php\n' >"$LOCAL/.gitignore"
 	git init -q --bare /srv/origin.git
 	git -C "$LOCAL" init -q
 	git -C "$LOCAL" add -A
@@ -110,7 +110,7 @@ resetSites() {
 
 	local site
 	for site in staging prod; do
-		asDeploy "rsync -a --exclude=.git --exclude=vendor --exclude='wp-sync-deploy.*' $LOCAL/ /srv/$site/"
+		asDeploy "rsync -a --exclude=.git --exclude=vendor --exclude=packages --exclude='wp-sync-deploy.*' $LOCAL/ /srv/$site/"
 		writeWpConfig "$site" | asDeploy "cat > /srv/$site/public/wp-config.php"
 		asDeploy "touch /srv/$site/.allow-deployment"
 		installWordPress "$site"

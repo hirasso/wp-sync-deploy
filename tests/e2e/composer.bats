@@ -10,7 +10,6 @@ releaseLib() {
 	printf '{"name": "e2e/lib", "version": "%s"}\n' "$1" >"$LIB/composer.json"
 	echo "$1" >"$LIB/version.txt"
 	composer update --working-dir="$LOCAL" --quiet --no-interaction
-	installPackage
 }
 
 setup_file() {
@@ -28,7 +27,6 @@ EOF
 
 @test "deploy creates the vendor dir" {
 	run wsd deploy staging --yes
-	echo "status=$status lines=${#lines[@]}"; printf "%s\n" "${lines[@]}" | grep -v public/wp/ | tail -20; ls -la "$LOCAL/vendor" "$LOCAL/vendor/hirasso/wp-sync-deploy/bin"; tail -5 "$LOCAL/wp-sync-deploy.config.php"
 	[ "$status" -eq 0 ]
 	[ "$(cat "$VENDOR/version.txt")" = 1.0.0 ]
 }

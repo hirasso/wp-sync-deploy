@@ -45,7 +45,7 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 ## Tests
 
 - `composer test` (`tests/e2e/run.sh [bats args]`) runs the bats tests in one Docker container that plays `local.test`, `staging.test` and `prod.test`, with SSH from user `dev` to `deploy` on localhost. Fixture project: `tests/e2e/fixture/`, setup: `tests/e2e/helpers.bash`
-- the package is copied into the fixture's `vendor/` per test file, as config and tasks files are found by walking up from the package dir
+- the package is copied into the fixture's `packages/` per test file (config and tasks files are found by walking up from the package dir). Not `vendor/`: the composer tests manage it, and `checkMinimumSelfVersion` exits silently if `vendor/composer/installed.json` lacks the package
 - in nono (no Docker, no SSH): push the branch and read the result with `gh run watch <id>` / `gh run view <id> --log-failed`. Take the run id for the pushed commit (`gh run list --commit <sha>`), not the latest run
 - add tests for every user-facing behavior change. Before relying on a new test, prove it fails without the fix (throwaway branch, deleted afterwards)
 
