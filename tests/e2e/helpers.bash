@@ -41,6 +41,18 @@ httpStatus() {
 	curl -s -o /dev/null -w '%{http_code}' "$1"
 }
 
+# Wait for an HTTP status, e.g. until OPcache sees restored files (revalidate_freq: 2s)
+eventuallyStatus() {
+	local status
+	for _ in $(seq 10); do
+		status=$(httpStatus "$1")
+		[ "$status" = "$2" ] && return
+		sleep 0.5
+	done
+	echo "Expected $2 from $1, got $status"
+	false
+}
+
 writeWpConfig() {
 	local site=$1
 	cat <<EOF

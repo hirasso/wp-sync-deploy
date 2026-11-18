@@ -1004,7 +1004,7 @@ function pruneSnapshots() {
 # Human-readable age of a unix timestamp, e.g. "3 hours ago"
 function formatAge() {
 	local SECONDS_AGO=$(($(date +%s) - $1))
-	if ((SECONDS_AGO < 120)); then echo "$SECONDS_AGO seconds ago"
+	if ((SECONDS_AGO < 60)); then echo "less than a minute ago"
 	elif ((SECONDS_AGO < 7200)); then echo "$((SECONDS_AGO / 60)) minutes ago"
 	elif ((SECONDS_AGO < 172800)); then echo "$((SECONDS_AGO / 3600)) hours ago"
 	else echo "$((SECONDS_AGO / 86400)) days ago"
@@ -1015,7 +1015,7 @@ function formatAge() {
 # Then delete it, so the next rollback goes back one more deploy
 function rollbackLatestSnapshot() {
 	resolveSnapshotsDir
-	local NAME DIR MANIFEST COMMIT EPOCH URL
+	local NAME DIR MANIFEST COMMIT EPOCH WHEN URL
 	NAME=$($SSH_CONNECTION "ls -1 '$SNAPSHOTS_DIR' 2>/dev/null | sort | tail -1" </dev/null)
 	[ -n "$NAME" ] || logError "No snapshot found at $PRETTY_REMOTE_ENV (${BLUE}~/$SNAPSHOTS_PATH${NC})"
 	DIR="$SNAPSHOTS_DIR/$NAME"
@@ -1023,8 +1023,10 @@ function rollbackLatestSnapshot() {
 	MANIFEST=$($SSH_CONNECTION "cat '$DIR/manifest' 2>/dev/null" </dev/null || true)
 	COMMIT=$(sed -n 's/^commit=//p' <<<"$MANIFEST")
 	EPOCH=$(sed -n 's/^epoch=//p' <<<"$MANIFEST")
+	WHEN=$NAME
+	[ -z "$EPOCH" ] || WHEN=$(formatAge "$EPOCH")
 
-	log "⏪ Would you really like to roll back $PRETTY_REMOTE_HOST to before the deploy from ${BLUE}${EPOCH:+$(formatAge "$EPOCH")}${EPOCH:-$NAME}${NC}${COMMIT:+ (commit ${BLUE}${COMMIT:0:7}${NC})}?"
+	log "⏪ Would you really like to roll back $PRETTY_REMOTE_HOST to before the deploy from ${BLUE}$WHEN${NC}${COMMIT:+ (commit ${BLUE}${COMMIT:0:7}${NC})}?"
 	log "   Database changes since then (e.g. new posts, orders) are ${RED}lost${NC}."
 	if [[ "$SKIP_CONFIRM" != true ]]; then
 		read -r -p " [y/n] " PROMPT_RESPONSE
@@ -1058,5 +1060,5 @@ function rollbackLatestSnapshot() {
 	cleanupMaintenanceMode
 	MAINTENANCE_MODE=""
 	logLine
-	logSuccess "Rolled back $PRETTY_REMOTE_ENV to before the deploy from ${BLUE}${EPOCH:+$(formatAge "$EPOCH")}${EPOCH:-$NAME}${NC}"
+	logSuccess "Rolled back $PRETTY_REMOTE_ENV to before the deploy from ${BLUE}$WHEN${NC}"
 }
