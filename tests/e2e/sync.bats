@@ -29,7 +29,7 @@ setup_file() {
 
 @test "pull doesn't lock the remote tables" {
 	mariadb prod -e "CREATE TABLE wp_e2e_filler (v TEXT) ENGINE=InnoDB;
-		INSERT INTO wp_e2e_filler SELECT REPEAT(MD5(seq), 8) FROM seq_1_to_300000;"
+		INSERT INTO wp_e2e_filler SELECT REPEAT(MD5(seq), 8) FROM seq_1_to_600000;"
 	local log="$BATS_TEST_TMPDIR/sync.log"
 	wsdConfirm sync production >"$log" 2>&1 &
 	local pid=$!
@@ -40,11 +40,13 @@ setup_file() {
 	for _ in $(seq 100); do dumping && break; sleep 0.1; done
 	dumping
 
-	# Blocks until the dump finishes if it locks the tables
-	mariadb prod -e "SET SESSION lock_wait_timeout = 2; SET SESSION innodb_lock_wait_timeout = 2;
-		UPDATE wp_options SET option_value = 'written during dump' WHERE option_name = 'blogname'"
+	# Waits for the dump to finish if it locks the tables
+	local start=$(date +%s%N)
+	mariadb prod -e "UPDATE wp_options SET option_value = 'written during dump' WHERE option_name = 'blogname'"
+	local ms=$((($(date +%s%N) - start) / 1000000))
+	[ "$ms" -lt 1000 ] || { echo "Write blocked for ${ms}ms"; false; }
 	# Otherwise the test proves nothing: make the filler table bigger
-	dumping
+	dumping || { echo "Dump finished before the write"; false; }
 
 	wait "$pid" || { cat "$log"; false; }
 }
