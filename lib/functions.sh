@@ -219,7 +219,7 @@ function checkMinimumSelfVersion() {
 	[ -f "$installed_json" ] || return 0
 
 	local installed
-	installed=$(grep -A1 '"name": "hirasso/wp-sync-deploy"' "$installed_json" | sed -n 's/.*"version": "\(.*\)".*/\1/p')
+	installed=$(grep -A1 '"name": "hirasso/wp-sync-deploy"' "$installed_json" | sed -n 's/.*"version": "\(.*\)".*/\1/p' || true)
 	[[ "$installed" =~ ^[0-9]+(\.[0-9]+)*$ ]] || return 0
 
 	local minimum
