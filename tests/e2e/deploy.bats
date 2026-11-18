@@ -58,3 +58,13 @@ THEME=public/content/themes/e2e
 	[ -e "/srv/prod/$THEME/new.php" ]
 	[ "$(httpStatus http://prod.test/post-on-prod/)" = 200 ]
 }
+
+@test "deploy works if composer's installed.json lacks the package" {
+	# The package is in packages/wp-sync-deploy, see installPackage
+	mkdir -p "$LOCAL/composer"
+	echo '{"packages": []}' >"$LOCAL/composer/installed.json"
+
+	run wsd deploy staging --dry-run
+	rm -r "$LOCAL/composer"
+	[ "$status" -eq 0 ]
+}
