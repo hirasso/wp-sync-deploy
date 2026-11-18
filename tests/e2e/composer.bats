@@ -23,7 +23,7 @@ setup_file() {
 EOF
 	sed -i 's|^);|    composer: new \\Hirasso\\WPSyncDeploy\\Composer(),\n);|' "$LOCAL/wp-sync-deploy.config.php"
 	releaseLib 1.0.0
-	wsd deploy staging --yes
+	wsd deploy staging --yes >"$BATS_FILE_TMPDIR/deploy.log" 2>&1 || { grep -v public/wp/ "$BATS_FILE_TMPDIR/deploy.log" | sed "s/^/# /" >&3; false; }
 }
 
 @test "deploy creates the vendor dir" {
