@@ -936,19 +936,23 @@ function logLeftovers() {
 	log "🧹 ${BOLD}Can't be deleted at $PRETTY_REMOTE_ENV because of ignored files inside, clean up manually:${NORMAL}\n\r$LEFTOVERS"
 }
 
+# Set the snapshots dir of the remote root, in the remote home
+function resolveSnapshotsDir() {
+	REMOTE_HOME=$($SSH_CONNECTION 'echo $HOME' </dev/null)
+	SNAPSHOTS_PATH="$REMOTE_FILES_DIR/snapshots/$(echo "${REMOTE_ROOT_DIR#/}" | tr / -)"
+	SNAPSHOTS_DIR="$REMOTE_HOME/$SNAPSHOTS_PATH"
+}
+
 # Snapshots, for rollbacks: before each deploy, the database, the files the deploy overwrites or
 # deletes (rsync --backup-dir) and a list of the files it adds. Stored in the remote home, outside the web root
 function prepareSnapshot() {
 	SNAPSHOT_DIR=""
 	[ "$KEEP_SNAPSHOTS" -gt 0 ] || return 0
 
-	local REMOTE_HOME SNAPSHOTS_PATH
-	REMOTE_HOME=$($SSH_CONNECTION 'echo $HOME' </dev/null)
+	resolveSnapshotsDir
 	[[ "$REMOTE_HOME/" == "$REMOTE_WEB_ROOT/"* ]] &&
 		logError "Snapshots would be public: the remote home ${RED}$REMOTE_HOME${NC} is inside the web root. Set ${GREEN}keepSnapshots: 0${NC} to deploy without them"
 
-	SNAPSHOTS_PATH="$REMOTE_FILES_DIR/snapshots/$(echo "${REMOTE_ROOT_DIR#/}" | tr / -)"
-	SNAPSHOTS_DIR="$REMOTE_HOME/$SNAPSHOTS_PATH"
 	SNAPSHOT_NAME=$(date -u +%Y%m%d-%H%M%S)
 	SNAPSHOT_DIR="$SNAPSHOTS_DIR/$SNAPSHOT_NAME"
 	PRETTY_SNAPSHOT_DIR="~/$SNAPSHOTS_PATH/$SNAPSHOT_NAME"
@@ -962,10 +966,11 @@ function createSnapshot() {
 	log "📸 Taking a snapshot at $PRETTY_REMOTE_ENV ..."
 
 	$SSH_CONNECTION "mkdir -p '$SNAPSHOTS_DIR' && mkdir -m 700 '$SNAPSHOT_DIR'" </dev/null
-	printf 'commit=%s\nbranch=%s\ntime=%s\n' \
+	printf 'commit=%s\nbranch=%s\ntime=%s\nepoch=%s\n' \
 		"$(git -C "$LOCAL_ROOT_DIR" rev-parse HEAD 2>/dev/null || true)" \
 		"$(git -C "$LOCAL_ROOT_DIR" branch --show-current 2>/dev/null || true)" \
-		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" |
+		"$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+		"$(date +%s)" |
 		$SSH_CONNECTION "cat > '$SNAPSHOT_DIR/manifest'"
 
 	# No table locks, the site keeps running
@@ -994,4 +999,64 @@ function saveAddedFiles() {
 function pruneSnapshots() {
 	[ -n "$SNAPSHOT_DIR" ] || return 0
 	$SSH_CONNECTION "cd '$SNAPSHOTS_DIR' && ls -1 | sort -r | tail -n +$((KEEP_SNAPSHOTS + 1)) | xargs rm -rf" </dev/null
+}
+
+# Human-readable age of a unix timestamp, e.g. "3 hours ago"
+function formatAge() {
+	local SECONDS_AGO=$(($(date +%s) - $1))
+	if ((SECONDS_AGO < 120)); then echo "$SECONDS_AGO seconds ago"
+	elif ((SECONDS_AGO < 7200)); then echo "$((SECONDS_AGO / 60)) minutes ago"
+	elif ((SECONDS_AGO < 172800)); then echo "$((SECONDS_AGO / 3600)) hours ago"
+	else echo "$((SECONDS_AGO / 86400)) days ago"
+	fi
+}
+
+# Restore the latest snapshot: files, database, and remove the files its deploy added.
+# Then delete it, so the next rollback goes back one more deploy
+function rollbackLatestSnapshot() {
+	resolveSnapshotsDir
+	local NAME DIR MANIFEST COMMIT EPOCH URL
+	NAME=$($SSH_CONNECTION "ls -1 '$SNAPSHOTS_DIR' 2>/dev/null | sort | tail -1" </dev/null)
+	[ -n "$NAME" ] || logError "No snapshot found at $PRETTY_REMOTE_ENV (${BLUE}~/$SNAPSHOTS_PATH${NC})"
+	DIR="$SNAPSHOTS_DIR/$NAME"
+
+	MANIFEST=$($SSH_CONNECTION "cat '$DIR/manifest' 2>/dev/null" </dev/null || true)
+	COMMIT=$(sed -n 's/^commit=//p' <<<"$MANIFEST")
+	EPOCH=$(sed -n 's/^epoch=//p' <<<"$MANIFEST")
+
+	log "⏪ Would you really like to roll back $PRETTY_REMOTE_HOST to before the deploy from ${BLUE}${EPOCH:+$(formatAge "$EPOCH")}${EPOCH:-$NAME}${NC}${COMMIT:+ (commit ${BLUE}${COMMIT:0:7}${NC})}?"
+	log "   Database changes since then (e.g. new posts, orders) are ${RED}lost${NC}."
+	if [[ "$SKIP_CONFIRM" != true ]]; then
+		read -r -p " [y/n] " PROMPT_RESPONSE
+		[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+	fi
+
+	# Written directly, as WordPress might not load after a broken deploy
+	$SSH_CONNECTION "echo '<?php \$upgrading = time();' > '$REMOTE_ROOT_DIR/$WP_CORE_DIR/.maintenance'" </dev/null
+	MAINTENANCE_MODE=remote
+	logSuccess "Maintenance mode activated at $PRETTY_REMOTE_ENV"
+
+	# Added files first, then folders, deepest first. Then restore overwritten and deleted files
+	$SSH_CONNECTION "cd '$REMOTE_ROOT_DIR' &&
+		{ grep -v '/\$' '$DIR/added' 2>/dev/null | while IFS= read -r f; do rm -f -- \"\$f\"; done; } &&
+		{ grep '/\$' '$DIR/added' 2>/dev/null | sort -r | while IFS= read -r d; do rmdir -- \"\$d\" 2>/dev/null || true; done; } &&
+		{ [ ! -d '$DIR/files' ] || rsync -a '$DIR/files/' ./; }" </dev/null
+	logSuccess "Files restored at $PRETTY_REMOTE_ENV"
+
+	$SSH_CONNECTION "gunzip -c '$DIR/db.sql.gz' > '$DIR/db.sql'" </dev/null
+	wpRemote db import "$DIR/db.sql"
+
+	# Rollback-safe cleanup only. Deploy tasks could re-run migrations and undo the restore
+	wpRemote transient delete --all
+	wpRemote cache flush
+	for URL in $(wpRemote site list --field=url 2>/dev/null || echo "$REMOTE_URL"); do
+		WP_BOOT_URL=$URL wpRemote option delete rewrite_rules --quiet 2>/dev/null || true
+	done
+
+	$SSH_CONNECTION "rm -rf '$DIR'" </dev/null
+
+	cleanupMaintenanceMode
+	MAINTENANCE_MODE=""
+	logLine
+	logSuccess "Rolled back $PRETTY_REMOTE_ENV to before the deploy from ${BLUE}${EPOCH:+$(formatAge "$EPOCH")}${EPOCH:-$NAME}${NC}"
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Dispatch to the wp-sync-deploy scripts, e.g. when installed via composer:
-# `vendor/bin/wp-sync-deploy <deploy|sync|upload|config> [args]`
+# `vendor/bin/wp-sync-deploy <deploy|sync|upload|rollback|config> [args]`
 
 PACKAGE_DIR=$(dirname "$(dirname "$(realpath "$0")")")
 
@@ -9,7 +9,7 @@ COMMAND="${1:-}"
 [ $# -gt 0 ] && shift
 
 case $COMMAND in
-deploy | sync | upload | config)
+deploy | sync | upload | rollback | config)
     exec "$PACKAGE_DIR/$COMMAND.sh" "$@"
     ;;
 # Alias for `config init`
@@ -17,7 +17,7 @@ setup)
     exec "$PACKAGE_DIR/config.sh" init "$@"
     ;;
 *)
-    echo "Usage: wp-sync-deploy <deploy|sync|upload|config> [args]"
+    echo "Usage: wp-sync-deploy <deploy|sync|upload|rollback|config> [args]"
     exit 1
     ;;
 esac

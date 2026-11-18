@@ -9,9 +9,15 @@ wsd() {
 	(cd "$LOCAL" && vendor/hirasso/wp-sync-deploy/bin/wp-sync-deploy "$@")
 }
 
-# Same, answering "y" to the confirmation prompt
+# Same, answering the confirmation prompt, e.g. `wsdAnswer n deploy staging`
+wsdAnswer() {
+	local answer=$1
+	shift
+	echo "$answer" | wsd "$@"
+}
+
 wsdConfirm() {
-	echo y | wsd "$@"
+	wsdAnswer y "$@"
 }
 
 # WP-CLI for an environment: local, staging or prod
