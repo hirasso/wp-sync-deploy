@@ -196,7 +196,7 @@ A rollback restores the latest [snapshot](#snapshots): it removes the files the 
 - Run it again to go back one more deploy, as long as there are snapshots
 - A rollback can't be undone. Fix a bad rollback by deploying again
 - Your tasks file doesn't run, as it could run migrations again. Transients, the object cache and the rewrite rules are reset instead
-- Tables a deploy created (e.g. by a plugin update) are kept, but unused
+- Tables created after the snapshot (e.g. by a plugin update) are dropped. Only tables with your WordPress table prefix are touched
 - A bug noticed days later is better fixed by deploying a fix: a rollback would also lose all content since
 
 ### Composer dependencies
