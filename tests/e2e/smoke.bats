@@ -21,7 +21,7 @@ restoreTheme() {
 @test "deploy runs a smoke test" {
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
-	[[ "$output" == *"Smoke test passed (2 URLs)"* ]]
+	[[ "$output" == *"Smoke test passed (3 URLs)"* ]]
 }
 
 @test "dry run doesn't run the smoke test" {
@@ -31,12 +31,18 @@ restoreTheme() {
 	[[ "$output" != *"Smoke test passed"* ]]
 }
 
-@test "failed smoke test asks to roll back" {
+@test "failed smoke test doesn't roll back without consent" {
 	break404
+	# Risky: no deploy prompt. Closed stdin answers the rollback prompt
+	local config="$LOCAL/wp-sync-deploy.config.php"
+	cp "$config" "$BATS_TEST_TMPDIR/config.php"
+	sed -i "s|rootDir: '/srv/staging',|rootDir: '/srv/staging', deployStrategy: \\\\Hirasso\\\\WPSyncDeploy\\\\DeployStrategy::Risky,|" "$config"
 
-	run wsdAnswer $'y\nn' deploy staging
+	run wsd deploy staging </dev/null
+	cp "$BATS_TEST_TMPDIR/config.php" "$config"
 	[ "$status" -ne 0 ]
 	[[ "$output" == *"404"*"post-on-staging"* ]]
+	[[ "$output" != *"rolled back"* ]]
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 404 ]
 }
 
@@ -53,7 +59,7 @@ restoreTheme() {
 
 @test "fatal error on the remote rolls back" {
 	restoreTheme
-	echo '<?php /** Plugin Name: e2e */ if (wp_parse_url(home_url(), PHP_URL_HOST) !== "local.test") { e2e_undefined(); }' >"$LOCAL/$PLUGIN/e2e.php"
+	printf '<?php\n/**\n * Plugin Name: e2e\n */\nif (wp_parse_url(home_url(), PHP_URL_HOST) !== "local.test") { e2e_undefined(); }\n' >"$LOCAL/$PLUGIN/e2e.php"
 
 	run wsd deploy staging --yes
 	[ "$status" -ne 0 ]
@@ -75,6 +81,7 @@ restoreTheme() {
 @test "rollback runs a smoke test" {
 	sed -i "s|keepSnapshots: 0,||" "$LOCAL/wp-sync-deploy.config.php"
 	restoreTheme
+	wsd deploy staging --yes
 	wsd deploy staging --yes
 
 	run wsd rollback staging --yes

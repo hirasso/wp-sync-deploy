@@ -178,6 +178,7 @@ run)
     deployVendor ${VENDOR_SNAPSHOT_ARGS[@]+"${VENDOR_SNAPSHOT_ARGS[@]}"} 2>&1 | tee "$VENDOR_RSYNC_LOG"
   fi
 
+  FILES_CHANGED_AT=$(date +%s)
   saveAddedFiles
 
   logLine

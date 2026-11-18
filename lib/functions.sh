@@ -1062,6 +1062,7 @@ function rollbackLatestSnapshot() {
 		{ grep -v '/\$' '$DIR/added' 2>/dev/null | while IFS= read -r f; do rm -f -- \"\$f\"; done; } &&
 		{ grep '/\$' '$DIR/added' 2>/dev/null | sort -r | while IFS= read -r d; do rmdir -- \"\$d\" 2>/dev/null || true; done; } &&
 		{ [ ! -d '$DIR/files' ] || rsync -a '$DIR/files/' ./; }" </dev/null
+	FILES_CHANGED_AT=$(date +%s)
 	logSuccess "Files restored at $PRETTY_REMOTE_ENV"
 
 	$SSH_CONNECTION "gunzip -c '$DIR/db.sql.gz' > '$DIR/db.sql'" </dev/null
@@ -1088,6 +1089,9 @@ function rollbackLatestSnapshot() {
 function runSmokeTest() {
 	local TASKS_STATUS=${1:-0} URLS URL STATUS FAILED=""
 	log "🩺 Running a smoke test at $PRETTY_REMOTE_ENV ..."
+	# OPcache re-checks changed files only every revalidate_freq seconds (default 2)
+	local WAIT=$((${FILES_CHANGED_AT:-0} + 3 - $(date +%s)))
+	[ "$WAIT" -le 0 ] || sleep "$WAIT"
 	[ "$TASKS_STATUS" -eq 0 ] || FAILED="$FAILED\n\r   - the tasks failed"
 
 	URLS=$(wpRemote eval-file - <"$SCRIPT_DIR/lib/smoke-urls.php" 2>/dev/null | grep -E '^https?://' | sort -u) || true
@@ -1108,11 +1112,10 @@ function runSmokeTest() {
 	return 1
 }
 
-# Print the status of a URL. Fails unless 2xx without a PHP error.
-# Retries, as OPcache can serve the old code for a few seconds (revalidate_freq)
+# Print the status of a URL. Fails unless 2xx without a PHP error. Retries once, e.g. on network hiccups
 function smokeTestUrl() {
 	local RESPONSE STATUS TRY
-	for TRY in 1 2 3 4 5; do
+	for TRY in 1 2; do
 		[ "$TRY" -eq 1 ] || sleep 1
 		RESPONSE=$(curl --silent --location --insecure --max-time 30 ${REMOTE_HTTP_AUTH:+--user "$REMOTE_HTTP_AUTH"} \
 			--write-out '\n%{http_code}' "$1") || RESPONSE=$'\n000'
