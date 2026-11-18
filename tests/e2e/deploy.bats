@@ -38,7 +38,7 @@ THEME=public/content/themes/e2e
 
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
-	! wpAt staging option get rewrite_rules >/dev/null 2>&1
+	! wpAt staging option get rewrite_rules >/dev/null 2>&1 || false
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 200 ]
 }
 

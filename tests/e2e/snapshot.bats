@@ -40,9 +40,9 @@ setStagingOption() {
 	local dir=$(latestSnapshot staging)
 	[ "$(sudo stat -c %a "$dir")" = 700 ]
 	sudo test -e "$dir/files/$THEME/style.css"
-	! sudo grep -q changed "$dir/files/$THEME/style.css"
+	! sudo grep -q changed "$dir/files/$THEME/style.css" || false
 	sudo test -e "$dir/files/public/content/plugins/e2e/obsolete.php"
-	! sudo test -e "$dir/files/$THEME/new.php"
+	! sudo test -e "$dir/files/$THEME/new.php" || false
 	sudo zcat "$dir/db.sql.gz" | grep -q post-on-staging
 	sudo grep -qx "$THEME/new.php" "$dir/added"
 	sudo grep -qx "commit=$(git -C "$LOCAL" rev-parse HEAD)" "$dir/manifest"

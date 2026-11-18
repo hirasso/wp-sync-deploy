@@ -44,12 +44,12 @@ snapshotCount() {
 	[ "$status" -eq 0 ]
 	[ ! -e "/srv/staging/$THEME/dir" ]
 	[ -e "/srv/staging/$THEME/new.php" ]
-	! grep -q changed "/srv/staging/$THEME/style.css"
+	! grep -q changed "/srv/staging/$THEME/style.css" || false
 	[ -e "/srv/staging/$PLUGIN/obsolete.php" ]
-	! wpAt staging option get e2e_migrated
-	! wpAt staging db query "SHOW TABLES" --skip-column-names | grep -qx wp_e2e_new
+	! wpAt staging option get e2e_migrated || false
+	! wpAt staging db query "SHOW TABLES" --skip-column-names | grep -qx wp_e2e_new || false
 	wpAt staging db query "SHOW TABLES" --skip-column-names | grep -qx other_app
-	! wpAt staging post list --field=post_name | grep -qx after-deploy
+	! wpAt staging post list --field=post_name | grep -qx after-deploy || false
 	[ ! -e /srv/staging/public/wp/.maintenance ]
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 200 ]
 	[ "$(snapshotCount)" -eq 1 ]
