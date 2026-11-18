@@ -19,15 +19,14 @@ THEME=public/content/themes/e2e
 @test "deploy transfers new, changed and deleted files" {
 	echo new >"$LOCAL/$THEME/new.php"
 	echo '/* changed */' >>"$LOCAL/$THEME/style.css"
-	rm "$LOCAL/public/content/plugins/e2e/e2e.php"
-	echo '<?php /** Plugin Name: e2e */' >"$LOCAL/public/content/plugins/e2e/plugin.php"
+	rm "$LOCAL/public/content/plugins/e2e/obsolete.php"
 	asDeploy "mkdir -p /srv/staging/public/content/uploads && touch /srv/staging/public/content/uploads/keep.jpg"
 
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
 	[ -e "/srv/staging/$THEME/new.php" ]
 	grep -q changed "/srv/staging/$THEME/style.css"
-	[ ! -e /srv/staging/public/content/plugins/e2e/e2e.php ]
+	[ ! -e /srv/staging/public/content/plugins/e2e/obsolete.php ]
 	[ -e /srv/staging/public/content/uploads/keep.jpg ]
 	grep -q "'staging'" /srv/staging/public/wp-config.php
 }
