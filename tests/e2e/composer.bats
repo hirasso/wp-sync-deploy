@@ -23,17 +23,19 @@ setup_file() {
 EOF
 	sed -i 's|^);|    composer: new \\Hirasso\\WPSyncDeploy\\Composer(),\n);|' "$LOCAL/wp-sync-deploy.config.php"
 	releaseLib 1.0.0
-	wsd deploy staging --yes 2>&1 | tail -15 >&3
+	wsd deploy staging --yes
 }
 
 @test "deploy creates the vendor dir" {
+	ls -la /srv/staging /srv/staging/vendor || true; cat "$LOCAL/composer.lock" | head -30; ls "$LOCAL/vendor"
 	[ "$(cat "$VENDOR/version.txt")" = 1.0.0 ]
 }
 
 @test "rollback restores the vendor dir" {
 	echo new >"$LIB/new.txt"
 	releaseLib 1.1.0
-	wsd deploy staging --yes
+	run wsd deploy staging --yes
+	[ "$status" -eq 0 ]
 	[ "$(cat "$VENDOR/version.txt")" = 1.1.0 ]
 	[ -e "$VENDOR/new.txt" ]
 
