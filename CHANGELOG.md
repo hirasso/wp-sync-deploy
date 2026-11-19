@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.4.1 - 2026-11-19
+
+- Fix exit after confirming the outdated version prompt
+
 ## 4.4.0 - 2026-11-18
 
 - Run a smoke test after deploys and rollbacks, roll back on failure
