@@ -232,7 +232,7 @@ function checkMinimumSelfVersion() {
 	log "   ${BLUE}composer update hirasso/wp-sync-deploy${NC}"
 	log "   https://github.com/hirasso/wp-sync-deploy/releases"
 	read -r -p " Continue anyway? [y/n] " PROMPT_RESPONSE
-	[[ "$PROMPT_RESPONSE" != "y" ]] && exit 1
+	[[ "$PROMPT_RESPONSE" == "y" ]] || exit 1
 }
 
 # Check if the remote root is exists
