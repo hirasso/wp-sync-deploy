@@ -1084,11 +1084,11 @@ function rollbackLatestSnapshot() {
 	logSuccess "Rolled back $PRETTY_REMOTE_ENV to before the deploy from ${BLUE}$WHEN${NC}"
 }
 
-# Request the URLs from lib/smoke-urls.php. Fails on failed tasks (first argument: their exit status),
+# Request and list the URLs from lib/smoke-urls.php. Fails on failed tasks (first argument: their exit status),
 # a non-2xx status or a PHP error in the body
 function runSmokeTest() {
 	local TASKS_STATUS=${1:-0} URLS URL STATUS FAILED=""
-	log "🩺 Running a smoke test at $PRETTY_REMOTE_ENV ..."
+	log "🌍 Running a smoke test at $PRETTY_REMOTE_ENV ..."
 	# OPcache re-checks changed files only every revalidate_freq seconds (default 2)
 	local WAIT=$((${FILES_CHANGED_AT:-0} + 3 - $(date +%s)))
 	[ "$WAIT" -le 0 ] || sleep "$WAIT"
@@ -1100,9 +1100,16 @@ function runSmokeTest() {
 		FAILED="$FAILED\n\r   - WP-CLI couldn't load WordPress"
 	fi
 
+	logLine
 	for URL in $URLS; do
-		STATUS=$(smokeTestUrl "$URL") || FAILED="$FAILED\n\r   - ${RED}$STATUS${NC} $URL"
+		if STATUS=$(smokeTestUrl "$URL"); then
+			log "   ${GREEN}✔${NC} $STATUS $URL"
+		else
+			log "   ${RED}✘ $STATUS${NC} $URL"
+			FAILED="$FAILED\n\r   - ${RED}$STATUS${NC} $URL"
+		fi
 	done
+	logLine
 
 	if [ -z "$FAILED" ]; then
 		logSuccess "Smoke test passed ($(wc -l <<<"$URLS" | tr -d ' ') URLs)"

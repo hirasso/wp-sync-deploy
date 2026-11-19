@@ -202,7 +202,7 @@ A rollback restores the latest [snapshot](#snapshots): it removes the files the 
 
 ### Smoke test
 
-After each deploy and rollback, wp-sync-deploy requests the home URL of every site and the latest post of each public post type (e.g. a post, a page, a product). Each must return a 2xx status without a PHP error. Single posts matter: broken rewrite rules can leave the home page working while every post returns 404. Failed tasks count as a failed smoke test too.
+After each deploy and rollback, wp-sync-deploy requests the home URL of every site and the latest post of each public post type (e.g. a post, a page, a product). Each must return a 2xx status without a PHP error. Every URL is listed with its status and ✔ or ✘. Single posts matter: broken rewrite rules can leave the home page working while every post returns 404. Failed tasks count as a failed smoke test too.
 
 If the smoke test fails after a deploy, wp-sync-deploy asks whether to roll back. With `--yes`, it rolls back automatically, as nobody is there to answer. Either way, the deploy exits with an error.
 

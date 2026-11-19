@@ -22,6 +22,8 @@ restoreTheme() {
 	run wsd deploy staging --yes
 	[ "$status" -eq 0 ]
 	[[ "$output" == *"Smoke test passed (3 URLs)"* ]]
+	[[ "$output" == *"   ✔ 200 http://staging.test/"* ]]
+	[[ "$output" == *"   ✔ 200 http://staging.test/post-on-staging/"* ]]
 }
 
 @test "dry run doesn't run the smoke test" {
@@ -41,7 +43,9 @@ restoreTheme() {
 	run wsd deploy staging </dev/null
 	cp "$BATS_TEST_TMPDIR/config.php" "$config"
 	[ "$status" -ne 0 ]
-	[[ "$output" == *"404"*"post-on-staging"* ]]
+	[[ "$output" == *"   ✔ 200 http://staging.test/"* ]]
+	[[ "$output" == *"   ✘ 404 http://staging.test/post-on-staging/"* ]]
+	[[ "$output" == *"   - 404 http://staging.test/post-on-staging/"* ]]
 	[[ "$output" != *"rolled back"* ]]
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 404 ]
 }
