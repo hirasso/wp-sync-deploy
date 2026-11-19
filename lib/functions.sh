@@ -420,8 +420,9 @@ function installRemoteWpCli() {
 		"$WP_CLI_LOCAL_PHAR" "$SCRIPT_DIR/lib/wp-cli-setup.php" "$REMOTE_SSH:$REMOTE_FILES_DIR/" </dev/null 2>&1) ||
 		logError "Failed to upload WP-CLI to ${BLUE}~/$REMOTE_FILES_DIR/wp-cli.phar${NC} on the remote server. Is the home directory writable?\n\r$RESULT"
 
-	# Legacy: remove the hashed phar and the tasks file from the web root, uploaded by wp-sync-deploy < 4.1
-	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT/wp-cli-$(createHash $REMOTE_WEB_ROOT).phar' '$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php'" </dev/null
+	# Legacy: remove the hashed phars and the tasks file from the web root, uploaded by wp-sync-deploy < 4.1.
+	# Glob, as the hash came from the web root path at that time
+	$SSH_CONNECTION "rm -f '$REMOTE_WEB_ROOT'/wp-cli-??????????.phar '$REMOTE_WEB_ROOT/wp-sync-deploy.tasks.php'" </dev/null
 
 	logSuccess "WP-CLI available on the remote server."
 }

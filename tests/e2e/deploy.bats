@@ -38,6 +38,13 @@ THEME=public/content/themes/e2e
 	[ "$(httpStatus http://staging.test/post-on-staging/)" = 200 ]
 }
 
+@test "deploy removes legacy WP-CLI phars from the web root" {
+	asDeploy "touch /srv/staging/public/wp-cli-0123456789.phar /srv/staging/public/wp-cli-abcdef0123.phar"
+	run wsd deploy staging --yes
+	[ "$status" -eq 0 ]
+	! ls /srv/staging/public/wp-cli-*.phar 2>/dev/null || false
+}
+
 @test "deploy to production requires .allow-deployment" {
 	commitLocal
 	asDeploy "rm /srv/prod/.allow-deployment"
