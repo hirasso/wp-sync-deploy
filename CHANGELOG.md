@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.4.2 - 2026-11-19
+
+- Support jailed remote shells: rely on few remote tools only
+
 ## 4.4.1 - 2026-11-19
 
 - Fix exit after confirming the outdated version prompt
