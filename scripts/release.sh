@@ -91,10 +91,6 @@ if [[ -n "$(git diff --name-only "$PREVIOUS_TAG" HEAD -- src lib '*.sh' ':!scrip
     done
 fi
 
-if [[ "$IS_RC" == false && -z "$BUMP_MINIMUM" ]]; then
-    read -r -p "Bump .minimum-version to $VERSION? [y/N] " PROMPT_RESPONSE
-    [[ "$PROMPT_RESPONSE" == "y" ]] && BUMP_MINIMUM=true
-fi
 [[ "$IS_RC" == true && -n "$BUMP_MINIMUM" ]] && logError "--minimum is only supported for stable releases"
 
 # Let the user edit the release notes
@@ -112,6 +108,11 @@ eval "$NOTES_EDITOR \"\$NOTES_FILE\""
 NOTES=$(grep -v '^<!--' "$NOTES_FILE" | sed -e '/./,$!d')
 [ -z "$NOTES" ] && logError "Release notes are empty, aborting"
 printf '%s\n' "$NOTES" >"$NOTES_FILE"
+
+if [[ "$IS_RC" == false && -z "$BUMP_MINIMUM" ]]; then
+    read -r -p "Bump .minimum-version to $VERSION? [y/N] " PROMPT_RESPONSE
+    [[ "$PROMPT_RESPONSE" == "y" ]] && BUMP_MINIMUM=true
+fi
 
 logLine
 log "🚀 Releasing ${GREEN}$VERSION${NC} from ${BLUE}$BRANCH${NC} (changes since ${BLUE}$PREVIOUS_TAG${NC})"
