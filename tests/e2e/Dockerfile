@@ -25,4 +25,10 @@ RUN useradd -m -s /bin/bash dev && useradd -m -s /bin/bash deploy \
 COPY docker/nginx.conf /etc/nginx/sites-enabled/default
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
+# Remote tools: POSIX sh builtins, cat, rm, mkdir, rmdir, ls, plus rsync, php and the MySQL clients WP-CLI needs
+COPY docker/jailsh /usr/local/bin/jailsh
+RUN mkdir -p /opt/jail/bin \
+    && for tool in sh cat rm mkdir rmdir ls rsync php mysql mysqldump mariadb mariadb-dump; do ln -s "$(command -v $tool)" /opt/jail/bin/; done \
+    && echo /usr/local/bin/jailsh >>/etc/shells && chsh -s /usr/local/bin/jailsh deploy
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

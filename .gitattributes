@@ -7,3 +7,4 @@
 /tmp export-ignore
 /tests export-ignore
 /.github export-ignore
+/docs export-ignore

@@ -252,8 +252,7 @@ function checkRemoteRootExists() {
 function checkRemoteRootExistsAndIsEmpty() {
 	checkRemoteRootExists
 
-	# Run the `find` command on the remote server to check for contents
-	IS_EMPTY=$($SSH_CONNECTION "find \"$REMOTE_ROOT_DIR\" -mindepth 1 -print -quit | grep -q . && echo \"no\" || echo \"yes\"")
+	IS_EMPTY=$($SSH_CONNECTION "[ -z \"\$(ls -A '$REMOTE_ROOT_DIR')\" ] && echo yes || echo no")
 
 	if [[ $IS_EMPTY == "yes" ]]; then
 		logSuccess "${BLUE}Remote root is empty${NC}"
@@ -283,7 +282,7 @@ function checkCommandLinePHPVersions() {
 	log "   - Command line PHP version at $PRETTY_LOCAL_ENV server: ${BLUE}$LOCAL_VERSION${NC}"
 
 	# The flag "-n" suppresses warnings
-	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -v | head -n1 | awk '{print \$2}'")
+	local REMOTE_OUTPUT=$($SSH_CONNECTION "$REMOTE_PHP_BINARY -n -r 'echo PHP_VERSION;'")
 	local REMOTE_VERSION=${REMOTE_OUTPUT:0:3}
 	log "   - Command line PHP version at $PRETTY_REMOTE_ENV server: ${BLUE}$REMOTE_VERSION${NC}"
 
@@ -759,33 +758,25 @@ function checkWPVersions() {
 	confirmDeploy "WordPress at $PRETTY_REMOTE_ENV is newer than locally"
 }
 
-# List all plugins and themes in a content dir as "<key>\t<version>"
-# Runs both locally and remotely (via `declare -f`), so keep it self-contained
+# List all plugins and themes as "<name>\t<version>". Usage: listExtensionVersions <wpLocal|wpRemote>
+# Skips loading them, so a broken one doesn't break the list. Without mu-plugins and drop-ins
 function listExtensionVersions() {
-	cd "$1" 2>/dev/null || return 0
-	for file in plugins/*.php plugins/*/*.php themes/*/style.css; do
-		[ -f "$file" ] || continue
-		key="${file%/*}"
-		[ "$key" = "plugins" ] && key="$file"
-		head -c 8192 "$file" | awk -v key="$key" '
-			tolower($0) ~ /^[ \t\/*#@]*(plugin|theme) name:/ { named = 1 }
-			tolower($0) ~ /^[ \t\/*#@]*version:/ && version == "" {
-				version = $0
-				sub(/^[^:]*:[ \t]*/, "", version)
-				sub(/[ \t\r]*$/, "", version)
-			}
-			END { if (named) print key "\t" version }'
-	done | sort -u -t "$(printf '\t')" -k1,1
+	local TYPE
+	for TYPE in plugin theme; do
+		$1 $TYPE list --fields=name,version,status --format=csv --skip-plugins --skip-themes
+	done </dev/null | awk -F, '$1 != "name" && $3 != "must-use" && $3 != "dropin" { print $1 "\t" $2 }'
 }
 
 # Ask for confirmation if plugins or themes at the remote are missing locally
 # or newer than locally (e.g. updated via wp-admin), as the deploy would remove or downgrade them.
 function checkExtensionVersions() {
-	local LOCAL_LIST=$(listExtensionVersions "$LOCAL_ROOT_DIR/$WP_CONTENT_DIR")
-	local REMOTE_LIST=$({
-		declare -f listExtensionVersions
-		echo "listExtensionVersions \"$REMOTE_ROOT_DIR/$WP_CONTENT_DIR\""
-	} | $SSH_CONNECTION bash -s)
+	installRemoteWpCli
+	local LOCAL_LIST REMOTE_LIST
+	LOCAL_LIST=$(listExtensionVersions wpLocal 2>/dev/null) &&
+		REMOTE_LIST=$(listExtensionVersions wpRemote 2>/dev/null) || {
+		logWarning "Couldn't list the plugins and themes with WP-CLI, skipping their version check"
+		return 0
+	}
 
 	# Nothing to compare on a fresh remote
 	[[ -z "$REMOTE_LIST" ]] && return 0
@@ -975,7 +966,8 @@ function createSnapshot() {
 
 	# No table locks, the site keeps running
 	wpRemote db export --single-transaction --skip-lock-tables --quick --default-character-set=utf8mb4 "$SNAPSHOT_DIR/db.sql" --quiet
-	$SSH_CONNECTION "gzip '$SNAPSHOT_DIR/db.sql'" </dev/null
+	echo '<?php copy($argv[1], "compress.zlib://$argv[1].gz") && unlink($argv[1]) || exit(1);' |
+		$SSH_CONNECTION "$REMOTE_PHP_BINARY -- '$SNAPSHOT_DIR/db.sql'"
 }
 
 # rsync arguments to back up overwritten and deleted files into the snapshot. Usage: snapshotRsyncArgs <log file> [subdir]
@@ -998,7 +990,9 @@ function saveAddedFiles() {
 # Keep the newest $KEEP_SNAPSHOTS snapshots
 function pruneSnapshots() {
 	[ -n "$SNAPSHOT_DIR" ] || return 0
-	$SSH_CONNECTION "cd '$SNAPSHOTS_DIR' && ls -1 | sort -r | tail -n +$((KEEP_SNAPSHOTS + 1)) | xargs rm -rf" </dev/null
+	# Globs are sorted, oldest first
+	$SSH_CONNECTION "cd '$SNAPSHOTS_DIR' && set -- * && n=\$((\$# - $KEEP_SNAPSHOTS)) &&
+		for d; do [ \$n -gt 0 ] || break; rm -rf -- \"\$d\"; n=\$((n - 1)); done" </dev/null
 }
 
 # Human-readable age of a unix timestamp, e.g. "3 hours ago"
@@ -1015,7 +1009,8 @@ function formatAge() {
 # plugin update after it. `db import` only replaces the dump's own tables. Works without loading WordPress
 function dropTablesNotInDump() {
 	local DUMP_TABLES PREFIX DROP
-	DUMP_TABLES=$($SSH_CONNECTION "grep '^CREATE TABLE' '$1'" </dev/null | sed -n 's/^CREATE TABLE `\(.*\)` (.*/\1/p')
+	DUMP_TABLES=$(echo '<?php foreach (new SplFileObject($argv[1]) as $line) if (strncmp($line, "CREATE TABLE", 12) === 0) echo $line;' |
+		$SSH_CONNECTION "$REMOTE_PHP_BINARY -- '$1'" | sed -n 's/^CREATE TABLE `\(.*\)` (.*/\1/p')
 	# Shortest `*options` table, e.g. `wp_options` on multisite next to `wp_2_options`
 	PREFIX=$(grep 'options$' <<<"$DUMP_TABLES" | awk '{ print length, $0 }' | sort -n | head -1 | cut -d' ' -f2- | sed 's/options$//')
 	[ -n "$PREFIX" ] || return 0
@@ -1035,7 +1030,7 @@ function dropTablesNotInDump() {
 function rollbackLatestSnapshot() {
 	resolveSnapshotsDir
 	local NAME DIR MANIFEST COMMIT EPOCH WHEN URL
-	NAME=$($SSH_CONNECTION "ls -1 '$SNAPSHOTS_DIR' 2>/dev/null | sort | tail -1" </dev/null)
+	NAME=$($SSH_CONNECTION "for d in '$SNAPSHOTS_DIR'/*; do [ -d \"\$d\" ] && n=\${d##*/}; done; echo \"\${n:-}\"" </dev/null)
 	[ -n "$NAME" ] || logError "No snapshot found at $PRETTY_REMOTE_ENV (${BLUE}~/$SNAPSHOTS_PATH${NC})"
 	DIR="$SNAPSHOTS_DIR/$NAME"
 
@@ -1057,15 +1052,20 @@ function rollbackLatestSnapshot() {
 	MAINTENANCE_MODE=remote
 	logSuccess "Maintenance mode activated at $PRETTY_REMOTE_ENV"
 
-	# Added files first, then folders, deepest first. Then restore overwritten and deleted files
-	$SSH_CONNECTION "cd '$REMOTE_ROOT_DIR' &&
-		{ grep -v '/\$' '$DIR/added' 2>/dev/null | while IFS= read -r f; do rm -f -- \"\$f\"; done; } &&
-		{ grep '/\$' '$DIR/added' 2>/dev/null | sort -r | while IFS= read -r d; do rmdir -- \"\$d\" 2>/dev/null || true; done; } &&
+	# Added files first, then folders in reverse order (rsync logs a folder before its contents).
+	# Then restore overwritten and deleted files
+	$SSH_CONNECTION "cd '$REMOTE_ROOT_DIR' && dirs='' &&
+		{ [ ! -f '$DIR/added' ] || while IFS= read -r f; do
+			case \$f in */) dirs=\"\$f
+\$dirs\" ;; *) rm -f -- \"\$f\" ;; esac
+		done <'$DIR/added'; } &&
+		{ printf '%s' \"\$dirs\" | while IFS= read -r d; do rmdir -- \"\$d\" 2>/dev/null || true; done; } &&
 		{ [ ! -d '$DIR/files' ] || rsync -a '$DIR/files/' ./; }" </dev/null
 	FILES_CHANGED_AT=$(date +%s)
 	logSuccess "Files restored at $PRETTY_REMOTE_ENV"
 
-	$SSH_CONNECTION "gunzip -c '$DIR/db.sql.gz' > '$DIR/db.sql'" </dev/null
+	echo '<?php copy("compress.zlib://$argv[1].gz", $argv[1]) || exit(1);' |
+		$SSH_CONNECTION "$REMOTE_PHP_BINARY -- '$DIR/db.sql'"
 	wpRemote db import "$DIR/db.sql"
 	dropTablesNotInDump "$DIR/db.sql"
 

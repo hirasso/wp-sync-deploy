@@ -13,6 +13,7 @@ Sync and deploy your WordPress website between environments 🔀
 ## Prerequisites
 
 - A writable SSH home directory on the **remote server**. wp-sync-deploy brings its own [WP-CLI](https://wp-cli.org/) and uploads it to `~/.wp-sync-deploy/`, outside of the web root
+- Little else on the **remote server**: a POSIX shell with `cat`, `ls`, `mkdir`, `rm` and `rmdir`, plus `rsync`, PHP and the MySQL client tools WP-CLI uses. Restricted (jailed) SSH shells of shared hosters are fine
 - PHP >= 8.2 on your **local machine**
 - A WordPress directory structure similar to this (adjustable through a [`wp-sync-deploy.config.php`](#configuration) file):
 

@@ -17,6 +17,8 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 
 ## Internals
 
+- remote commands only use the tools in `docs/adr/0001-minimal-remote-tools.md`. The e2e remote enforces it (`tests/e2e/docker/jailsh`)
+
 - WP-CLI is cached locally at `~/.cache/wp-sync-deploy/wp-cli.phar` (re-downloaded when older than a week) and uploaded to `~/.wp-sync-deploy/` on the remote, outside of the web root, once per run
 - `wpLocal` and `wpRemote` load `lib/wp-cli-setup.php` with `--require`: it hides PHP deprecation notices and swaps the WP-CLI logger, so WP-CLI logs like `logSuccess`/`logWarning`/`logError`
 - the tasks file is uploaded to `~/.wp-sync-deploy/` for each run and deleted afterwards
@@ -39,6 +41,7 @@ This is [wp-sync-deploy](https://github.com/hirasso/wp-sync-deploy), a set of ba
 | `scripts/release.sh` | `composer release` |
 | `skills/wp-sync-deploy/` | Agent skill for setup/upgrade |
 | `tests/e2e/` | End-to-end tests (Docker + bats) |
+| `docs/adr/` | Architecture decisions |
 | `.github/workflows/e2e.yml` | Runs the e2e tests on every push |
 | `tmp/` | Throwaway scripts (gitignored) |
 

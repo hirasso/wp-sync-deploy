@@ -1,0 +1,5 @@
+#!/bin/sh
+# Login shell of `deploy`, like a potato hoster's jail: POSIX sh and only the tools wp-sync-deploy may rely on
+PATH=/opt/jail/bin
+export PATH
+exec /bin/sh "$@"
