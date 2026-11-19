@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.4.3 - 2026-11-19
+
+- Ask about `.minimum-version` after the release notes review
+- Remove legacy WP-CLI phars from the web root, whatever their hash
+- List every URL of the smoke test with its status
+
 ## 4.4.2 - 2026-11-19
 
 - Support jailed remote shells: rely on few remote tools only
