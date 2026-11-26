@@ -111,7 +111,7 @@ dry)
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
-    "$RSYNC_BIN" --dry-run -avz --delete --relative \
+    "$RSYNC_BIN" --dry-run -avz --no-g --no-o --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "$SSH_COMMAND" \
       "${PROTECT_FILTERS[@]}" \
@@ -162,7 +162,7 @@ run)
   # Execute rsync from $LOCAL_ROOT_DIR in a subshell to make sure we are staying in the current pwd
   (
     cd "$LOCAL_ROOT_DIR"
-    "$RSYNC_BIN" -avz --delete --relative \
+    "$RSYNC_BIN" -avz --no-g --no-o --delete --relative \
       --chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
       -e "$SSH_COMMAND" \
       "${PROTECT_FILTERS[@]}" \

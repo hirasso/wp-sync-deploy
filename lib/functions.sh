@@ -847,7 +847,7 @@ function buildVendor() {
 # Deploy the vendor dir built by buildVendor
 # Usage: deployVendor [--dry-run]
 function deployVendor() {
-	"$RSYNC_BIN" "$@" -avzc --omit-dir-times --delete \
+	"$RSYNC_BIN" "$@" -avzc --no-g --no-o --omit-dir-times --delete \
 		--chmod=Du=rwx,Dg=rx,Do=rx,Fu=rw,Fg=r,Fo=r \
 		-e "$SSH_COMMAND" \
 		"$VENDOR_BUILD_DIR/$COMPOSER_VENDOR_DIR/" "$REMOTE_SSH:$REMOTE_ROOT_DIR/$VENDOR_DIR/"
@@ -1061,7 +1061,7 @@ function rollbackLatestSnapshot() {
 \$dirs\" ;; *) rm -f -- \"\$f\" ;; esac
 		done <'$DIR/added'; } &&
 		{ printf '%s' \"\$dirs\" | while IFS= read -r d; do rmdir -- \"\$d\" 2>/dev/null || true; done; } &&
-		{ [ ! -d '$DIR/files' ] || rsync -a '$DIR/files/' ./; }" </dev/null
+		{ [ ! -d '$DIR/files' ] || rsync -rlt '$DIR/files/' ./; }" </dev/null
 	FILES_CHANGED_AT=$(date +%s)
 	logSuccess "Files restored at $PRETTY_REMOTE_ENV"
 
