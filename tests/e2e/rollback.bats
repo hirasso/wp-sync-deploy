@@ -61,3 +61,15 @@ snapshotCount() {
 	[ ! -e "/srv/staging/$THEME/new.php" ]
 	[ "$(snapshotCount)" -eq 0 ]
 }
+
+@test "rollback keeps owner and permissions of existing dirs" {
+	sudo chgrp nogroup /srv/staging /srv/staging/public
+	sudo chmod 751 /srv/staging
+	echo '/* changed */' >>"$LOCAL/$THEME/style.css"
+	wsd deploy staging --yes
+
+	run wsd rollback staging --yes
+	[ "$status" -eq 0 ]
+	[ "$(stat -c '%a %G' /srv/staging)" = '751 nogroup' ]
+	[ "$(stat -c %G /srv/staging/public)" = nogroup ]
+}

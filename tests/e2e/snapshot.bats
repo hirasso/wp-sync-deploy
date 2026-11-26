@@ -48,6 +48,16 @@ setStagingOption() {
 	sudo grep -qx "commit=$(git -C "$LOCAL" rev-parse HEAD)" "$dir/manifest"
 }
 
+# Like cPanel docroots (user:nobody)
+@test "deploy snapshots dirs owned by a group the SSH user isn't in" {
+	sudo chgrp nogroup /srv/staging/public
+	echo '/* changed again */' >>"$LOCAL/$THEME/style.css"
+
+	run wsd deploy staging --yes
+	[ "$status" -eq 0 ]
+	[ "$(stat -c %G /srv/staging/public)" = nogroup ]
+}
+
 @test "deploy keeps the 2 newest snapshots" {
 	echo one >"$LOCAL/$THEME/one.php"
 	wsd deploy staging --yes
