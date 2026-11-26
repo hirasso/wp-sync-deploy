@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.4.4 - 2026-11-26
+
+- Don't preserve owner/group on deploy and rollback
+
 ## 4.4.3 - 2026-11-19
 
 - Ask about `.minimum-version` after the release notes review
